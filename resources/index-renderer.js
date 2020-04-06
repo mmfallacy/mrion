@@ -18,4 +18,30 @@ $('.side-bar button.navlink').click(function(){
     $(`.content#${this.id}`).addClass('shown').fadeIn()
 })
 
+
+// DROP DOWN SOURCE HANDLER
+let SOURCES = {
+    'Mangakakalot':true,
+    'Mangascans':true,
+    'KissManga':true,
+    'Meraki Scans':true,
+}
+
+function sourceChange(){
+
+}
+for(key in SOURCES)
+    $('.source-select .dropdown-options').append(
+        `<div class="option">${key}</div>`
+    )
+$('.source-select .dropdown').click(function(){
+    $(this).toggleClass('active')
+})
+$('.source-select .option').click(function(){
+    $('.source-select .option').show()
+    $('.source-select .selected').html($(this).html())
+    $(this).hide()
+    sourceChange()
+})
+
 $('button.navlink#home').click()

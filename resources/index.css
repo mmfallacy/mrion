@@ -256,11 +256,11 @@ html, body {
   overflow: hidden;
 }
 
-.content#home .manga-select .source-select div.dropdown:hover {
+.content#home .manga-select .source-select div.dropdown.active {
   height: 20vh;
 }
 
-.content#home .manga-select .source-select div.dropdown:hover .dropdown-options {
+.content#home .manga-select .source-select div.dropdown.active .dropdown-options {
   overflow-y: scroll;
 }
 
@@ -301,6 +301,7 @@ html, body {
   --bar-width:3%;
   --thumb-width:1%;
   height: calc(100% - 4vh);
+  padding-top: .5%;
 }
 
 .content#home .manga-select .source-select div.dropdown .dropdown-options .option {
@@ -313,6 +314,7 @@ html, body {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+  cursor: pointer;
   border-bottom: 1px solid #5F5C5C;
 }
 
