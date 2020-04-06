@@ -2,18 +2,127 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
     <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
-    <title>Hello World!</title>
+    <title>Manga Reader</title>
+    <link rel="stylesheet" href="./resources/index.css">
+    
+    <link rel="stylesheet" href="./resources/fonts/icofont.css">
   </head>
   <body>
-    <h1>Hello World!</h1>
-    We are using Node.js <span id="node-version"></span>,
-    Chromium <span id="chrome-version"></span>,
-    and Electron <span id="electron-version"></span>.
-
-    <!-- You can also require other files to run in this process -->
-    <script src="./renderer.js"></script>
+    <div class="title-bar">
+      <span id="title">Manga Reader</span>
+      <button class="icofont-minus" id="min-electron"></button>
+      <button class="icofont-maximize" id="max-electron"></button>
+      <button class="icofont-close" id="close-electron"></button>
+    </div>
+    <div class="side-bar">
+      <div class="icofont-navigation-menu menu"><span class="icofont-lock"></span></div>
+      <button class="navlink" id="home">
+        <span>Home</span>
+      </button>
+      <button class="navlink" id="latestManga">
+        <span>Latest Manga</span>
+      </button>
+      <button class="navlink" id="favorites">
+        <span>Favorites</span>
+      </button>
+      <button class="navlink" id="settings">
+        <span>Settings</span>
+      </button>
+    </div>
+    <div class="content" id="home">
+      <div class="manga-select">
+        <div class="source-select">Source:
+          <div class="dropdown">
+            <span class="dropdown-arrow icofont-caret-down"></span>
+            <div class="selected">Mangakakalots</div>
+            <div class="dropdown-options">
+              <div class="option selected">Meraki</div>
+              <div class="option selected">Testing</div>
+              <div class="option selected">Kiss Manga</div>
+              <div class="option selected">Meraki</div>
+              <div class="option selected">Testing</div>
+              <div class="option selected">Kiss Manga</div>
+            </div>
+          </div>
+        </div>
+        <h2>Discover</h2>
+        <hr>
+        <br>
+        <div class="manga-handler">
+          <!-- MANGA HANDLER -->
+          <div class="manga">
+            <img src="./resources/img/manga placeholder.jpg">
+            <span class="manga-title" id="title">Matchless Emperor Lies Of The Sheriff Evans: Dead Or Love</span>
+            <div class="manga-info">
+              <span id='title'>Matchless Emperor Lies Of The Sheriff Evans: Dead Or Love</span>
+              <hr>
+              <span class="label">Author:</span><span id='author'>Mizuki Kuriyama</span>
+              <hr>
+              <span class="label">Status:</span><span id='status'>Ongoing</span>
+              <hr>
+              <span class="label">Last Update:</span><span id='lastupdate'>Apr 06,2020 - 21:08 PM</span>
+              <hr>
+              <div id="rating">
+                <span class="icofont-star"></span>
+                <span class="icofont-star"></span>
+                <span class="icofont-star"></span>
+                <span class="icofont-star"></span>
+                <span class="icofont-star"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="content" id="latestManga"></div>
+    <div class="content" id="favorites"></div>
+    <div class="content" id="settings">
+      <h2>Settings</h2>
+      <hr>
+      <br>
+      <div class="setting-group">
+        <span class="label" >Notify me of new chapters</span>
+        <label class="switch round">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-group">
+        <span class="label" >Enable at Startup</span>
+        <label class="switch round">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-group additional">
+        <span class="label" >Preload Chapters</span>
+        <label class="switch round">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+        <select class="select">
+          <option>1</option>
+          <option>2</option>
+          <option>3</option>
+        </select>
+      </div>
+      <div class="setting-group readingmode">
+        <span class="label" >Reading Mode</span>
+        <label class="switch round" id="horver">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+        <span class="sublabel">Horizontal</span>
+        <span class="label blank"></span>
+        <label class="switch round" id="norrev">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+        <span class="sublabel">Normal</span>
+      </div>
+    </div>
   </body>
+  <script src="./resources/index-renderer.js"></script>
 </html>

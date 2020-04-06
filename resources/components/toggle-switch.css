@@ -1,0 +1,60 @@
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--inactive-color);
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 70%;
+  width: 40%;
+  left: 8%;
+  bottom: 15%;
+  background-color: var(--slider-color);
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  --inactive-color: #ccc;
+  --active-color: #2196F3;
+  --slider-color: white;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch input:checked + .slider {
+  background-color: var(--active-color);
+}
+
+.switch input:focus + .slider {
+  -webkit-box-shadow: 0 0 1px var(--active-color);
+          box-shadow: 0 0 1px var(--active-color);
+}
+
+.switch input:checked + .slider:before {
+  -webkit-transform: translateX(108%);
+          transform: translateX(108%);
+}
+
+.switch.round .slider {
+  border-radius: 5rem;
+}
+
+.switch.round .slider:before {
+  border-radius: 5rem;
+}
+/*# sourceMappingURL=toggle-switch.css.map */

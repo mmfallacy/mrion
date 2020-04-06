@@ -1,0 +1,42 @@
+@font-face {
+    font-family: 'Open Sans';
+    src: url('./opensans/regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Open Sans Itallic';
+    src: url('./opensans/itallic.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Open Sans Bold';
+    src: url('./opensans/bold.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Open Sans Bold Itallic';
+    src: url('./opensans/bolditallic.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Open Sans SemiBold';
+    src: url('./opensans/semibold.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Open Sans SemiBold Itallic';
+    src: url('./opensans/semibolditallic.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Open Sans Light';
+    src: url('./opensans/light.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Open Sans Light Itallic';
+    src: url('./opensans/lightitallic.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Open Sans ExtraBold';
+    src: url('./opensans/extrabold.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Open Sans ExtraBold Itallic';
+    src: url('./opensans/extrabolditallic.ttf') format('truetype');
+}
+
+

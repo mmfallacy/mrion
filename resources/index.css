@@ -1,0 +1,352 @@
+@import url("./fonts/opensans.css");
+@import url("./components/toggle-switch.css");
+@import url("./components/manga.css");
+* {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  font-family: "Open Sans";
+  letter-spacing: .2rem;
+}
+
+*:focus {
+  outline: none;
+}
+
+*:not([type='text']) {
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: #3a3535;
+  overflow: hidden;
+}
+
+.title-bar {
+  color: white;
+  height: 30px;
+  background-color: #ff7315;
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
+  pointer-events: auto;
+  display: -ms-grid;
+  display: grid;
+  padding-left: 1%;
+  -ms-grid-columns: auto 5% 5% 5%;
+      grid-template-columns: auto 5% 5% 5%;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  font-size: .9rem;
+}
+
+.title-bar button {
+  width: 100%;
+  height: 100%;
+  border: none;
+  -webkit-app-region: no-drag;
+  background-color: transparent;
+  color: white;
+  font-size: 1rem;
+}
+
+.title-bar button:hover {
+  background-color: #5F5C5C;
+  cursor: pointer;
+}
+
+.side-bar {
+  height: calc(100% - 30px);
+  width: 75px;
+  background-color: #232020;
+  overflow: hidden;
+  -webkit-transition: width .1s ease-in-out;
+  transition: width .1s ease-in-out;
+  z-index: 30;
+  position: relative;
+}
+
+.side-bar.hold {
+  width: 200px;
+}
+
+.side-bar.hold div.menu span {
+  visibility: visible;
+}
+
+.side-bar.hold ~ .content {
+  width: calc(100% - 200px);
+  left: 200px;
+}
+
+.side-bar div.menu {
+  width: 200px;
+  height: 7.5%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  padding-left: 25px;
+  padding-right: 15px;
+  font-size: 1.3rem;
+  border-bottom: 1px solid #f4f4f4;
+  background-color: #ff7315;
+  color: #f4f4f4;
+  cursor: pointer;
+}
+
+.side-bar div.menu span {
+  visibility: hidden;
+}
+
+.side-bar button.navlink {
+  width: 200px;
+  height: 7.5%;
+  cursor: pointer;
+  background-color: transparent;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  padding-left: 25px;
+  border: none;
+  border-bottom: 1px solid #f4f4f4;
+}
+
+.side-bar button.navlink#latestManga {
+  padding-left: 26px;
+}
+
+.side-bar button.navlink#latestManga span {
+  letter-spacing: .1rem;
+}
+
+.side-bar button.navlink.active {
+  background-color: #ff7315;
+}
+
+.side-bar button.navlink svg {
+  height: 20px;
+  width: 20px;
+  margin-right: 30px;
+  fill: #f4f4f4;
+}
+
+.side-bar button.navlink span {
+  font-size: .8rem;
+  color: #f4f4f4;
+}
+
+.side-bar:hover {
+  width: 200px;
+}
+
+.content {
+  background-color: #3a3535;
+  display: none;
+  height: calc(100% - 30px);
+  width: calc(100% - 75px);
+  position: absolute;
+  top: 30px;
+  left: 75px;
+  z-index: 10;
+  color: #f4f4f4;
+  -webkit-transition: width .1s ease-in, left .1s ease-in;
+  transition: width .1s ease-in, left .1s ease-in;
+  padding: 1% 2%;
+}
+
+.content#settings .setting-group {
+  width: 80vw;
+  display: -ms-grid;
+  display: grid;
+  -ms-grid-columns: 60% 10% 10% 10% 10%;
+      grid-template-columns: 60% 10% 10% 10% 10%;
+  grid-column-gap: 2.5%;
+  margin-bottom: 2.5%;
+}
+
+.content#settings .setting-group.readingmode {
+  height: 13%;
+  -ms-grid-columns: 60% 10% 30%;
+      grid-template-columns: 60% 10% 30%;
+  -ms-grid-rows: 50% 50%;
+      grid-template-rows: 50% 50%;
+      grid-template-areas: "label toggle1 sublabel1" "blank toggle2 sublabel2";
+}
+
+.content#settings .setting-group.readingmode .switch#horver {
+  grid-area: 'toggle1';
+}
+
+.content#settings .setting-group.readingmode .switch#norrev {
+  grid-area: 'toggle2';
+}
+
+.content#settings .setting-group.readingmode .label {
+  grid-area: 'label';
+}
+
+.content#settings .setting-group.readingmode .label.blank {
+  grid-area: 'blank';
+}
+
+.content#settings .setting-group.readingmode .sublabel {
+  -ms-grid-column-align: left;
+      justify-self: left;
+}
+
+.content#settings .setting-group :not(:first-child) {
+  -ms-grid-column-align: center;
+      justify-self: center;
+}
+
+.content#settings .setting-group label.switch {
+  height: 25px;
+  width: 50px;
+  --active-color: #ff7315;
+}
+
+.content#settings .setting-group .select {
+  width: 100%;
+}
+
+.content#home {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.content#home .manga-select .source-select {
+  width: 104%;
+  height: 5vh;
+  background-color: black;
+  margin: -1% -2%;
+  margin-bottom: 1%;
+  position: relative;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  padding-left: 2%;
+}
+
+.content#home .manga-select .source-select div.dropdown {
+  width: 85%;
+  height: 4vh;
+  position: absolute;
+  top: .5vh;
+  left: 13%;
+  background-color: #3a3535;
+  z-index: 20;
+  overflow: hidden;
+}
+
+.content#home .manga-select .source-select div.dropdown:hover {
+  height: 20vh;
+}
+
+.content#home .manga-select .source-select div.dropdown:hover .dropdown-options {
+  overflow-y: scroll;
+}
+
+.content#home .manga-select .source-select div.dropdown .dropdown-arrow {
+  height: 4vh;
+  width: 3%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  position: absolute;
+  right: 0;
+  color: #ff7315;
+  background-color: #232020;
+}
+
+.content#home .manga-select .source-select div.dropdown .selected {
+  width: 100%;
+  height: 4vh;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  padding-left: 2%;
+  border-bottom: 1px solid #5F5C5C;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+.content#home .manga-select .source-select div.dropdown .dropdown-options {
+  --thumb-color:#ff7315;
+  --track-color:#232020;
+  --bar-width:3%;
+  --thumb-width:1%;
+  height: calc(100% - 4vh);
+}
+
+.content#home .manga-select .source-select div.dropdown .dropdown-options .option {
+  width: 100%;
+  height: 4vh;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  padding-left: 2%;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  border-bottom: 1px solid #5F5C5C;
+}
+
+.content#home .manga-select .manga-handler {
+  width: 102%;
+  margin-left: -1%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+}
+
+.content#home .manga-select .manga-handler .manga {
+  --background-color: #5F5C5C;
+}
+
+.content#home .manga-select .manga-handler > * {
+  margin: 1% 1% 1% 1%;
+}
+
+.content#home .manga-select .source-select div.dropdown .dropdown-options::-webkit-scrollbar {
+  width: var(--bar-width);
+}
+
+.content#home .manga-select .source-select div.dropdown .dropdown-options::-webkit-scrollbar-track {
+  background: var(--track-color);
+}
+
+.content#home .manga-select .source-select div.dropdown .dropdown-options::-webkit-scrollbar-thumb {
+  background: var(--thumb-color);
+  width: var(--thumb-width);
+}
+/*# sourceMappingURL=index.css.map */
