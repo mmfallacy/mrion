@@ -2,22 +2,22 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
-    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';connect-src *;">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self';connect-src *;"> -->
     <title>Manga Reader</title>
     <link rel="stylesheet" href="./resources/index.css">
     
-    <link rel="stylesheet" href="./resources/fonts/icofont.css">
+    <link rel="stylesheet" href="./resources/fonts/remixicon/remixicon.css">
   </head>
   <body>
     <div class="title-bar">
       <span id="title">Manga Reader</span>
-      <button class="icofont-minus" id="min-electron"></button>
-      <button class="icofont-maximize" id="max-electron"></button>
-      <button class="icofont-close" id="close-electron"></button>
+      <button class="ri-subtract-line" id="min-electron"></button>
+      <button class="ri-checkbox-multiple-blank-line" id="max-electron"></button>
+      <button class="ri-close-line" id="close-electron"></button>
     </div>
     <div class="side-bar">
-      <div class="icofont-navigation-menu menu"><span class="icofont-lock"></span></div>
+      <div class="ri-menu-fill menu"><span class="ri-lock-unlock-line ulock"></span><span class="ri-lock-line lock"></span></div>
       <button class="navlink" id="home">
         <span>Home</span>
       </button>
@@ -32,42 +32,33 @@
       </button>
     </div>
     <div class="content" id="home">
-      <div class="manga-select">
-        <div class="source-select">Source:
-          <div class="dropdown">
-            <span class="dropdown-arrow icofont-caret-down"></span>
-            <div class="selected"></div>
-            <div class="dropdown-options">
-            </div>
+      <div class="source-select">Source:
+        <div class="dropdown">
+          <span class="dropdown-arrow ri-arrow-down-s-fill"></span>
+          <div class="selected"></div>
+          <div class="dropdown-options">
           </div>
+        </div>
+      </div>
+      <div class="manga-select">
+        <div class="header">
+          <h2>Search</h2>
+          <div class="searchbar">
+            <input class="searchfield" placeholder="Select Source to Enable" id="searchfield" type="text" /><button id="searchbutton" class="ri-search-eye-line"></button>
+          </div>
+        </div>
+        <hr>
+        <br>
+        <div class="manga-handler" id="home-searchManga">
+          <!-- MANGA HANDLER -->
         </div>
         <h2>Discover</h2>
         <hr>
         <br>
-        <div class="manga-handler">
+        <div class="manga-handler" id="home-mangaList">
           <!-- MANGA HANDLER -->
-          <div class="manga">
-            <img src="./resources/img/manga placeholder.jpg">
-            <span class="manga-title" id="title">Matchless Emperor Lies Of The Sheriff Evans: Dead Or Love</span>
-            <div class="manga-info">
-              <span id='title'>Matchless Emperor Lies Of The Sheriff Evans: Dead Or Love</span>
-              <hr>
-              <span class="label">Author:</span><span id='author'>Mizuki Kuriyama</span>
-              <hr>
-              <span class="label">Status:</span><span id='status'>Ongoing</span>
-              <hr>
-              <span class="label">Last Update:</span><span id='lastupdate'>Apr 06,2020 - 21:08 PM</span>
-              <hr>
-              <div id="rating">
-                <span class="icofont-star"></span>
-                <span class="icofont-star"></span>
-                <span class="icofont-star"></span>
-                <span class="icofont-star"></span>
-                <span class="icofont-star"></span>
-              </div>
-            </div>
-          </div>
         </div>
+        <div class="returnTop ri-arrow-up-line"></div>
       </div>
     </div>
     <div class="content" id="latestManga"></div>

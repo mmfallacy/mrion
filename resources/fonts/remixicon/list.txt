@@ -1,0 +1,10 @@
+menu
+star
+filled star
+half star
+checkbox-multiple
+close
+subtract
+arrow-down
+lock 
+unlock

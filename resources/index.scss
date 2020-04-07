@@ -63,8 +63,11 @@ html, body{
     &.hold{
         width:200px;
         div.menu{
-            span{
-                visibility: visible;
+            span.lock{
+                display:block;
+            }
+            span.ulock{
+                display:none;
             }
         }
         & ~ .content{
@@ -85,8 +88,11 @@ html, body{
         background-color: $color-foreground;
         color:$color-light;
         cursor:pointer;
-        span{
-            visibility: hidden;
+        span.ulock{
+            display:block;
+        }
+        span.lock{
+            display:none;
         }
     }
     button.navlink{
@@ -183,91 +189,190 @@ html, body{
     }
 }
 .content#home{
-    overflow-y: auto;
-    overflow-x: hidden;
-    .manga-select{
-        .source-select{
-            width:104%;
-            height:5vh;
-            background-color:black;
-            margin: -1% -2%;
-            margin-bottom:1%;
-            position: relative;
-            display:flex;
-            align-items: center;
-            padding-left:2%;
-            div.dropdown{
-                width:85%;
+    .source-select{
+        width:104%;
+        height:5vh;
+        background-color:black;
+        margin: -1% -2%;
+        margin-bottom:1%;
+        position: relative;
+        display:flex;
+        align-items: center;
+        padding-left:2%;
+        div.dropdown{
+            width:85%;
+            height:4vh;
+            position: absolute;
+            top:.5vh;
+            left:13%;
+            background-color: $color-normal;
+            z-index:20;
+            overflow:hidden;
+            &.active{
+                height:20vh;
+                .dropdown-options{
+                    overflow-y:scroll;
+                }
+            }
+            .dropdown-arrow{
                 height:4vh;
+                width:3%;
+                display:flex;
+                justify-content: center;
+                align-items: center;
                 position: absolute;
-                top:.5vh;
-                left:13%;
-                background-color: $color-normal;
-                z-index:20;
-                overflow:hidden;
-                &.active{
-                    height:20vh;
-                    .dropdown-options{
-                        overflow-y:scroll;
-                    }
-                }
-                .dropdown-arrow{
-                    height:4vh;
-                    width:3%;
-                    display:flex;
-                    justify-content: center;
-                    align-items: center;
-                    position: absolute;
-                    right:0;
-                    color: $color-foreground;
-                    background-color: $color-dark;
-                }
-                .selected{
+                right:0;
+                color: $color-foreground;
+                background-color: $color-dark;
+            }
+            .selected{
+                width:100%;
+                height:4vh;
+                display:flex;
+                padding-left:2%;
+                border-bottom: 1px solid $color-dark-brighter;
+                align-items: center;
+            }
+            .dropdown-options{
+                @extend  %overflowbar;
+                --thumb-color:#{$color-foreground};
+                --track-color:#{$color-dark};
+                --bar-width:3%;
+                --thumb-width:1%;
+                height: calc(100% - 4vh);
+                padding-top:.5%;
+                .option{
                     width:100%;
                     height:4vh;
                     display:flex;
                     padding-left:2%;
-                    border-bottom: 1px solid $color-dark-brighter;
                     align-items: center;
-                }
-                .dropdown-options{
-                    @extend  %overflowbar;
-                    --thumb-color:#{$color-foreground};
-                    --track-color:#{$color-dark};
-                    --bar-width:3%;
-                    --thumb-width:1%;
-                    height: calc(100% - 4vh);
-                    padding-top:.5%;
-                    .option{
-                        width:100%;
-                        height:4vh;
-                        display:flex;
-                        padding-left:2%;
-                        align-items: center;
-                        cursor:pointer;
-                        border-bottom: 1px solid $color-dark-brighter;
-                    }
+                    cursor:pointer;
+                    border-bottom: 1px solid $color-dark-brighter;
                 }
             }
         }
+    }
+    .manga-select{
+        @extend  %overflowbar;
+        --thumb-color:#{$color-foreground};
+        --track-color:#{$color-dark};
+        --bar-width:1%;
+        --thumb-width:1%;
+        width:102%;
+        height:calc(100% - 5vh);
+        hr{
+            width:98%;
+        }
         .manga-handler{
-            width:102%;
+            width:100%;
+            min-height:calc(100% - 20vh);
             margin-left:-1%;
             display:flex;
             justify-content: space-between;
             flex-wrap: wrap;
+            position: relative;
             .manga{
                 --background-color: #{$color-dark-brighter};
             }
             &>*{
                 margin: 1% 1% 1% 1%;
             }
+            .overlay{
+                position: absolute;
+                bottom:0;
+                z-index:11;
+                width:100%;
+                background-color: $color-normal;
+                height:50px;
+                display:flex;
+                align-items: center;
+                justify-content: center;
+                .loader{
+                    margin:0;
+                    border: 6px solid $color-dark-brighter;
+                    border-top: 6px solid $color-foreground;
+                    height:30px;
+                    width:30px;
+                    border-radius: 5rem;
+                    @keyframes loading {
+                        0%{
+                            transform: rotate(0deg);
+                        }
+                        100%{
+                            transform:rotate(360deg)
+                        }
+                    } 
+                    &.animating{
+                        animation: loading .7s linear infinite;
+                    }
+                }
+            }
+            &#home-searchManga{
+                min-height: 0;
+            }
         }
+        
+        .header{
+            width:98%;
+            display:flex;
+            align-items: center;
+            justify-content: space-between;
+            .searchbar{
+                width:35%;
+                background-color:  $color-dark;
+                border:1px solid $color-dark-brighter;
+                height:25px;
+                display:flex;
+                justify-content: space-between;
+                input{
+                    flex-grow: 1;
+                    border:none;
+                    background-color: transparent;
+                    padding:0 2.5%;
+                    color:white;
+                    &::placeholder{
+                        color:$color-dark-brighter;
+                    }
+                    &:disabled{
+                        color:$color-dark-brighter;
+                    }
+                }
+                button{
+                    border:none;
+                    background-color:transparent;
+                    color:$color-foreground;
+                    cursor: pointer;
+                    &:disabled{
+                        color:$color-dark-brighter;
+                        cursor: default;
+                    }
+                }
+            }
+        }
+    }
+    .returnTop{
+        font-size:2rem;
+        position:absolute;
+        bottom:2%;
+        right:2%;
+        width:60px;
+        height:60px;
+        border-radius: 5rem;
+        letter-spacing: 0 !important;
+        z-index:11;
+        cursor: pointer;
+        display: none;
+        align-items:center;
+        justify-content: center;
+        background-color:$color-foreground;
     }
 }
 
 
 %overflowbar{
+    overflow-y: scroll;
+    overflow-x: hidden;
     &::-webkit-scrollbar {
         width:var(--bar-width);
     }
