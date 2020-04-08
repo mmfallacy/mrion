@@ -159,4 +159,9 @@ $('.content#home .searchbar input#searchfield').click(function(){
     $(this).siblings('button#searchbutton').click()
 })
 
-$('button.navlink#home').click()
+$('.content#selectedManga  .manga-info .manga-info-text .absolute-snap').click(function(){
+    $(this).children('.more-info-card').toggleClass('shown')
+})
+$('.content#selectedManga').show()
+//$('button.navlink#home').click()
+

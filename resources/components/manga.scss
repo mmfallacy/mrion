@@ -7,6 +7,8 @@
     position: relative;
     background-color:var(--background-color) ;
     padding:.5% 0;
+    box-shadow: 0 5px 6px var(--shadow-color);
+    cursor:pointer;
     &:hover{
         .manga-info{
             width:100%;

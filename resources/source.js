@@ -17,6 +17,7 @@ class Source {
             manga.image = (typeof directive.imgParser!=='function')?$(this).find(directive.mangaImage).prop('src'):directive.imgParser($(this).find(directive.mangaImage))
             manga.latestChap = $(this).find(directive.latestChap).html()
             manga.rating = (!directive.rating)?false : manga.rating= $(this).find(directive.rating).html()
+            manga.href = $(this).find(directive.mangaTitle).prop('href')
             mangaList.push(manga)
         });
         
@@ -34,6 +35,7 @@ class Source {
             manga.image = $(this).find(directive.mangaImage).prop('src')
             manga.latestChap = $(this).find(directive.latestChap).html()
             manga.rating = (!directive.rating)?false : manga.rating= $(this).find(directive.rating).html()
+            manga.href = $(this).find(directive.mangaTitle).prop('href')
             mangaList.push(manga)
         });
         

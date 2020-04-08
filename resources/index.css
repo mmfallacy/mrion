@@ -1,3 +1,4 @@
+@charset "UTF-8";
 @import url("./fonts/opensans.css");
 @import url("./components/toggle-switch.css");
 @import url("./components/manga.css");
@@ -52,6 +53,15 @@ html, body {
       -ms-flex-align: center;
           align-items: center;
   font-size: .9rem;
+}
+
+.title-bar span.subtitle {
+  visibility: hidden;
+}
+
+.title-bar span.subtitle:before {
+  content: "—";
+  margin-right: 1%;
 }
 
 .title-bar button {
@@ -359,6 +369,7 @@ html, body {
 
 .content#home .manga-select .manga-handler .manga {
   --background-color: #5F5C5C;
+  --shadow-color: #232020;
 }
 
 .content#home .manga-select .manga-handler > * {
@@ -521,20 +532,305 @@ html, body {
   background-color: #ff7315;
 }
 
-.content#home .source-select div.dropdown .dropdown-options, .content#home .manga-select {
+.content#selectedManga {
+  padding: 0;
+  background: #5F5C5C;
+}
+
+.content#selectedManga .manga-info {
+  width: 100%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  padding: 2%;
+  position: absolute;
+  top: 0;
+  background: #3a3535;
+  -webkit-box-shadow: 0 5px 6px #232020;
+          box-shadow: 0 5px 6px #232020;
+  z-index: 11;
+}
+
+.content#selectedManga .manga-info img {
+  height: 45vh;
+}
+
+.content#selectedManga .manga-info .manga-info-text {
+  margin-left: 2%;
+  -webkit-box-flex: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+  overflow: hidden;
+  max-height: 45vh;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-transition: max-height .25s ease-in;
+  transition: max-height .25s ease-in;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+.content#selectedManga .manga-info .manga-info-text:hover {
+  -webkit-transition: max-height .35s ease-out;
+  transition: max-height .35s ease-out;
+  max-height: 500px;
+}
+
+.content#selectedManga .manga-info .manga-info-text h2 {
+  -ms-flex-item-align: start;
+      align-self: flex-start;
+  font-weight: bolder;
+}
+
+.content#selectedManga .manga-info .manga-info-text hr {
+  width: 100%;
+  margin: 10px 0%;
+}
+
+.content#selectedManga .manga-info .manga-info-text .alt-titles {
+  -ms-flex-item-align: start;
+      align-self: flex-start;
+  color: #f4f4f4;
+  font-size: 1.2rem;
+  font-weight: lighter;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap {
+  width: 100%;
+  position: relative;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .description-card {
+  -webkit-transition: opacity .4s ease-out, -webkit-transform .5s ease-out;
+  transition: opacity .4s ease-out, -webkit-transform .5s ease-out;
+  transition: transform .5s ease-out, opacity .4s ease-out;
+  transition: transform .5s ease-out, opacity .4s ease-out, -webkit-transform .5s ease-out;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .description-card > .label {
+  -ms-flex-item-align: start;
+      align-self: flex-start;
+  display: block;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .description-card > .label:after {
+  content: ':';
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .description-card .description {
+  text-indent: 10%;
+  font-size: .95rem;
+  text-align: justify;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .more-info-card {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  -webkit-transform: translateX(-10%);
+          transform: translateX(-10%);
+  opacity: 0;
+  -webkit-transition: opacity .4s ease-in, -webkit-transform .5s ease-in;
+  transition: opacity .4s ease-in, -webkit-transform .5s ease-in;
+  transition: transform .5s ease-in, opacity .4s ease-in;
+  transition: transform .5s ease-in, opacity .4s ease-in, -webkit-transform .5s ease-in;
+  height: 290px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  background-color: #3a3535;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .more-info-card.shown {
+  -webkit-transform: translateX(0);
+          transform: translateX(0);
+  opacity: 1;
+  -webkit-transition: opacity .4s ease-out, -webkit-transform .5s ease-out;
+  transition: opacity .4s ease-out, -webkit-transform .5s ease-out;
+  transition: transform .5s ease-out, opacity .4s ease-out;
+  transition: transform .5s ease-out, opacity .4s ease-out, -webkit-transform .5s ease-out;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .more-info-card.shown ~ .description-card {
+  opacity: 0;
+  -webkit-transform: translateX(10%);
+          transform: translateX(10%);
+  -webkit-transition: opacity .4s ease-in, -webkit-transform .5s ease-in;
+  transition: opacity .4s ease-in, -webkit-transform .5s ease-in;
+  transition: transform .5s ease-in, opacity .4s ease-in;
+  transition: transform .5s ease-in, opacity .4s ease-in, -webkit-transform .5s ease-in;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .more-info-card .info-row {
+  width: 95%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .more-info-card .info-row .label {
+  display: block;
+  font-weight: bold;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .more-info-card .info-row .label:after {
+  content: ":";
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .more-info-card .info-row .text {
+  display: block;
+  font-size: .9rem;
+  width: 60%;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .more-info-card .info-row .text.genre {
+  font-size: .7rem;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+}
+
+.content#selectedManga .manga-info .manga-info-text .absolute-snap .more-info-card .info-row .text .genre {
+  border: none;
+  border-radius: 5rem;
+  text-align: center;
+  background-color: #ff7315;
+  padding: .5vh 2vw;
+  margin-bottom: 1%;
+  margin-right: 1%;
+}
+
+.content#selectedManga .chapter-container {
+  margin-top: 51vh;
+  width: 100%;
+  padding: 1%  2%;
+  height: calc(100% - 51vh - 1%);
+}
+
+.content#selectedManga .chapter-container .label {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.content#selectedManga .chapter-container hr {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.content#selectedManga .chapter-container .chapter-list {
+  overflow-y: auto !important;
+  --thumb-color:#ff7315;
+  --track-color:#232020;
+  --bar-width:1%;
+  width: 101%;
+  max-height: 90%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  --thumb-width:1%;
+}
+
+.content#selectedManga .chapter-container .chapter-list .chapter {
+  display: block;
+  border: none;
+  border-radius: 5rem;
+  color: white;
+  width: 200px;
+  height: 30px;
+  position: relative;
+  background-color: #ff7315;
+  margin-bottom: 50px;
+  cursor: pointer;
+}
+
+.content#selectedManga .chapter-container .chapter-list .chapter span {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  line-height: 200%;
+  left: 0;
+  top: 0;
+  -webkit-transition: opacity .25s ease-in-out;
+  transition: opacity .25s ease-in-out;
+}
+
+.content#selectedManga .chapter-container .chapter-list .chapter .chapter-num {
+  opacity: 1;
+}
+
+.content#selectedManga .chapter-container .chapter-list .chapter .chapter-date {
+  opacity: 0;
+}
+
+.content#selectedManga .chapter-container .chapter-list .chapter:hover .chapter-num {
+  opacity: 0;
+}
+
+.content#selectedManga .chapter-container .chapter-list .chapter:hover .chapter-date {
+  opacity: 1;
+}
+
+@media (max-width: 1000px) {
+  .content#selectedManga .chapter-container .chapter-list .chapter {
+    margin-right: 90px;
+  }
+  .content#selectedManga .chapter-container .chapter-list .chapter:nth-child(3n) {
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 1000px) {
+  .content#selectedManga .chapter-container .chapter-list .chapter {
+    margin-right: 55px;
+  }
+  .content#selectedManga .chapter-container .chapter-list .chapter:nth-child(5n) {
+    margin-right: 0;
+  }
+}
+
+.content#home .source-select div.dropdown .dropdown-options, .content#home .manga-select, .content#selectedManga .chapter-container .chapter-list {
   overflow-y: scroll;
   overflow-x: hidden;
 }
 
-.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar, .content#home .manga-select::-webkit-scrollbar {
+.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar, .content#home .manga-select::-webkit-scrollbar, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar {
   width: var(--bar-width);
 }
 
-.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-track, .content#home .manga-select::-webkit-scrollbar-track {
+.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-track, .content#home .manga-select::-webkit-scrollbar-track, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-track {
   background: var(--track-color);
 }
 
-.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-thumb, .content#home .manga-select::-webkit-scrollbar-thumb {
+.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-thumb, .content#home .manga-select::-webkit-scrollbar-thumb, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-thumb {
   background: var(--thumb-color);
   width: var(--thumb-width);
 }

@@ -1,0 +1,87 @@
+[
+	{
+		"path": "$ROOTPATH$\\resources\\index.scss",
+		"bookmarks": [
+			{
+				"line": 0,
+				"column": 0,
+				"label": "Variables"
+			},
+			{
+				"line": 10,
+				"column": 0,
+				"label": "Global"
+			},
+			{
+				"line": 32,
+				"column": 0,
+				"label": "Titlebar"
+			},
+			{
+				"line": 65,
+				"column": 0,
+				"label": "Sidebar"
+			},
+			{
+				"line": 142,
+				"column": 0,
+				"label": "General Content Class"
+			},
+			{
+				"line": 158,
+				"column": 0,
+				"label": "Settings"
+			},
+			{
+				"line": 201,
+				"column": 0,
+				"label": "Home"
+			},
+			{
+				"line": 390,
+				"column": 0,
+				"label": "Selected"
+			},
+			{
+				"line": 598,
+				"column": 0,
+				"label": "Scrollbar"
+			}
+		]
+	},
+	{
+		"path": "$ROOTPATH$\\index.html",
+		"bookmarks": [
+			{
+				"line": 13,
+				"column": 0,
+				"label": "Title-bar"
+			},
+			{
+				"line": 20,
+				"column": 4,
+				"label": "Side-bar"
+			},
+			{
+				"line": 36,
+				"column": 27,
+				"label": "Home"
+			},
+			{
+				"line": 68,
+				"column": 4,
+				"label": "Selected"
+			},
+			{
+				"line": 124,
+				"column": 4,
+				"label": "Latest Manga"
+			},
+			{
+				"line": 133,
+				"column": 4,
+				"label": "Settings"
+			}
+		]
+	}
+]

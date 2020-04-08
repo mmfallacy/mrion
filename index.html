@@ -10,12 +10,14 @@
     <link rel="stylesheet" href="./resources/fonts/remixicon/remixicon.css">
   </head>
   <body>
+    <!-- TITLE -->
     <div class="title-bar">
-      <span id="title">Manga Reader</span>
+      <span id="title">Manga Reader <span class="subtitle">Manga Name</span></span>
       <button class="ri-subtract-line" id="min-electron"></button>
       <button class="ri-checkbox-multiple-blank-line" id="max-electron"></button>
       <button class="ri-close-line" id="close-electron"></button>
     </div>
+    <!-- SIDE BAR -->
     <div class="side-bar">
       <div class="ri-menu-fill menu"><span class="ri-lock-unlock-line ulock"></span><span class="ri-lock-line lock"></span></div>
       <button class="navlink" id="home">
@@ -31,6 +33,7 @@
         <span>Settings</span>
       </button>
     </div>
+    <!-- HOME -->
     <div class="content" id="home">
       <div class="source-select">Source:
         <div class="dropdown">
@@ -61,6 +64,74 @@
           <!-- MANGA HANDLER -->
         </div>
         <div class="returnTop ri-arrow-up-line"></div>
+      </div>
+    </div>
+    <div class="content" id="selectedManga">
+      <div class="manga-info">
+        <img src="resources/img/manga placeholder.jpg"/>
+        <div class="manga-info-text">
+          <h2> Matchless Emperor Matchless Emperor Matchless Emperor Matchless Emperor </h2>
+          <span class="alt-titles">
+            盖世帝尊,Emperor Gaishi
+          </span>
+          <hr>
+          <div class="absolute-snap">
+            <div class="more-info-card">
+              <div class="info-row" id="author">
+                <span class="label">Author</span>
+                <span class="text">Two Dimensional Animation</span>
+              </div>
+              <div class="info-row" id="status">
+                <span class="label">Status</span>
+                <span class="text">Ongoing</span>
+              </div>
+              <div class="info-row" id="lastUpdate">
+                <span class="label">Last Update</span>
+                <span class="text">Apr 07,2020 - 18:39 PM</span>
+              </div>
+              <div class="info-row" id="genres">
+                <span class="label">Genres</span>
+                <div class="text genre">
+                  <span class="genre">Action</span>
+                  <span class="genre">Fantasy</span>
+                  <span class="genre">Martial Arts</span>
+                  <span class="genre">Webtoons</span>
+                </div>
+              </div>
+              <div class="info-row" id="chapters">
+                <span class="label">Chapters</span>
+                <span class="text">24</span>
+              </div>
+              <div class="info-row" id="rating">
+                <span class="label">Rating</span>
+                <div class="rating text">
+                  <span class="ri-star-line"></span>
+                  <span class="ri-star-line"></span>
+                  <span class="ri-star-line"></span>
+                  <span class="ri-star-line"></span>
+                  <span class="ri-star-line"></span>
+                </div>
+              </div>
+            </div>
+            <div class="description-card">
+              <span class="label">Description</span>
+              <div class="description">
+                A car accident allowed her to cross the magical world, she was reincarnated to a baby! She participated in a competition and won. Then, she was adopted by the emperor and became a princess. However, the other adopted princesses are all given with luxury treatment. But why is it that only she lives in small firewood house? She is also beaten and bullied by the other princesses? She will do whatever it takes to fight back. When she shows a brave fighting spirit, the cold-blooded emperor finally came and said to her: “This little brat, is a little interesting.”
+              </div>
+              <br>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chapter-container">
+        <span class="label">Chapter List: </span>
+        <hr>
+        <div class="chapter-list">
+          <button class="chapter">
+            <span class="chapter-num">Chapter 199</span>
+            <span class="chapter-date">March 31, 2020</span>
+          </button>
+        </div>
       </div>
     </div>
     <div class="content" id="latestManga"></div>
