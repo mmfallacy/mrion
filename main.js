@@ -46,3 +46,16 @@ ipcMain.on('max-electron',(evt)=>{
   window = BrowserWindow.fromId(evt.frameId)
   window.setFullScreen(!window.isFullScreen());
 })
+ipcMain.on('kissMangaSearch',(evt,url)=>{
+  let tempWindow = new BrowserWindow({
+    width: 900,
+    height: 700,
+    webPreferences: {
+      nodeIntegration: true,
+      preload: path.join(__dirname,'resources','enableJquery.js')
+    }
+  })
+  tempWindow.loadURL(url)
+  tempWindow.webContents.openDevTools({mode:'detach'})
+
+});

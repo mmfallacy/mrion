@@ -20,6 +20,9 @@ $color-foreground: #ff7315;
 *:not([type='text']){
     user-select: none;
 }
+*::selection{
+    background: $color-foreground;
+}
 html, body{
     height:100%;
     width:100%;
@@ -337,6 +340,10 @@ html, body{
                     &:disabled{
                         color:$color-dark-brighter;
                     }
+                    
+                    &:placeholder-shown + button#clearsearchbutton{
+                        visibility:hidden;
+                    }
                 }
                 button{
                     border:none;
@@ -346,6 +353,10 @@ html, body{
                     &:disabled{
                         color:$color-dark-brighter;
                         cursor: default;
+                    }
+                    &#clearsearchbutton{
+                        font-size:1.2rem;
+                        visibility:visible;
                     }
                 }
             }

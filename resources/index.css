@@ -21,6 +21,14 @@
           user-select: none;
 }
 
+*::-moz-selection {
+  background: #ff7315;
+}
+
+*::selection {
+  background: #ff7315;
+}
+
 html, body {
   height: 100%;
   width: 100%;
@@ -471,6 +479,10 @@ html, body {
   color: #5F5C5C;
 }
 
+.content#home .manga-select .header .searchbar input:placeholder-shown + button#clearsearchbutton {
+  visibility: hidden;
+}
+
 .content#home .manga-select .header .searchbar button {
   border: none;
   background-color: transparent;
@@ -481,6 +493,11 @@ html, body {
 .content#home .manga-select .header .searchbar button:disabled {
   color: #5F5C5C;
   cursor: default;
+}
+
+.content#home .manga-select .header .searchbar button#clearsearchbutton {
+  font-size: 1.2rem;
+  visibility: visible;
 }
 
 .content#home .returnTop {
