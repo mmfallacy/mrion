@@ -131,7 +131,7 @@ $('.source-select .option').click(function(){
     updateMangaList(CURRENT_SOURCE,CURRENT_SOURCE_PAGE)
 })
 $('.content#home .returnTop').click(function(){
-    $('.content#home .manga-select').scrollTop(0)
+    $('.content#home .manga-select').stop().animate({scrollTop:0}, 500, 'swing');
 })
 $('.content#home .manga-select').scroll(function() {
     if($(this).scrollTop()>$(this).height())
@@ -183,6 +183,7 @@ function selectedMangaReset(){
     $mangaInfo.find('#rating .text').children().attr('class', 'ri-star-line')
     $mangaInfo.find('.more-info-card').removeClass('shown')
     $parent.find('.chapter-list').empty()
+
 }
 function stripTagsFromString(string){
     var doc = new DOMParser().parseFromString(string, 'text/html');
@@ -192,7 +193,6 @@ async function selectManga(){
     let manga = await CURRENT_SOURCE.scanMangaHref($(this).data('href'))
     selectedMangaReset()
     $(".manga-info img").prop('src', manga.image)
-    console.log(manga)
     let $parent = $('.content#selectedManga')
     let $mangaInfo = $parent.find(".manga-info .manga-info-text")
     $mangaInfo.find('#title').html(manga.title)
@@ -207,7 +207,6 @@ async function selectManga(){
         if(manga.info.rating-i>.75) $(this).attr('class','ri-star-fill')
         else if(manga.info.rating-i>.25) $(this).attr('class','ri-star-half-line')
     })
-    $('.content#selectedManga').fadeIn()
     let $chapters = $parent.find('.chapter-list')
     manga.chapters.map(function(obj){
         $chapters.append(`
@@ -217,6 +216,8 @@ async function selectManga(){
             </button>
         `)
     })
+    $parent.fadeIn()
+    $parent.find('.chapter-list').scrollTop(0)
 }
 
 $('.content#selectedManga  .manga-info .manga-info-text').hover(

@@ -56,7 +56,7 @@ class Source {
         
         $source.find(directive.chapter.parent).find(directive.chapter.el).each(function(){
             let chapter = {}
-            chapter.text = $(this).find(directive.chapter.text).text().trim()
+            chapter.text = $(this).find(directive.chapter.text).text().split(':')[0].trim()
             chapter.date = $(this).find(directive.chapter.date).text().trim()
             chapters.push(chapter)
         })
