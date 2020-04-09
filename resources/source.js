@@ -31,8 +31,8 @@ class Source {
         let mangaList = []
         $source.find(directive.mangaList).find(directive.mangaItem).each(function(){
             let manga = {}
-            manga.title = $(this).find(directive.mangaTitle).html()
-            manga.image = $(this).find(directive.mangaImage).prop('src')
+            manga.title = (typeof directive.titleParser!=='function')?$(this).find(directive.mangaTitle).html():directive.titleParser($(this).find(directive.mangaTitle))
+            manga.image = (typeof directive.imgParser!=='function')?$(this).find(directive.mangaImage).prop('src'):directive.imgParser($(this).find(directive.mangaImage))
             manga.latestChap = $(this).find(directive.latestChap).html()
             manga.rating = (!directive.rating)?false : manga.rating= $(this).find(directive.rating).html()
             manga.href = $(this).find(directive.mangaTitle).prop('href')
@@ -40,6 +40,38 @@ class Source {
         });
         
         return mangaList
+    }
+    async scanMangaHref(href){
+        let directive = this.directive.manga
+        let {status, data} = await axios.get(href)
+        if(status !== 200) throw 'Not 200'
+        let $source = $(data)
+        let obj = {}
+
+        obj.image = $source.find(directive.image).prop('src')
+        obj.title = $source.find(directive.title).html()
+        obj.altTitles = $source.find(directive.altTitle).text().split(',')
+        
+        let chapters = []
+        
+        $source.find(directive.chapter.parent).find(directive.chapter.el).each(function(){
+            let chapter = {}
+            chapter.text = $(this).find(directive.chapter.text).text().trim()
+            chapter.date = $(this).find(directive.chapter.date).text().trim()
+            chapters.push(chapter)
+        })
+
+        obj.info = (typeof directive.infoParser!=='function')
+            ?
+            'test'
+            :
+            directive.infoParser($source.find(directive.info))
+        obj.chapters = chapters
+
+        obj.description = (typeof directive.descriptionParser!=='function')
+                                ?'test'
+                                :directive.descriptionParser($source.find(directive.description))
+        return obj
     }
 }
 class Mangakakalots extends Source{
@@ -69,9 +101,58 @@ class Mangakakalots extends Source{
                 urlAdd: 'search/',
                 rating: false,
             },
+            manga:{
+                image : '.manga-info-top .manga-info-pic img',
+                title : '.manga-info-top .manga-info-text li:first-child() h1',
+                altTitle : '.manga-info-top .manga-info-text li:first-child() h2',
+                description:'#noidungm',
+                info: '.manga-info-top .manga-info-text',
+                chapter:{
+                    parent: '.manga-info-chapter .chapter-list',
+                    el: '.row',
+                    text: 'span:first-child() a',
+                    date: 'span:nth-child(3)'
+                },
+                descriptionParser: this.descriptionParser,
+                infoParser: this.infoParser
+            }
         }
     }
     
+    infoParser($selector){
+        let info = {}
+        $selector.find('li').each(function(index){
+            switch(index){
+                case 1:
+                    info.author = []
+                    $(this).find('a').each(function(){
+                        info.author.push($(this).text())
+                    })
+                    break;
+                case 2:
+                    info.status = $(this).text().split(' : ')[1].trim()
+                    break;
+                case 3:
+                    info.lastUpdated = $(this).text().split(' : ')[1].trim()
+                    break;
+                case 6:
+                    info.genres = []
+                    $(this).find('a').each(function(){
+                        info.genres.push($(this).text())
+                    })
+                    break;
+                case 8:
+                    info.rating =  parseFloat($(this).find('em').filter(function(){
+                        return $(this).attr('property') === 'v:average'
+                    }).html())
+                    break;
+            }
+        })
+        return info
+    }
+    descriptionParser($selector){
+        return $selector.clone().children().remove().end().text().trim()
+    }
 }
 class KissManga extends Source{
     constructor(url){

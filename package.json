@@ -1,28 +1,25 @@
 {
-  "name": "electron-quick-start",
+  "name": "manga-reader",
   "version": "1.0.0",
-  "description": "A minimal Electron application",
+  "description": "Manga Reader",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build":{
+    "appId":"com.mmfallacy.mangareader"
   },
   "repository": "https://github.com/electron/electron-quick-start",
-  "keywords": [
-    "Electron",
-    "quick",
-    "start",
-    "tutorial",
-    "demo"
-  ],
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
-    "electron": "^8.2.0"
+    "electron": "^8.2.0",
+    "electron-reload": "^1.5.0",
+    "electron-builder": "^22.4.1"
   },
   "dependencies": {
-    "animejs": "^3.1.0",
     "axios": "^0.19.2",
-    "electron-reload": "^1.5.0",
     "fs": "0.0.1-security",
     "jquery": "^3.4.1",
     "os": "^0.1.1"

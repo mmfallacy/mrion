@@ -52,6 +52,7 @@ function appendMangaToHandler(id,obj){
     $manga.find('#title').html(obj.title)
     $manga.find('img').prop('src',obj.image).prop('alt',obj.title)
     $manga.find('#latestchap').html(obj.latestChap)
+    $manga.data('href',obj.href)
     $manga.find('#rating span').each(function(i){
         if(obj.rating-i>.75) $(this).attr('class','ri-star-fill')
         else if(obj.rating-i>.25) $(this).attr('class','ri-star-half-line')
@@ -159,9 +160,84 @@ $('.content#home .searchbar input#searchfield').click(function(){
     $(this).siblings('button#searchbutton').click()
 })
 
+$('.manga-handler').on('click','.manga',selectManga)
+$('.content#selectedManga  .manga-info .manga-info-text #back').click(function(){
+    $('.content#selectedManga').fadeOut()
+})
 $('.content#selectedManga  .manga-info .manga-info-text .absolute-snap').click(function(){
     $(this).children('.more-info-card').toggleClass('shown')
 })
-$('.content#selectedManga').show()
-//$('button.navlink#home').click()
 
+function selectedMangaReset(){
+    $(".manga-info img").removeAttr('src')
+    let $parent = $('.content#selectedManga')
+    let $mangaInfo = $parent.find(".manga-info .manga-info-text")
+    $mangaInfo.find('#title').html('')
+    $mangaInfo.find('#alt-titles').html('')
+    $mangaInfo.find('#description .text').html('')
+    $mangaInfo.find('#author .text').html('')
+    $mangaInfo.find('#status .text').html('')
+    $mangaInfo.find('#lastUpdate .text').html('')
+    $mangaInfo.find('#chapters .text').html('')
+    $mangaInfo.find('#genres .text').empty()
+    $mangaInfo.find('#rating .text').children().attr('class', 'ri-star-line')
+    $mangaInfo.find('.more-info-card').removeClass('shown')
+    $parent.find('.chapter-list').empty()
+}
+function stripTagsFromString(string){
+    var doc = new DOMParser().parseFromString(string, 'text/html');
+    return doc.body.textContent || "";
+ }
+async function selectManga(){
+    let manga = await CURRENT_SOURCE.scanMangaHref($(this).data('href'))
+    selectedMangaReset()
+    $(".manga-info img").prop('src', manga.image)
+    console.log(manga)
+    let $parent = $('.content#selectedManga')
+    let $mangaInfo = $parent.find(".manga-info .manga-info-text")
+    $mangaInfo.find('#title').html(manga.title)
+    $mangaInfo.find('#alt-titles').html(manga.altTitles.join(", "))
+    $mangaInfo.find('#description .text').html(stripTagsFromString(manga.description))
+    $mangaInfo.find('#author .text').html(manga.info.author.join(", "))
+    $mangaInfo.find('#status .text').html(manga.info.status)
+    $mangaInfo.find('#lastUpdate .text').html(manga.info.lastUpdated)
+    $mangaInfo.find('#chapters .text').html(manga.chapters.length)
+    manga.info.genres.map(el=>$mangaInfo.find('#genres .text').append(`<span class="genre">${el}</span>`))
+    $mangaInfo.find('#rating .text span').each(function(i){
+        if(manga.info.rating-i>.75) $(this).attr('class','ri-star-fill')
+        else if(manga.info.rating-i>.25) $(this).attr('class','ri-star-half-line')
+    })
+    $('.content#selectedManga').fadeIn()
+    let $chapters = $parent.find('.chapter-list')
+    manga.chapters.map(function(obj){
+        $chapters.append(`
+            <button class="chapter">
+                <span class="chapter-num">${obj.text}</span>
+                <span class="chapter-date">${obj.date}</span>
+            </button>
+        `)
+    })
+}
+
+$('.content#selectedManga  .manga-info .manga-info-text').hover(
+function(){
+    let addHeight = $(this).find('#title').height() + $(this).find('#alt-titles').height() + 21  
+    let descHeight = $(this).find('.description-card').height()
+    let infoHeight = $(this).find('.more-info-card').height()
+    $(this).height(Math.max(descHeight,infoHeight)+addHeight)
+},
+function(){
+    $(this).height("45vh");
+});
+
+
+
+
+
+//$('.content#selectedManga').show()
+$('button.navlink#home').click()
+// setTimeout(()=>{
+//     $('.content#home .dropdown-options .option').filter(function(){
+//         return ($(this).html() === "Mangakakalots")
+//     }).click()
+// },1000)
