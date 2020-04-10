@@ -74,49 +74,55 @@
     </div>
     <div class="content" id="settings">
       <h2>Settings</h2>
+      <h5>Settings will be saved upon tab change.</h5>
       <hr>
       <br>
-      <div class="setting-group">
+      <div class="setting-group" id="notify">
         <span class="label" >Notify me of new chapters</span>
         <label class="switch round">
           <input type="checkbox">
           <span class="slider"></span>
         </label>
       </div>
-      <div class="setting-group">
+      <div class="setting-group" id="startup">
         <span class="label" >Enable at Startup</span>
         <label class="switch round">
           <input type="checkbox">
           <span class="slider"></span>
         </label>
       </div>
-      <div class="setting-group additional">
-        <span class="label" >Preload Chapters</span>
-        <label class="switch round">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-        <select class="select">
-          <option>1</option>
-          <option>2</option>
-          <option>3</option>
-        </select>
-      </div>
-      <div class="setting-group readingmode">
+      <div class="setting-group readingmode" id="readMode">
         <span class="label" >Reading Mode</span>
-        <label class="switch round" id="horver">
+        <label class="switch round" id="readHor">
           <input type="checkbox">
           <span class="slider"></span>
         </label>
         <span class="sublabel">Horizontal</span>
         <span class="label blank"></span>
-        <label class="switch round" id="norrev">
+        <label class="switch round" id="readVer">
           <input type="checkbox">
           <span class="slider"></span>
         </label>
         <span class="sublabel">Normal</span>
       </div>
+      <div class="setting-group additional" id="preload">
+        <span class="label" >Preload Chapters</span>
+        <label class="switch round">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+        <div class="dropdown select">
+          <span class="selected">0</span>
+          <span class="ri-arrow-down-s-fill arrow"></span>
+          <div class="options">
+            <span class="option">1</span>
+            <span class="option">2</span>
+            <span class="option">3</span>
+          </div>
+        </div>
+      </div>
     </div>
+    
     <div class="content" id="selectedManga">
       <div class="manga-info">
         <div class="manga-image">

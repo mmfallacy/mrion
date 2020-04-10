@@ -1,9 +1,16 @@
 const {ipcRenderer:main} = require('electron');
 window.$ = require('jquery')
 const {Mangakakalots,KissManga} = require('./resources/source.js');
-var MANGATEST;
-// --------------------------------------
 
+var CONFIG = main.sendSync('getConfigObj')
+// --------------------------------------
+$(`.content#settings .setting-group#preload .dropdown .selected`).html(CONFIG.preloadNum)
+console.log(CONFIG.preload)
+if(CONFIG.preload!=0) $(`.content#settings .setting-group#preload .dropdown.select`).removeClass('disabled')
+else $(`.content#settings .setting-group#preload .dropdown.select`).addClass('disabled')
+
+for([id,val] of Object.entries(CONFIG))
+    $(`.content#settings #${id} input`).prop('checked',val)
 
 $('.side-bar').children('button').each(function(){
     $(this).prepend($(main.sendSync('requestSvg',`${this.id}.svg`)))
@@ -20,6 +27,12 @@ $('.side-bar button.navlink').click(function(){
     $('.content').removeClass('shown').hide()
     $(this).addClass('active')
     $(`.content#${this.id}`).addClass('shown').fadeIn()
+    if(this.id=="settings") $('.side-bar button.navlink:not(#settings)').one('click',()=>{
+        if($('.content#settings').find('h5').data('changed')!=='changed') return;
+        console.log('changed')
+        $('.content#settings').find('h5').slideUp()
+        main.send('settingsUpdated')
+    })
 })
 
 
@@ -88,6 +101,16 @@ const sourceGroupTemplate = $(`
 
 
 // -------------------------------------- FUNCTIONS
+function setConfig(key,value){
+    if(!Object.keys(CONFIG).includes(key)) throw "CONFIG DOES NOT CONTAIN KEY : " + key
+    CONFIG[key] = value
+    return main.sendSync('setConfig',[key,value])
+}
+function getConfig(key){
+    MAINCONFIGVAL = main.sendSync('getConfig',key)
+    if (CONFIG[key] !== MAINCONFIGVAL) throw "CONFIG MISMATCH" 
+    return CONFIG[key]
+}
 function appendMangaToHandler(id,obj){
     $manga = mangaTemplate.clone()
     $manga.data('source',CURRENT_SOURCE)
@@ -360,8 +383,34 @@ $('.content#favorites').on('click','.source-group .header',function(){ // EXPAND
     $(this).siblings('.mangas-wrapper').slideToggle("fast")
 })
 
+// SETTINGS
+$(`.content#settings .setting-group#preload .dropdown .selected,
+   .content#settings .setting-group#preload .dropdown .arrow`).click(function(){
+    console.log('test')
+    $(this).parent().toggleClass('active')
+})
+$('.content#settings .setting-group#preload .dropdown .options .option').click(function(){
+    let $parent = $(this).parent().parent()
+    $parent.find('.selected').html($(this).html())
+    $parent.find('.option').each(function(){
+        $(this).removeClass('current')
+    })
+    $(this).addClass('current')
+    $parent.data('selected', $(this).html())
+    $parent.parent().parent().find('h5').slideDown().data('changed','changed')
+    setConfig('preloadNum',parseInt($(this).html()))
+    $parent.removeClass('active')
+})
+$('.content#settings .setting-group .switch.round input').change(function(){
+    $parent = $(this).parent().parent()
+    let id = $parent.attr('id')
+    if(id==='readMode') id = $(this).parent().attr('id')
+    if(id==='preload') $parent.find('.dropdown').toggleClass('disabled')
+    $parent.parent().find('h5').slideDown().data('changed','changed')
+    setConfig(id,(this.checked)?1:0)
+})
 //$('.content#testing').show()
-$('button.navlink#home').click()
+$('button.navlink#settings').click()
 // setTimeout(()=>{
 //     $('.content#home .dropdown-options .option').filter(function(){
 //         return ($(this).html() === "Mangakakalots")

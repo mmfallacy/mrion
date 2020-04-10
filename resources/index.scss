@@ -170,16 +170,23 @@ html, body{
 }
 
 .content#settings{
+    h5{
+        font-style:italic;
+        display:none;
+        color:$color-dark-brighter;
+        margin-bottom:5px;
+    }
     .setting-group{
-        width:80vw;
+        width:85vw;
         display:grid;
-        grid-template-columns: 60% 10% 10% 10% 10%;
+        grid-template-columns: 70% 10% 10% 10%;
         grid-column-gap: 2.5%;
         margin-bottom:2.5%;
         &.readingmode{
-            height: 13%;
-            grid-template-columns: 60% 10% 30%;
+            height: 12%;
+            grid-template-columns: 70% 10% 20%;
             grid-template-rows: 50% 50%;
+            grid-row-gap:10%;
             grid-template-areas:
                 "label toggle1 sublabel1"
                 "blank toggle2 sublabel2";
@@ -207,8 +214,65 @@ html, body{
             width:50px;
             --active-color: #{$color-foreground};
         }
-        .select{
+        .dropdown.select{
             width:100%;
+            background-color: $color-light-darker;
+            overflow:hidden;
+            max-height:25px;
+            position: relative;
+            transition: max-height .5s ease-in;
+            &.active{
+                max-height: 100%;
+
+            }
+            &.disabled{
+                pointer-events: none;
+                .option{
+                    background-color:$color-dark-brighter;
+                    border-bottom:1px solid $color-dark;
+                    color:$color-dark;
+                }
+                .selected{
+                    @extend .option;
+                    border:1px solid $color-dark;
+                }
+                .arrow{
+                    background-color: $color-normal;
+                    border:1px solid $color-dark;
+                    border-left:none;
+                }
+            }
+            .options{
+            }
+            .arrow{
+                position: absolute;
+                right:0;
+                top:0;
+                background-color: $color-dark-brighter;
+                height:25px;
+                display:flex;
+                justify-content: center;
+                align-items: center;
+                letter-spacing: 0;
+                width:24%;
+                border:1px solid $color-dark-brighter;
+                border-left:none;
+            }
+            .selected{
+                @extend .option;
+                border:1px solid $color-dark-brighter;
+            }
+            .option{
+                color:$color-light;
+                display:block;
+                padding-left:5%;
+                height:25px;
+                width:100%;
+                border-bottom:1px solid $color-dark-brighter;
+                &.current{
+                    background-color: $color-foreground;
+                }
+            }
         }
     }
 }
@@ -248,6 +312,7 @@ html, body{
                 right:0;
                 color: $color-foreground;
                 background-color: $color-dark;
+                letter-spacing: 0;
             }
             .selected{
                 width:100%;

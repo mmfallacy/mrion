@@ -15,12 +15,7 @@ var knex = require("knex")({
     filename: "./userdata/data.db"
   }
 });
-var CONFIG = {}
-let CONFIGSQL = knex.table('CONFIG')
-CONFIGSQL.then((result)=>{
-  for(let row of result)
-    CONFIG[row.field] = row.value
-})
+var CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname,'userdata','config.json')))
 
 var mainWindow,tray;
 function createMainWindow () {
@@ -80,3 +75,16 @@ ipcMain.on('addFavorite',(evt,data)=>{
 ipcMain.on('removeFavorite',(evt,href)=>{
   knex.table('FAVORITES').where({href:href}).del().then()
 })
+ipcMain.on('setConfig',(evt,args)=>{
+  let [key,val] = args
+  CONFIG[key] = val
+  evt.returnValue = true
+})
+ipcMain.on('getConfig',(evt,key)=>{
+  console.log(key)
+  evt.returnValue = CONFIG[key]
+})
+ipcMain.on('settingsUpdated',(evt)=>{
+  fs.writeFileSync(path.join(__dirname,'userdata','config.json'), JSON.stringify(CONFIG,null,2))
+})
+ipcMain.on('getConfigObj',evt=>evt.returnValue=CONFIG)
