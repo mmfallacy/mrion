@@ -66,6 +66,57 @@
         <div class="returnTop ri-arrow-up-line"></div>
       </div>
     </div>
+    <div class="content" id="latestManga"></div>
+    <div class="content" id="favorites">
+      <h2>Favorites</h2>
+      <hr>
+      <br>
+    </div>
+    <div class="content" id="settings">
+      <h2>Settings</h2>
+      <hr>
+      <br>
+      <div class="setting-group">
+        <span class="label" >Notify me of new chapters</span>
+        <label class="switch round">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-group">
+        <span class="label" >Enable at Startup</span>
+        <label class="switch round">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-group additional">
+        <span class="label" >Preload Chapters</span>
+        <label class="switch round">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+        <select class="select">
+          <option>1</option>
+          <option>2</option>
+          <option>3</option>
+        </select>
+      </div>
+      <div class="setting-group readingmode">
+        <span class="label" >Reading Mode</span>
+        <label class="switch round" id="horver">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+        <span class="sublabel">Horizontal</span>
+        <span class="label blank"></span>
+        <label class="switch round" id="norrev">
+          <input type="checkbox">
+          <span class="slider"></span>
+        </label>
+        <span class="sublabel">Normal</span>
+      </div>
+    </div>
     <div class="content" id="selectedManga">
       <div class="manga-info">
         <div class="manga-image">
@@ -133,177 +184,6 @@
             <span class="chapter-date">March 31, 2020</span>
           </button>
         </div>
-      </div>
-    </div>
-    <div class="content" id="latestManga"></div>
-    <div class="content" id="favorites">
-      <h2>Favorites</h2>
-      <hr>
-      <br>
-      <div class="source-group">
-        <div class="header">
-          <h3>Mangakakalots</h3>
-          <hr>
-        </div>
-        <div class="mangas">
-          <div class="manga">
-            <img src="resources/img/manga placeholder.jpg">
-            <div id="rating">
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-            </div>
-            <div class="manga-info">
-                <span id="latestchap">CHAP</span>
-                <span class="label">Latest Chapter:</span>
-                <hr>
-                <span id='title'>TITLE</span>
-            </div>
-          </div>
-          <div class="manga">
-            <img src="resources/img/manga placeholder.jpg">
-            <div id="rating">
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-            </div>
-            <div class="manga-info">
-                <span id="latestchap">CHAP</span>
-                <span class="label">Latest Chapter:</span>
-                <hr>
-                <span id='title'>TITLE</span>
-            </div>
-          </div>
-          <div class="manga">
-            <img src="resources/img/manga placeholder.jpg">
-            <div id="rating">
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-            </div>
-            <div class="manga-info">
-                <span id="latestchap">CHAP</span>
-                <span class="label">Latest Chapter:</span>
-                <hr>
-                <span id='title'>TITLE</span>
-            </div>
-          </div>
-          <div class="manga">
-            <img src="resources/img/manga placeholder.jpg">
-            <div id="rating">
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-            </div>
-            <div class="manga-info">
-                <span id="latestchap">CHAP</span>
-                <span class="label">Latest Chapter:</span>
-                <hr>
-                <span id='title'>TITLE</span>
-            </div>
-          </div>
-          <div class="manga">
-            <img src="resources/img/manga placeholder.jpg">
-            <div id="rating">
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-            </div>
-            <div class="manga-info">
-                <span id="latestchap">CHAP</span>
-                <span class="label">Latest Chapter:</span>
-                <hr>
-                <span id='title'>TITLE</span>
-            </div>
-          </div>
-          <div class="manga">
-            <img src="resources/img/manga placeholder.jpg">
-            <div id="rating">
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-            </div>
-            <div class="manga-info">
-                <span id="latestchap">CHAP</span>
-                <span class="label">Latest Chapter:</span>
-                <hr>
-                <span id='title'>TITLE</span>
-            </div>
-          </div>
-          <div class="manga">
-            <img src="resources/img/manga placeholder.jpg">
-            <div id="rating">
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-                <span class="ri-star-line"></span>
-            </div>
-            <div class="manga-info">
-                <span id="latestchap">CHAP</span>
-                <span class="label">Latest Chapter:</span>
-                <hr>
-                <span id='title'>TITLE</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="content" id="settings">
-      <h2>Settings</h2>
-      <hr>
-      <br>
-      <div class="setting-group">
-        <span class="label" >Notify me of new chapters</span>
-        <label class="switch round">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="setting-group">
-        <span class="label" >Enable at Startup</span>
-        <label class="switch round">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="setting-group additional">
-        <span class="label" >Preload Chapters</span>
-        <label class="switch round">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-        <select class="select">
-          <option>1</option>
-          <option>2</option>
-          <option>3</option>
-        </select>
-      </div>
-      <div class="setting-group readingmode">
-        <span class="label" >Reading Mode</span>
-        <label class="switch round" id="horver">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-        <span class="sublabel">Horizontal</span>
-        <span class="label blank"></span>
-        <label class="switch round" id="norrev">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-        <span class="sublabel">Normal</span>
       </div>
     </div>
   </body>

@@ -2,6 +2,9 @@ const {ipcRenderer:main} = require('electron');
 window.$ = require('jquery')
 const {Mangakakalots,KissManga} = require('./resources/source.js');
 
+// --------------------------------------
+
+
 $('.side-bar').children('button').each(function(){
     $(this).prepend($(main.sendSync('requestSvg',`${this.id}.svg`)))
 });
@@ -22,10 +25,26 @@ $('.side-bar button.navlink').click(function(){
 
 // DROP DOWN SOURCE HANDLER
 let SOURCES = {
-    'Mangakakalots':new Mangakakalots('https://mangakakalots.com/'),
-    'Mangascans':true,
-    'KissManga':new KissManga('https://kissmanga.in/'),
-    'Meraki Scans':true,
+    mangakakalots:{
+        source: new Mangakakalots('https://mangakakalots.com/'),
+        name: "Mangakakalots",
+        sourceId:0,
+    },
+    manganelo:{
+        source: true,
+        name: "MangaNelo",
+        sourceId:1,
+    },
+    kissmanga:{
+        source:new KissManga('https://kissmanga.in/'),
+        name:"KissManga",
+        sourceId:2,
+    },
+    merakiscans:{
+        source: true,
+        name: "Meraki Scans",
+        sourceId:3,
+    },
 }
 let CURRENT_SOURCE;
 let CURRENT_SOURCE_PAGE=1;
@@ -47,8 +66,25 @@ const mangaTemplate = $(`
     </div>
 </div>
 `)
+const sourceGroupTemplate = $(`
+<div class="source-group">
+    <div class="header">
+        <h3>Mangakakalots</h3>
+        <hr>
+    </div>
+    <div class="mangas-wrapper">
+        <div class="mangas">
+        </div>
+    </div>
+</div>
+`) 
+
+
+// -------------------------------------- FUNCTIONS
 function appendMangaToHandler(id,obj){
     $manga = mangaTemplate.clone()
+    $manga.data('source',CURRENT_SOURCE)
+    $manga.data('bookmarked',false)
     $manga.find('#title').html(obj.title)
     $manga.find('img').prop('src',obj.image).prop('alt',obj.title)
     $manga.find('#latestchap').html(obj.latestChap)
@@ -65,7 +101,7 @@ function appendMangaToHandler(id,obj){
     $manga.hide().fadeIn('fast')
 }
 let updateMangaTimeout;
-async function updateMangaList(source,page){
+async function updateMangaList({source},page){
     let $loader = $("<div class='overlay'><div class='loader animating'></div></div>");
     let STATUS = true;
     let mangaList;
@@ -76,7 +112,7 @@ async function updateMangaList(source,page){
         STATUS = false
         $('#home-mangaList .overlay').remove()
         updateMangaTimeout = setTimeout(()=>{
-            updateMangaList(source,page)
+            updateMangaList({source},page)
         },5000)
     }
     $('#home-mangaList').append($loader)
@@ -88,7 +124,7 @@ async function updateMangaList(source,page){
         $('.content#home .manga-select').data('loading',false)
     }
 }
-async function searchManga(source,keywords){
+async function searchManga({source},keywords){
     let parsed_keywords = keywords.replace(/\s/g, source.searchBuilder)
     $('#home-searchManga').empty()
     let mangaList;
@@ -110,69 +146,11 @@ function clearMangaHandler(id){
         $(this).parent().empty()
     })
 }
-for(key in SOURCES)
-    $('.source-select .dropdown-options').append(
-        `<div class="option">${key}</div>`
-    )
-$('.source-select .dropdown').click(function(){
-    $(this).toggleClass('active')
-})
-$('.source-select .option').click(function(){
-    $('.source-select .option').show()
-    $('.source-select .selected').html($(this).html())
-    $(this).hide()
-    clearMangaHandler('home-searchManga')
-    clearMangaHandler('home-mangaList')
-    clearTimeout(updateMangaTimeout)
-    CURRENT_SOURCE = SOURCES[$(this).html()]
-    CURRENT_SOURCE_PAGE=1
-    $('.content#home .searchbar *').prop('disabled',false)
-    $('.content#home .searchbar *').prop('placeholder',"Enter Keywords...")
-    updateMangaList(CURRENT_SOURCE,CURRENT_SOURCE_PAGE)
-})
-$('.content#home .returnTop').click(function(){
-    $('.content#home .manga-select').stop().animate({scrollTop:0}, 500, 'swing');
-})
-$('.content#home .manga-select').scroll(function() {
-    if($(this).scrollTop()>$(this).height())
-        $('.content#home .returnTop').fadeIn().css('display', 'flex');
-    else $('.content#home .returnTop').fadeOut()
-    if(!CURRENT_SOURCE) return
-    if($(this).data("loading")) return
-    let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
-    if(hasReachedBottom){
-        updateMangaList(CURRENT_SOURCE,++CURRENT_SOURCE_PAGE)
-    }
-});
-
-$('.content#home .searchbar *').prop('disabled',true)
-$('.content#home .searchbar button#searchbutton').click(function(){
-    searchManga(CURRENT_SOURCE,$(this).siblings('input#searchfield').val())
-})
-$('.content#home .searchbar button#clearsearchbutton').click(function(){
-    $(this).siblings('input#searchfield').val('')
-    clearMangaHandler('home-searchManga')
-})
-$('.content#home .searchbar input#searchfield').click(function(){
-    $(this).select()
-}).keydown(function(e){
-    if(e.which==13)
-    $(this).siblings('button#searchbutton').click()
-})
-
-$('.manga-handler').on('click','.manga',selectManga)
-$('.content#selectedManga  .manga-info .manga-info-text #back').click(function(){
-    $('.content#selectedManga').fadeOut()
-})
-$('.content#selectedManga  .manga-info .manga-image #bookmark').click(function(){
-    $(this).toggleClass('bookmarked')
-})
-$('.content#selectedManga  .manga-info .manga-info-text .absolute-snap').click(function(){
-    $(this).children('.more-info-card').toggleClass('shown')
-})
-
 function selectedMangaReset(){
     $(".manga-info .manga-image img").removeAttr('src')
+    $(".manga-info").removeData('mangaObj')
+    $(".manga-info").removeData('source')
+    $('.manga-info .manga-image #bookmark').removeClass('bookmarked')
     let $parent = $('.content#selectedManga')
     let $mangaInfo = $parent.find(".manga-info .manga-info-text")
     $mangaInfo.find('#title').html('')
@@ -193,9 +171,13 @@ function stripTagsFromString(string){
     return doc.body.textContent || "";
  }
 async function selectManga(){
-    let manga = await CURRENT_SOURCE.scanMangaHref($(this).data('href'))
+    let manga = await $(this).data('source').source.scanMangaHref($(this).data('href'))
     selectedMangaReset()
     $(".manga-info .manga-image img").prop('src', manga.image)
+    $(".manga-info").data('mangaObj', $(this))
+    $('.manga-info').data('source',$(this).data('source'))
+    if($(this).data('bookmarked'))
+        $('.manga-info .manga-image #bookmark').addClass('bookmarked')
     let $parent = $('.content#selectedManga')
     let $mangaInfo = $parent.find(".manga-info .manga-info-text")
     $mangaInfo.find('#title').html(manga.title)
@@ -222,23 +204,111 @@ async function selectManga(){
     $parent.fadeIn()
     $parent.find('.chapter-list').scrollTop(0)
 }
+function serializeMangaObj($selector){
+    console.log($selector)
+}
 
-$('.content#selectedManga  .manga-info .manga-info-text').hover(
-function(){
-    let addHeight = $(this).find('#title').height() + $(this).find('#alt-titles').height() + 21  
-    let descHeight = $(this).find('.description-card').height()
-    let infoHeight = $(this).find('.more-info-card').height()
-    $(this).height(Math.max(descHeight,infoHeight)+addHeight)
-},
-function(){
-    $(this).height("45vh");
+// --------------------------------------
+for([key,value] of Object.entries(SOURCES)){
+    $('.source-select .dropdown-options').append(
+        `<div class="option" id="${key}">${value.name}</div>`
+    )
+    let $SG = sourceGroupTemplate.clone()
+    $SG.prop('id',`source${value.sourceId}`)
+    $SG.find('.header').find('h3').html(value.name)
+    $('.content#favorites').append($SG)
+    //let favorites = main.sendSync('getFavorites',key)
+}
+$('.source-select .dropdown').click(function(){ // CUSTOM DROPDOWN FOR SOURCE SELECTION
+    $(this).toggleClass('active')
+})
+$('.source-select .option').click(function(){ // OPTION HANDLER FOR SOURCE SELECTION
+    $('.source-select .option').show()
+    $('.source-select .selected').html($(this).html())
+    $(this).hide()
+    clearMangaHandler('home-searchManga')
+    clearMangaHandler('home-mangaList')
+    clearTimeout(updateMangaTimeout)
+    CURRENT_SOURCE = SOURCES[$(this).prop('id')]
+    CURRENT_SOURCE_PAGE=1
+    $('.content#home .searchbar *').prop('disabled',false)
+    $('.content#home .searchbar *').prop('placeholder',"Enter Keywords...")
+    updateMangaList(CURRENT_SOURCE,CURRENT_SOURCE_PAGE)
+})
+$('.content#home .returnTop').click(function(){ //RETURN TO TOP BUTTON EVT HANDLER
+    $('.content#home .manga-select').stop().animate({scrollTop:0}, 500, 'swing');
+})
+$('.content#home .manga-select').scroll(function() { //LOAD NEW PAGE ON SCROLL TO BOTTOM
+    if($(this).scrollTop()>$(this).height())
+        $('.content#home .returnTop').fadeIn().css('display', 'flex');
+    else $('.content#home .returnTop').fadeOut()
+    if(!CURRENT_SOURCE) return
+    if($(this).data("loading")) return
+    let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
+    if(hasReachedBottom){
+        updateMangaList(CURRENT_SOURCE,++CURRENT_SOURCE_PAGE)
+    }
 });
 
-$('.content#favorites .source-group .header').click(function(){
-    $(this).siblings('.mangas').slideToggle()
+$('.content#home .searchbar *').prop('disabled',true)
+$('.content#home .searchbar button#searchbutton').click(function(){  // SEARCH EVT HANDLER
+    searchManga(CURRENT_SOURCE,$(this).siblings('input#searchfield').val())
+})
+$('.content#home .searchbar button#clearsearchbutton').click(function(){ // CLEAR SEARCH EVT HANDLER
+    $(this).siblings('input#searchfield').val('')
+    clearMangaHandler('home-searchManga')
+})
+$('.content#home .searchbar input#searchfield').click(function(){ // SELECT CONTENTS OF INPUT ONCE CLICKED
+    $(this).select()
+}).keydown(function(e){ // SUBMIT ON ENTER
+    if(e.which==13)
+    $(this).siblings('button#searchbutton').click()
+})
+
+$('.manga-handler').on('click','.manga',selectManga) // MANGA COMPONENT CLICK EVT HANDLER
+$('.content#favorites').on('click','.mangas .manga',selectManga) // MANGA COMPONENT CLICK EVT HANDLER (FAVORITES)
+
+$('.content#selectedManga  .manga-info .manga-info-text #back').click(function(){ // SELECTED MANGA BACK EVT HANDLER
+    $('.content#selectedManga').fadeOut()
+})
+$('.content#selectedManga  .manga-info .manga-image #bookmark').click(function(){  // FAVORITE BUTTON EVT HANDLER
+    let $parent = $(this).parent().parent()
+    let $manga = $parent.data('mangaObj')
+    let $mangaClone = $manga.clone(true)
+    let id =`source${$parent.data('source').sourceId}`
+    if($manga.data('bookmarked')){
+        $(this).removeClass('bookmarked')
+        $manga.data('bookmarked',false)
+        $(`.content#favorites .source-group#${id}`).find('.mangas').find('.manga').filter(function(){
+            return $(this).data('href') === $manga.data('href')
+        }).remove()
+    }
+    else{
+        $manga.data('bookmarked',true)
+        $(this).addClass('bookmarked')
+        $mangaClone.data('bookmarked',true)
+        $(`.content#favorites .source-group#${id}`).find('.mangas').append($mangaClone)
+    }
+})
+$('.content#selectedManga  .manga-info .manga-info-text .absolute-snap').click(function(){ // MORE INFO CARD EVT HANDLER
+    $(this).children('.more-info-card').toggleClass('shown')
 })
 
 
+$('.content#selectedManga  .manga-info .manga-info-text').hover( // HOVER EVENTS FOR MANGA INFO TEXT
+    function(){ // DETERMINE GREATER HEIGHT
+        let addHeight = $(this).find('#title').height() + $(this).find('#alt-titles').height() + 21  
+        let descHeight = $(this).find('.description-card').height()
+        let infoHeight = $(this).find('.more-info-card').height()
+        $(this).height(Math.max(descHeight,infoHeight)+addHeight)
+    },
+    function(){ // RESET HEIGHT
+        $(this).height("45vh");
+    });
+
+$('.content#favorites').on('click','.source-group .header',function(){ // EXPAND SOURCE GROUP
+    $(this).siblings('.mangas-wrapper').slideToggle("fast")
+})
 
 //$('.content#selectedManga').show()
 $('button.navlink#favorites').click()

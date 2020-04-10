@@ -559,6 +559,7 @@ html, body {
 .content#selectedManga {
   padding: 0;
   background: #5F5C5C;
+  z-index: 12;
 }
 
 .content#selectedManga .manga-info {
@@ -906,6 +907,7 @@ html, body {
   width: 100%;
   background-color: #5F5C5C;
   padding: 1%;
+  margin-bottom: 1%;
   overflow: hidden;
   -webkit-transition: height .5s ease-in-out;
   transition: height .5s ease-in-out;
@@ -915,6 +917,11 @@ html, body {
   display: block;
   width: 100%;
   cursor: pointer;
+}
+
+.content#favorites div.source-group .mangas-wrapper {
+  width: 100%;
+  display: none;
 }
 
 .content#favorites div.source-group .mangas {

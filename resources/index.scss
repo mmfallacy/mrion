@@ -404,6 +404,7 @@ html, body{
 .content#selectedManga{
     padding:0;
     background: $color-dark-brighter;
+    z-index:12;
     .manga-info{
         width:100%;
         display:flex;
@@ -656,12 +657,17 @@ html, body{
         width:100%;
         background-color: $color-dark-brighter;
         padding:1%;
+        margin-bottom:1%;
         overflow: hidden;
         transition: height .5s ease-in-out;
         .header{
             display:block;
             width:100%;
             cursor:pointer
+        }
+        .mangas-wrapper{
+            width:100%;
+            display:none;
         }
         .mangas{
             display:flex;

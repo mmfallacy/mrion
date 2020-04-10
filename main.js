@@ -57,3 +57,4 @@ ipcMain.on('max-electron',(evt)=>{
   window = mainWindow//BrowserWindow.fromId(evt.frameId)
   window.setFullScreen(!window.isFullScreen());
 })
+//ipcMain.on('getFavorites',(evt)=>)
