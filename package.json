@@ -1,7 +1,7 @@
 {
-  "name": "manga-reader",
+  "name": "mrion",
   "version": "1.0.0",
-  "description": "Manga Reader",
+  "description": "Electron-based Manga Reader app",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -9,7 +9,7 @@
     "rebuild": "electron-builder install-app-deps"
   },
   "build": {
-    "appId": "com.mmfallacy.mangareader",
+    "appId": "com.mmfallacy.mrion",
     "directories": {
       "output": "dist"
     },

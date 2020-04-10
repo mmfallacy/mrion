@@ -18,27 +18,27 @@
 				"label": "Titlebar"
 			},
 			{
-				"line": 67,
+				"line": 70,
 				"column": 0,
 				"label": "Sidebar"
 			},
 			{
-				"line": 155,
+				"line": 158,
 				"column": 0,
 				"label": "General Content Class"
 			},
 			{
-				"line": 171,
+				"line": 174,
 				"column": 0,
 				"label": "Settings"
 			},
 			{
-				"line": 270,
+				"line": 273,
 				"column": 0,
 				"label": "Home"
 			},
 			{
-				"line": 463,
+				"line": 466,
 				"column": 0,
 				"label": "Selected"
 			}
@@ -53,27 +53,27 @@
 				"label": "Title-bar"
 			},
 			{
-				"line": 20,
+				"line": 21,
 				"column": 4,
 				"label": "Side-bar"
 			},
 			{
-				"line": 36,
+				"line": 37,
 				"column": 27,
 				"label": "Home"
 			},
 			{
-				"line": 68,
+				"line": 69,
 				"column": 4,
 				"label": "Selected"
 			},
 			{
-				"line": 130,
+				"line": 131,
 				"column": 4,
 				"label": "Latest Manga"
 			},
 			{
-				"line": 139,
+				"line": 140,
 				"column": 4,
 				"label": "Settings"
 			}

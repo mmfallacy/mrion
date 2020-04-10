@@ -47,16 +47,20 @@ html, body {
   display: -ms-grid;
   display: grid;
   padding-left: 1%;
-  -ms-grid-columns: auto 5% 5% 5%;
-      grid-template-columns: auto 5% 5% 5%;
+  -ms-grid-columns: 2.5% auto 5% 5% 5%;
+      grid-template-columns: 2.5% auto 5% 5% 5%;
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
   font-size: .9rem;
 }
 
+.title-bar img {
+  height: 65%;
+}
+
 .title-bar span.subtitle {
-  visibility: hidden;
+  display: none;
 }
 
 .title-bar span.subtitle:before {
@@ -227,7 +231,7 @@ html, body {
 }
 
 .content#settings .setting-group {
-  width: 85vw;
+  width: 90%;
   display: -ms-grid;
   display: grid;
   -ms-grid-columns: 70% 10% 10% 10%;

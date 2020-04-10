@@ -40,15 +40,18 @@ html, body{
     pointer-events:auto;
     display:grid;
     padding-left:1%;
-    grid-template-columns: auto 5% 5% 5%;
+    grid-template-columns: 2.5% auto 5% 5% 5%;
     align-items: center;
     font-size:.9rem;
+    img{
+        height:65%;
+    }
     span.subtitle{
         &:before{
             content: "—";
             margin-right:1%;
         }
-        visibility: hidden;
+        display:none;
     }
     button{
         width:100%;
@@ -177,7 +180,7 @@ html, body{
         margin-bottom:5px;
     }
     .setting-group{
-        width:85vw;
+        width:90%;
         display:grid;
         grid-template-columns: 70% 10% 10% 10%;
         grid-column-gap: 2.5%;
