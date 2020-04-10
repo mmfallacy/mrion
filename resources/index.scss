@@ -4,6 +4,7 @@ $color-normal: #3a3535;
 $color-light: #f4f4f4;
 $color-light-darker:#c4c4c4;
 $color-foreground: #ff7315;
+$color-invalid:rgb(255, 53, 53);
 @import url('./fonts/opensans.css');
 @import url('./components/toggle-switch.css');
 @import url('./components/manga.css');
@@ -138,6 +139,18 @@ html, body{
     }
     &:hover{
         width:200px;
+    }
+    
+    @keyframes pulseAdd {
+        0%{
+            background-color:$color-normal;
+        }
+        50%{
+            background-color:yellow;
+        }
+        100%{
+            background-color:$color-normal;
+        }
     }
 }
 .content{
@@ -400,8 +413,37 @@ html, body{
         background: $color-normal;
         box-shadow: 0 5px 6px $color-dark;
         z-index:11;
-        img{
+        .manga-image{
             height:45vh;
+            position: relative;
+            img{
+                height:100%;
+            }
+            #bookmark{
+                height:35px;
+                width:35px;
+                position:absolute;
+                top:-10px;
+                right:-10px;
+                border-radius: 5rem;
+                border:none;
+                font-size:1.2rem;
+                background-color: $color-foreground;
+                text-align: center;
+                letter-spacing: 0;
+                color:$color-light;
+                cursor:pointer;
+                transition:color .2s linear;
+                &:hover{
+                    color:yellow;
+                }
+                &.bookmarked{
+                    color:yellow;
+                    &:hover{
+                        color:$color-invalid;
+                    }
+                }
+            }
         }
         .manga-info-text{
             margin-left:2%;
@@ -605,6 +647,49 @@ html, body{
     }
 }
 
+.content#favorites{
+    @extend %overflowbar;
+            --thumb-color:#{$color-foreground};
+            --track-color:#{$color-dark};
+            --bar-width:1%;
+    div.source-group{
+        width:100%;
+        background-color: $color-dark-brighter;
+        padding:1%;
+        overflow: hidden;
+        transition: height .5s ease-in-out;
+        .header{
+            display:block;
+            width:100%;
+            cursor:pointer
+        }
+        .mangas{
+            display:flex;
+            flex-wrap:wrap;
+            width:100%;
+            padding:2% 4%;
+            .manga{
+                --background-color: #{$color-dark};
+                --shadow-color: #{$color-dark};
+                
+                margin-bottom:25px;
+                @media (max-width: 1000px) {
+                    margin-right:85px;
+                    &:nth-child(3n){
+                        margin-right:0;
+                    }
+                }
+                @media (min-width: 1000px) {
+                    margin-right:32.5px;
+                    &:nth-child(5n){
+                        margin-right:0;
+                    }
+                }
+            }
+            
+        }
+    }
+}
 %overflowbar{
     overflow-y: scroll;
     overflow-x: hidden;

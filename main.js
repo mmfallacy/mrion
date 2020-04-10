@@ -1,13 +1,15 @@
-const {app, BrowserWindow, ipcMain} = require('electron')
+const {app, BrowserWindow, ipcMain,Tray} = require('electron')
 const path = require('path')
 const fs = require('fs')
+const icon = path.join(__dirname,'resources','img','ico.png')
 require('electron-reload')(__dirname, {
   electron: require(`${__dirname}/node_modules/electron`),
   ignored:/resources[\/\\]img|main.js|node_modules|[\/\\]\./
 });
 
+console.log(process.argv)
 
-var mainWindow;
+var mainWindow,tray;
 function createMainWindow () {
   mainWindow = new BrowserWindow({
     width: 900,
@@ -21,7 +23,13 @@ function createMainWindow () {
   mainWindow.loadFile('index.html')
   mainWindow.webContents.openDevTools({mode:'detach'})
 }
-app.whenReady().then(createMainWindow)
+app.whenReady().then(function(){
+  if(process.argv[2]=='tray'){
+    console.log('tray opened')
+    tray = new Tray(icon)
+  }
+  else createMainWindow()
+})
 
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()

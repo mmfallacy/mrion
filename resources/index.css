@@ -180,6 +180,30 @@ html, body {
   width: 200px;
 }
 
+@-webkit-keyframes pulseAdd {
+  0% {
+    background-color: #3a3535;
+  }
+  50% {
+    background-color: yellow;
+  }
+  100% {
+    background-color: #3a3535;
+  }
+}
+
+@keyframes pulseAdd {
+  0% {
+    background-color: #3a3535;
+  }
+  50% {
+    background-color: yellow;
+  }
+  100% {
+    background-color: #3a3535;
+  }
+}
+
 .content {
   background-color: #3a3535;
   display: none;
@@ -551,8 +575,43 @@ html, body {
   z-index: 11;
 }
 
-.content#selectedManga .manga-info img {
+.content#selectedManga .manga-info .manga-image {
   height: 45vh;
+  position: relative;
+}
+
+.content#selectedManga .manga-info .manga-image img {
+  height: 100%;
+}
+
+.content#selectedManga .manga-info .manga-image #bookmark {
+  height: 35px;
+  width: 35px;
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  border-radius: 5rem;
+  border: none;
+  font-size: 1.2rem;
+  background-color: #ff7315;
+  text-align: center;
+  letter-spacing: 0;
+  color: #f4f4f4;
+  cursor: pointer;
+  -webkit-transition: color .2s linear;
+  transition: color .2s linear;
+}
+
+.content#selectedManga .manga-info .manga-image #bookmark:hover {
+  color: yellow;
+}
+
+.content#selectedManga .manga-info .manga-image #bookmark.bookmarked {
+  color: yellow;
+}
+
+.content#selectedManga .manga-info .manga-image #bookmark.bookmarked:hover {
+  color: #ff3535;
 }
 
 .content#selectedManga .manga-info .manga-info-text {
@@ -837,20 +896,75 @@ html, body {
   }
 }
 
-.content#home .source-select div.dropdown .dropdown-options, .content#home .manga-select, .content#selectedManga .chapter-container .chapter-list {
+.content#favorites {
+  --thumb-color:#ff7315;
+  --track-color:#232020;
+  --bar-width:1%;
+}
+
+.content#favorites div.source-group {
+  width: 100%;
+  background-color: #5F5C5C;
+  padding: 1%;
+  overflow: hidden;
+  -webkit-transition: height .5s ease-in-out;
+  transition: height .5s ease-in-out;
+}
+
+.content#favorites div.source-group .header {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+}
+
+.content#favorites div.source-group .mangas {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  width: 100%;
+  padding: 2% 4%;
+}
+
+.content#favorites div.source-group .mangas .manga {
+  --background-color: #232020;
+  --shadow-color: #232020;
+  margin-bottom: 25px;
+}
+
+@media (max-width: 1000px) {
+  .content#favorites div.source-group .mangas .manga {
+    margin-right: 85px;
+  }
+  .content#favorites div.source-group .mangas .manga:nth-child(3n) {
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 1000px) {
+  .content#favorites div.source-group .mangas .manga {
+    margin-right: 32.5px;
+  }
+  .content#favorites div.source-group .mangas .manga:nth-child(5n) {
+    margin-right: 0;
+  }
+}
+
+.content#home .source-select div.dropdown .dropdown-options, .content#home .manga-select, .content#selectedManga .chapter-container .chapter-list, .content#favorites {
   overflow-y: scroll;
   overflow-x: hidden;
 }
 
-.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar, .content#home .manga-select::-webkit-scrollbar, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar {
+.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar, .content#home .manga-select::-webkit-scrollbar, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar, .content#favorites::-webkit-scrollbar {
   width: var(--bar-width);
 }
 
-.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-track, .content#home .manga-select::-webkit-scrollbar-track, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-track {
+.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-track, .content#home .manga-select::-webkit-scrollbar-track, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-track, .content#favorites::-webkit-scrollbar-track {
   background: var(--track-color);
 }
 
-.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-thumb, .content#home .manga-select::-webkit-scrollbar-thumb, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-thumb {
+.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-thumb, .content#home .manga-select::-webkit-scrollbar-thumb, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-thumb, .content#favorites::-webkit-scrollbar-thumb {
   background: var(--thumb-color);
   width: var(--thumb-width);
 }

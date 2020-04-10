@@ -164,12 +164,15 @@ $('.manga-handler').on('click','.manga',selectManga)
 $('.content#selectedManga  .manga-info .manga-info-text #back').click(function(){
     $('.content#selectedManga').fadeOut()
 })
+$('.content#selectedManga  .manga-info .manga-image #bookmark').click(function(){
+    $(this).toggleClass('bookmarked')
+})
 $('.content#selectedManga  .manga-info .manga-info-text .absolute-snap').click(function(){
     $(this).children('.more-info-card').toggleClass('shown')
 })
 
 function selectedMangaReset(){
-    $(".manga-info img").removeAttr('src')
+    $(".manga-info .manga-image img").removeAttr('src')
     let $parent = $('.content#selectedManga')
     let $mangaInfo = $parent.find(".manga-info .manga-info-text")
     $mangaInfo.find('#title').html('')
@@ -192,7 +195,7 @@ function stripTagsFromString(string){
 async function selectManga(){
     let manga = await CURRENT_SOURCE.scanMangaHref($(this).data('href'))
     selectedMangaReset()
-    $(".manga-info img").prop('src', manga.image)
+    $(".manga-info .manga-image img").prop('src', manga.image)
     let $parent = $('.content#selectedManga')
     let $mangaInfo = $parent.find(".manga-info .manga-info-text")
     $mangaInfo.find('#title').html(manga.title)
@@ -231,12 +234,14 @@ function(){
     $(this).height("45vh");
 });
 
-
+$('.content#favorites .source-group .header').click(function(){
+    $(this).siblings('.mangas').slideToggle()
+})
 
 
 
 //$('.content#selectedManga').show()
-$('button.navlink#home').click()
+$('button.navlink#favorites').click()
 // setTimeout(()=>{
 //     $('.content#home .dropdown-options .option').filter(function(){
 //         return ($(this).html() === "Mangakakalots")
