@@ -5,10 +5,23 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "rebuild": "electron-builder install-app-deps"
   },
-  "build":{
-    "appId":"com.mmfallacy.mangareader"
+  "build": {
+    "appId": "com.mmfallacy.mangareader",
+    "directories": {
+      "output": "dist"
+    },
+    "extraFiles": [
+      "userdata"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "resources/img/icon.ico"
+    }
   },
   "repository": "https://github.com/electron/electron-quick-start",
   "author": "GitHub",
@@ -22,6 +35,8 @@
     "axios": "^0.19.2",
     "fs": "0.0.1-security",
     "jquery": "^3.4.1",
-    "os": "^0.1.1"
+    "knex": "^0.20.13",
+    "os": "^0.1.1",
+    "sqlite3": "^4.1.1"
   }
 }

@@ -1,7 +1,7 @@
 const {ipcRenderer:main} = require('electron');
 window.$ = require('jquery')
 const {Mangakakalots,KissManga} = require('./resources/source.js');
-
+var MANGATEST;
 // --------------------------------------
 
 
@@ -29,21 +29,28 @@ let SOURCES = {
         source: new Mangakakalots('https://mangakakalots.com/'),
         name: "Mangakakalots",
         sourceId:0,
+        key:'mangakakalots',
     },
     manganelo:{
         source: true,
         name: "MangaNelo",
         sourceId:1,
+        key:'manganelo',
+
     },
     kissmanga:{
         source:new KissManga('https://kissmanga.in/'),
         name:"KissManga",
         sourceId:2,
+        key:'kissmanga',
+
     },
     merakiscans:{
         source: true,
         name: "Meraki Scans",
         sourceId:3,
+        key:'merakiscans',
+
     },
 }
 let CURRENT_SOURCE;
@@ -89,6 +96,7 @@ function appendMangaToHandler(id,obj){
     $manga.find('img').prop('src',obj.image).prop('alt',obj.title)
     $manga.find('#latestchap').html(obj.latestChap)
     $manga.data('href',obj.href)
+    $manga.data('rating',obj.rating)
     $manga.find('#rating span').each(function(i){
         if(obj.rating-i>.75) $(this).attr('class','ri-star-fill')
         else if(obj.rating-i>.25) $(this).attr('class','ri-star-half-line')
@@ -205,7 +213,34 @@ async function selectManga(){
     $parent.find('.chapter-list').scrollTop(0)
 }
 function serializeMangaObj($selector){
-    console.log($selector)
+    let obj = {}
+    obj.title = $selector.find("#title").html()
+    obj.image = $selector.find("img").prop('src')
+    obj.latestChap = $selector.find("#latestchap").html()
+    obj.href = $selector.data('href')
+    obj.rating = $selector.data('rating')
+    obj.sourceKey = $selector.data('source').key
+    obj.bookmarked = $selector.data('bookmarked')
+    return obj
+}
+function deserializeMangaObj(obj){
+    $manga = mangaTemplate.clone()
+    $manga.data('source',SOURCES[obj.sourceKey])
+    $manga.data('bookmarked',obj.bookmarked)
+    $manga.find('#title').html(obj.title)
+    $manga.find('img').prop('src',obj.image).prop('alt',obj.title)
+    $manga.find('#latestchap').html(obj.latestChap)
+    $manga.data('href',obj.href)
+    $manga.data('rating',obj.rating)
+    $manga.find('#rating span').each(function(i){
+        if(obj.rating-i>.75) $(this).attr('class','ri-star-fill')
+        else if(obj.rating-i>.25) $(this).attr('class','ri-star-half-line')
+    })
+    if(!obj.latestChap)
+        $manga.find('#latestchap, #latestchap+label').hide()
+    if(obj.rating==-1) 
+        $manga.find('#rating').hide()
+    return $manga
 }
 
 // --------------------------------------
@@ -219,6 +254,10 @@ for([key,value] of Object.entries(SOURCES)){
     $('.content#favorites').append($SG)
     //let favorites = main.sendSync('getFavorites',key)
 }
+for(obj of main.sendSync('getFavorites')){
+    $('.content#favorites').find(`#source${SOURCES[obj.sourceKey].sourceId}`).find('.mangas').append(deserializeMangaObj(obj))
+}
+
 $('.source-select .dropdown').click(function(){ // CUSTOM DROPDOWN FOR SOURCE SELECTION
     $(this).toggleClass('active')
 })
@@ -279,6 +318,7 @@ $('.content#selectedManga  .manga-info .manga-image #bookmark').click(function()
     if($manga.data('bookmarked')){
         $(this).removeClass('bookmarked')
         $manga.data('bookmarked',false)
+        main.send('removeFavorite', $manga.data('href'))
         $(`.content#favorites .source-group#${id}`).find('.mangas').find('.manga').filter(function(){
             return $(this).data('href') === $manga.data('href')
         }).remove()
@@ -288,7 +328,17 @@ $('.content#selectedManga  .manga-info .manga-image #bookmark').click(function()
         $(this).addClass('bookmarked')
         $mangaClone.data('bookmarked',true)
         $(`.content#favorites .source-group#${id}`).find('.mangas').append($mangaClone)
+        let serializedManga = serializeMangaObj($manga)
+        serializedManga.rating = -1
+        main.send('addFavorite',serializedManga)
     }
+})
+$('.content#selectedManga  .manga-info .manga-image #test').click(function(){
+    let $parent = $(this).parent().parent()
+    let $manga = $parent.data('mangaObj')
+    let $mangaClone = $manga.clone(true)
+    console.log('created global serialized obj')
+    MANGATEST = serializeMangaObj($mangaClone)
 })
 $('.content#selectedManga  .manga-info .manga-info-text .absolute-snap').click(function(){ // MORE INFO CARD EVT HANDLER
     $(this).children('.more-info-card').toggleClass('shown')
@@ -310,8 +360,8 @@ $('.content#favorites').on('click','.source-group .header',function(){ // EXPAND
     $(this).siblings('.mangas-wrapper').slideToggle("fast")
 })
 
-//$('.content#selectedManga').show()
-$('button.navlink#favorites').click()
+//$('.content#testing').show()
+$('button.navlink#home').click()
 // setTimeout(()=>{
 //     $('.content#home .dropdown-options .option').filter(function(){
 //         return ($(this).html() === "Mangakakalots")

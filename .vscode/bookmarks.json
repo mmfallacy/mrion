@@ -61,6 +61,21 @@
 				"line": 36,
 				"column": 27,
 				"label": "Home"
+			},
+			{
+				"line": 68,
+				"column": 4,
+				"label": "Selected"
+			},
+			{
+				"line": 126,
+				"column": 4,
+				"label": "Latest Manga"
+			},
+			{
+				"line": 135,
+				"column": 4,
+				"label": "Settings"
 			}
 		]
 	}

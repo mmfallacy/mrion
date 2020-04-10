@@ -4,10 +4,23 @@ const fs = require('fs')
 const icon = path.join(__dirname,'resources','img','ico.png')
 require('electron-reload')(__dirname, {
   electron: require(`${__dirname}/node_modules/electron`),
-  ignored:/resources[\/\\]img|main.js|node_modules|[\/\\]\./
+  ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
 });
 
 console.log(process.argv)
+
+var knex = require("knex")({
+  client: "sqlite3",
+  connection:{
+    filename: "./userdata/data.db"
+  }
+});
+var CONFIG = {}
+let CONFIGSQL = knex.table('CONFIG')
+CONFIGSQL.then((result)=>{
+  for(let row of result)
+    CONFIG[row.field] = row.value
+})
 
 var mainWindow,tray;
 function createMainWindow () {
@@ -53,8 +66,17 @@ ipcMain.on('min-electron',(evt)=>{
   window.minimize()
 })
 ipcMain.on('max-electron',(evt)=>{
-  console.log(evt.frameId)
   window = mainWindow//BrowserWindow.fromId(evt.frameId)
   window.setFullScreen(!window.isFullScreen());
 })
-//ipcMain.on('getFavorites',(evt)=>)
+ipcMain.on('getFavorites',(evt)=>{
+  knex.table('FAVORITES').then(res=>{
+    evt.returnValue = res
+  })
+})
+ipcMain.on('addFavorite',(evt,data)=>{
+  knex.table('FAVORITES').insert(data).then()
+})
+ipcMain.on('removeFavorite',(evt,href)=>{
+  knex.table('FAVORITES').where({href:href}).del().then()
+})
