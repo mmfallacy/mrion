@@ -129,7 +129,7 @@ function updateFunction(){
     if(trayMode) {
       console.log('tray bubble')
       tray.setImage(iconWBubble)
-      tray.displayBalloon({
+      if(CONFIG.notify)tray.displayBalloon({
         icon:icon,
         iconType:'custom',
         title:'MRION',
