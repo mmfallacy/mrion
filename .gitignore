@@ -1,5 +1,5 @@
-node_modules
-.vscode
-.vscode/bookmarks.json
-dist
-build
+node_modules/
+dist/
+resources/*.css.map
+resources/*.css
+.vscode/
