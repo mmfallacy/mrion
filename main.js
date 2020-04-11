@@ -7,7 +7,7 @@ require('electron-reload')(__dirname, {
   ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
 });
 
-const {Mangakakalots,KissManga} = require('./resources/source-cheerio.js');
+const {Mangakakalots,KissManga} = require('./resources/source.js');
 
 let SOURCES = {
   mangakakalots:{
@@ -40,7 +40,8 @@ let SOURCES = {
 }
 
 console.log(process.argv)
-
+var trayMode = false;
+var UPDATES;
 var knex = require("knex")({
   client: "sqlite3",
   connection:{
@@ -48,11 +49,25 @@ var knex = require("knex")({
   }
 });
 var CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname,'userdata','config.json')))
+var FAVORITES = {}
+
+knex.table('FAVORITES').then(res=>{
+  for(fav of res)
+    FAVORITES[fav.href] = fav
+})
 
 global.SOURCES = SOURCES // EXPOSE TO RENDERER
 global.CONFIG = CONFIG
 
 var mainWindow,tray;
+
+async function scheduleUpdater(){
+  UPDATED = {}
+  for(let [href,obj] of Object.entries(FAVORITES))
+    UPDATED[href] = await SOURCES[obj.sourceKey].source.checkHrefForUpdates(href,obj.latestChap)
+  UPDATES = UPDATED
+  return UPDATED
+}
 function createMainWindow () {
   mainWindow = new BrowserWindow({
     width: 900,
@@ -100,15 +115,15 @@ ipcMain.on('max-electron',(evt)=>{
   window.setFullScreen(!window.isFullScreen());
 })
 ipcMain.on('getFavorites',(evt)=>{
-  knex.table('FAVORITES').then(res=>{
-    evt.returnValue = res
-  })
+  evt.returnValue = FAVORITES
 })
 ipcMain.on('addFavorite',(evt,data)=>{
   knex.table('FAVORITES').insert(data).then()
+  FAVORITES[data.href] = data
 })
 ipcMain.on('removeFavorite',(evt,href)=>{
   knex.table('FAVORITES').where({href:href}).del().then()
+  delete FAVORITES[href]
 })
 ipcMain.on('setConfig',(evt,args)=>{
   let [key,val] = args
@@ -116,9 +131,29 @@ ipcMain.on('setConfig',(evt,args)=>{
   evt.returnValue = true
 })
 ipcMain.on('getConfig',(evt,key)=>{
-  console.log(key)
   evt.returnValue = CONFIG[key]
 })
 ipcMain.on('settingsUpdated',(evt)=>{
   fs.writeFileSync(path.join(__dirname,'userdata','config.json'), JSON.stringify(CONFIG,null,2))
+})
+ipcMain.on('getUpdates',(evt)=>{
+  evt.returnValue = UPDATES
+})
+
+ipcMain.on('runUpdater',(evt)=>{
+  scheduleUpdater().then((result)=>{
+    for(let [href, obj] of Object.entries(result)){
+      if(typeof obj === 'boolean') continue
+      if(trayMode) console.log("UPDATE ON TRAY")
+      if(mainWindow.isVisible()) {
+        mainWindow.webContents.send('favoritesUpdate')
+        return
+      }
+    }
+  })
+})
+ipcMain.on('updateLatestChap',(evt,data)=>{
+  knex.table('FAVORITES').where({href:data.href}).update({latestChap:data.text}).then(()=>{
+    FAVORITES[data.href].latestChap = data.text
+  })
 })

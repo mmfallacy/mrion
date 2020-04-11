@@ -40,7 +40,7 @@ html, body{
     pointer-events:auto;
     display:grid;
     padding-left:1%;
-    grid-template-columns: 2.5% auto 5% 5% 5%;
+    grid-template-columns: 2.5% auto 5% 5% 5% 5%;
     align-items: center;
     font-size:.9rem;
     img{
@@ -139,9 +139,31 @@ html, body{
             font-size:.8rem;
             color:$color-light;
         }
+        &#favorites{
+            position: relative;
+            .bubble{
+                height:9px;
+                display:none;
+                width:9px;
+                position: absolute;
+                top:7.5px;
+                left:50px;
+                background-color: $color-foreground;
+                border-radius: 5rem;
+            }
+        }
     }
     &:hover{
         width:200px;
+        button#favorites{
+            .bubble{
+                height:10px;
+                width:10px;
+                top:50%;
+                transform: translateY(-50%);
+                left:180px;
+            }
+        }
     }
     
     @keyframes pulseAdd {
@@ -679,6 +701,7 @@ html, body{
                 position:relative;
                 background-color: $color-foreground;
                 margin-bottom:50px;
+                box-shadow: 0 5px 6px rgba($color-dark,0.5);
                 cursor:pointer;
                 span{
                     width:100%;
@@ -749,7 +772,7 @@ html, body{
             .manga{
                 --background-color: #{$color-dark};
                 --shadow-color: #{$color-dark};
-                
+                --bubble-color:#{$color-foreground};
                 margin-bottom:25px;
                 @media (max-width: 1000px) {
                     margin-right:85px;

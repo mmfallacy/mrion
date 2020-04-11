@@ -33,6 +33,18 @@
         align-items: center;
         color:yellow;
     }
+    .bubble{
+        height:20px;
+        width:20px;
+        display:none;
+        position: absolute;
+        top:-5px;
+        right:-5px;
+        z-index:11;
+        background-color: var(--bubble-color);
+        border-radius: 5rem;
+    }
+
     .manga-info{
         height:100%;
         width:0%;
@@ -66,6 +78,9 @@
             font-weight: bold;
             text-align: center;
             margin-bottom: 15%;
+            display:block;
+            width:100%;
+            word-break:break-word;
         }
         hr{
             width:100%;

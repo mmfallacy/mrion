@@ -32,15 +32,67 @@ $('.side-bar button.navlink').click(function(){
         main.send('settingsUpdated')
     })
 })
+main.on('favoritesUpdate', async () =>{
+    let UPDATES = main.sendSync("getUpdates")
+    parseUpdates(UPDATES)
+    console.log("updated")
+})
 
+//CUSTOM LISTENER TO FAVORITES BUBBLE
+favorites = {
+    aInternal: 0,
+    aListener: function(val) {
+        if(val<=0)
+            $('button.navlink#favorites').children('.bubble').fadeOut()
+        else
+            $('button.navlink#favorites').children('.bubble').fadeIn()
+    },
+    set bubble(val) {
+      this.aInternal = val;
+      this.aListener(val);
+    },
+    get bubble() {
+      return this.aInternal;
+    }
+  }
 
 // DROP DOWN SOURCE HANDLER
-let SOURCES = remote.getGlobal('SOURCES')
+const {Mangakakalots,KissManga} = require('./resources/source.js');
+
+let SOURCES = {
+  mangakakalots:{
+      source: new Mangakakalots('https://mangakakalots.com/'),
+      name: "Mangakakalots",
+      sourceId:0,
+      key:'mangakakalots',
+  },
+  manganelo:{
+      source: true,
+      name: "MangaNelo",
+      sourceId:1,
+      key:'manganelo',
+
+  },
+  kissmanga:{
+      source:new KissManga('https://kissmanga.in/'),
+      name:"KissManga",
+      sourceId:2,
+      key:'kissmanga',
+
+  },
+  merakiscans:{
+      source: true,
+      name: "Meraki Scans",
+      sourceId:3,
+      key:'merakiscans',
+
+  },
+}
 let CURRENT_SOURCE;
 let CURRENT_SOURCE_PAGE=1;
 const mangaTemplate = $(`
 <div class="manga">
-    <img>
+    <img onerror="this.src='./resources/img/manga-placeholder.png'">
     <div id="rating">
         <span class="ri-star-line"></span>
         <span class="ri-star-line"></span>
@@ -71,6 +123,22 @@ const sourceGroupTemplate = $(`
 
 
 // -------------------------------------- FUNCTIONS
+function parseUpdates(UPDATES){
+    for(let[href, obj] of Object.entries(UPDATES)){
+        if(typeof obj === 'boolean') continue
+        favorites.bubble++;
+        let $manga =
+            $(`.content#favorites .source-group`).find('.mangas').find('.manga').filter(function(){
+                return $(this).data('href') === href
+            })
+        $manga.find('.bubble').fadeIn();
+        $manga.one('click',function(){
+            $(this).find('.bubble').fadeOut();
+            favorites.bubble--;
+            main.send('updateLatestChap',{href:href,text:obj.text})
+        })
+    }
+}
 function setConfig(key,value){
     if(!Object.keys(CONFIG).includes(key)) throw "CONFIG DOES NOT CONTAIN KEY : " + key
     CONFIG[key] = value
@@ -224,6 +292,7 @@ function deserializeMangaObj(obj){
     $manga.data('source',SOURCES[obj.sourceKey])
     $manga.data('bookmarked',obj.bookmarked)
     $manga.find('#title').html(obj.title)
+    $manga.append('<div class="bubble"></div>')
     $manga.find('img').prop('src',obj.image).prop('alt',obj.title)
     $manga.find('#latestchap').html(obj.latestChap)
     $manga.data('href',obj.href)
@@ -238,7 +307,6 @@ function deserializeMangaObj(obj){
         $manga.find('#rating').hide()
     return $manga
 }
-
 // --------------------------------------
 for([key,value] of Object.entries(SOURCES)){
     $('.source-select .dropdown-options').append(
@@ -250,7 +318,7 @@ for([key,value] of Object.entries(SOURCES)){
     $('.content#favorites').append($SG)
     //let favorites = main.sendSync('getFavorites',key)
 }
-for(obj of main.sendSync('getFavorites')){
+for(let [href,obj] of Object.entries(main.sendSync('getFavorites'))){
     $('.content#favorites').find(`#source${SOURCES[obj.sourceKey].sourceId}`).find('.mangas').append(deserializeMangaObj(obj))
 }
 

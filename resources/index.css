@@ -47,8 +47,8 @@ html, body {
   display: -ms-grid;
   display: grid;
   padding-left: 1%;
-  -ms-grid-columns: 2.5% auto 5% 5% 5%;
-      grid-template-columns: 2.5% auto 5% 5% 5%;
+  -ms-grid-columns: 2.5% auto 5% 5% 5% 5%;
+      grid-template-columns: 2.5% auto 5% 5% 5% 5%;
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
@@ -180,8 +180,32 @@ html, body {
   color: #f4f4f4;
 }
 
+.side-bar button.navlink#favorites {
+  position: relative;
+}
+
+.side-bar button.navlink#favorites .bubble {
+  height: 9px;
+  display: none;
+  width: 9px;
+  position: absolute;
+  top: 7.5px;
+  left: 50px;
+  background-color: #ff7315;
+  border-radius: 5rem;
+}
+
 .side-bar:hover {
   width: 200px;
+}
+
+.side-bar:hover button#favorites .bubble {
+  height: 10px;
+  width: 10px;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+          transform: translateY(-50%);
+  left: 180px;
 }
 
 @-webkit-keyframes pulseAdd {
@@ -935,6 +959,8 @@ html, body {
   position: relative;
   background-color: #ff7315;
   margin-bottom: 50px;
+  -webkit-box-shadow: 0 5px 6px rgba(35, 32, 32, 0.5);
+          box-shadow: 0 5px 6px rgba(35, 32, 32, 0.5);
   cursor: pointer;
 }
 
@@ -1023,6 +1049,7 @@ html, body {
 .content#favorites div.source-group .mangas .manga {
   --background-color: #232020;
   --shadow-color: #232020;
+  --bubble-color:#ff7315;
   margin-bottom: 25px;
 }
 

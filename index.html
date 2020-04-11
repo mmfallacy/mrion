@@ -14,6 +14,7 @@
     <div class="title-bar">
       <img class="logo" src="resources/img/icon.svg"/>
       <span id="title">MRION <span class="subtitle" id="title-bar-subtitle">Manga Name</span></span>
+      <button class="" id="min-toTray"></button>
       <button class="ri-subtract-line" id="min-electron"></button>
       <button class="ri-checkbox-multiple-blank-line" id="max-electron"></button>
       <button class="ri-close-line" id="close-electron"></button>
@@ -29,6 +30,7 @@
       </button>
       <button class="navlink" id="favorites">
         <span>Favorites</span>
+        <div class="bubble"></div>
       </button>
       <button class="navlink" id="settings">
         <span>Settings</span>
@@ -127,7 +129,7 @@
     <div class="content" id="selectedManga">
       <div class="manga-info">
         <div class="manga-image">
-          <img src="resources/img/manga placeholder.jpg"/>
+          <img src="resources/img/manga-placeholder.png" onerror="this.src='resources/img/manga-placeholder.png'"/>
           <button id="bookmark" class="ri-star-fill"></button>
         </div>
         <div class="manga-info-text">
