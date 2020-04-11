@@ -31,6 +31,8 @@ $('.side-bar button.navlink').click(function(){
         $('.content#settings').find('h5').slideUp()
         main.send('settingsUpdated')
     })
+    if(['home','genrelist'].includes(this.id)) $('.source-select').slideDown()
+    else $('.source-select').slideUp()
 })
 main.on('favoritesUpdate', async () =>{
     let UPDATES = main.sendSync("getUpdates")
@@ -57,21 +59,14 @@ favorites = {
   }
 
 // DROP DOWN SOURCE HANDLER
-const {Mangakakalots,KissManga} = require('./resources/source.js');
+const {Mangakakalot,KissManga} = require('./resources/source.js');
 
 let SOURCES = {
   mangakakalots:{
-      source: new Mangakakalots('https://mangakakalots.com/'),
-      name: "Mangakakalots",
+      source: new Mangakakalot('https://mangakakalot.com/'),
+      name: "Mangakakalot",
       sourceId:0,
-      key:'mangakakalots',
-  },
-  manganelo:{
-      source: true,
-      name: "MangaNelo",
-      sourceId:1,
-      key:'manganelo',
-
+      key:'mangakakalot',
   },
   kissmanga:{
       source:new KissManga('https://kissmanga.in/'),
@@ -79,14 +74,7 @@ let SOURCES = {
       sourceId:2,
       key:'kissmanga',
 
-  },
-  merakiscans:{
-      source: true,
-      name: "Meraki Scans",
-      sourceId:3,
-      key:'merakiscans',
-
-  },
+  }
 }
 // let SOURCES = main.getGlobal('SOURCES') 
 let CURRENT_SOURCE;
@@ -447,15 +435,10 @@ $('.content#settings .setting-group#preload .dropdown .options .option').click(f
 $('.content#settings .setting-group .switch.round input').change(function(){
     $parent = $(this).parent().parent()
     let id = $parent.attr('id')
-    if(id==='readMode') id = $(this).parent().attr('id')
+    //if(id==='readMode') id = $(this).parent().attr('id')
     if(id==='preload') $parent.find('.dropdown').toggleClass('disabled')
     $parent.parent().find('h5').slideDown().data('changed','changed')
     setConfig(id,(this.checked)?1:0)
 })
 //$('.content#testing').show()
-$('button.navlink#settings').click()
-// setTimeout(()=>{
-//     $('.content#home .dropdown-options .option').filter(function(){
-//         return ($(this).html() === "Mangakakalots")
-//     }).click()
-// },1000)
+$('button.navlink#genrelist').click()

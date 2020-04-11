@@ -25,8 +25,8 @@
       <button class="navlink" id="home">
         <span>Home</span>
       </button>
-      <button class="navlink" id="latestManga">
-        <span>Latest Manga</span>
+      <button class="navlink" id="genrelist">
+        <span>Genres</span>
       </button>
       <button class="navlink" id="favorites">
         <span>Favorites</span>
@@ -37,15 +37,17 @@
       </button>
     </div>
     <!-- HOME -->
-    <div class="content" id="home">
-      <div class="source-select">Source:
-        <div class="dropdown">
-          <span class="dropdown-arrow ri-arrow-down-s-fill"></span>
-          <div class="selected"></div>
-          <div class="dropdown-options">
-          </div>
+    <div class="source-select">Source:
+      <div class="dropdown">
+        <span class="dropdown-arrow ri-arrow-down-s-fill"></span>
+        <div class="selected"></div>
+        <div class="dropdown-options">
         </div>
       </div>
+    </div>
+    <div class="content" id="home">
+      <br>
+      <br>
       <div class="manga-select">
         <div class="header">
           <h2>Search</h2>
@@ -69,7 +71,15 @@
         <div class="returnTop ri-arrow-up-line"></div>
       </div>
     </div>
-    <div class="content" id="latestManga"></div>
+    <div class="content" id="genrelist">
+      <br>
+      <br>
+      <h2>Genres</h2>
+      <hr>
+      <div class="genre-list">
+        <div class="genre">Action</div>
+      </div>
+    </div>
     <div class="content" id="favorites">
       <h2>Favorites</h2>
       <hr>
@@ -81,7 +91,7 @@
       <hr>
       <br>
       <div class="setting-group" id="notify">
-        <span class="label" >Send a notification whenever a manga is updated</span>
+        <span class="label" >Notify whenever a manga is updated</span>
         <label class="switch round">
           <input type="checkbox">
           <span class="slider"></span>
@@ -94,7 +104,7 @@
           <span class="slider"></span>
         </label>
       </div>
-      <div class="setting-group readingmode" id="readMode">
+      <!-- <div class="setting-group readingmode" id="readMode">
         <span class="label" >Reading Mode</span>
         <label class="switch round" id="readHor">
           <input type="checkbox">
@@ -107,7 +117,7 @@
           <span class="slider"></span>
         </label>
         <span class="sublabel">Normal</span>
-      </div>
+      </div> -->
       <div class="setting-group additional" id="preload">
         <span class="label" >Preload Chapters</span>
         <label class="switch round">

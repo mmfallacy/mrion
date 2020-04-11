@@ -33,12 +33,12 @@
 				"label": "Settings"
 			},
 			{
-				"line": 295,
+				"line": 299,
 				"column": 0,
 				"label": "Home"
 			},
 			{
-				"line": 492,
+				"line": 509,
 				"column": 0,
 				"label": "Selected"
 			}
@@ -58,22 +58,17 @@
 				"label": "Side-bar"
 			},
 			{
-				"line": 39,
-				"column": 27,
-				"label": "Home"
-			},
-			{
-				"line": 71,
+				"line": 84,
 				"column": 4,
 				"label": "Selected"
 			},
 			{
-				"line": 133,
+				"line": 150,
 				"column": 4,
 				"label": "Latest Manga"
 			},
 			{
-				"line": 142,
+				"line": 159,
 				"column": 4,
 				"label": "Settings"
 			}

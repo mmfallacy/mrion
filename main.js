@@ -5,26 +5,19 @@ const icon = path.join(__dirname,'resources','img','iconsmallx.png')
 
 const iconWBubble = path.join(__dirname,'resources','img','iconsmall.png')
 
-// require('electron-reload')(__dirname, {
-//   electron: require(`${__dirname}/node_modules/electron`),
-//   ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
-// });
+require('electron-reload')(__dirname, {
+  electron: require(`${__dirname}/node_modules/electron`),
+  ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
+});
 
-const {Mangakakalots,KissManga} = require('./resources/source.js');
+const {Mangakakalot,KissManga} = require('./resources/source.js');
 
 let SOURCES = {
-  mangakakalots:{
-      source: new Mangakakalots('https://mangakakalots.com/'),
-      name: "Mangakakalots",
+  mangakakalot:{
+      source: new Mangakakalot('https://mangakakalot.com/'),
+      name: "Mangakakalot",
       sourceId:0,
-      key:'mangakakalots',
-  },
-  manganelo:{
-      source: true,
-      name: "MangaNelo",
-      sourceId:1,
-      key:'manganelo',
-
+      key:'mangakakalot',
   },
   kissmanga:{
       source:new KissManga('https://kissmanga.in/'),
@@ -32,14 +25,7 @@ let SOURCES = {
       sourceId:2,
       key:'kissmanga',
 
-  },
-  merakiscans:{
-      source: true,
-      name: "Meraki Scans",
-      sourceId:3,
-      key:'merakiscans',
-
-  },
+  }
 }
 
 console.log(process.argv)
@@ -133,7 +119,7 @@ function updateFunction(){
         icon:icon,
         iconType:'custom',
         title:'MRION',
-        content: `${mangas.length} mangas updated!`,
+        content: `${mangas.length} manga${(mangas.length>1)?'s':''} updated!`,
         largeIcon:true
       })
     }

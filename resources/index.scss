@@ -85,7 +85,7 @@ html, body{
                 display:none;
             }
         }
-        & ~ .content{
+        & ~ .content,& ~ .source-select{
             width:calc(100% - 200px);
             left:200px;
         }
@@ -207,6 +207,10 @@ html, body{
         grid-template-columns: 70% 10% 10% 10%;
         grid-column-gap: 2.5%;
         margin-bottom:2.5%;
+        
+        &#preload{
+            display:none;
+        }
         &.readingmode{
             height: 12%;
             grid-template-columns: 70% 10% 20%;
@@ -301,72 +305,74 @@ html, body{
         }
     }
 }
-.content#home{
-    .source-select{
-        width:104%;
-        height:5vh;
-        background-color:black;
-        margin: -1% -2%;
-        margin-bottom:1%;
-        position: relative;
-        display:flex;
-        align-items: center;
-        padding-left:2%;
-        div.dropdown{
-            width:85%;
+.source-select{
+    height:5vh;
+    width:calc(100% - 75px);
+    position: absolute;
+    top:30px;
+    left:75px;
+    z-index: 11;
+    color:white;
+    background-color:black;
+    display:flex;
+    align-items: center;
+    padding-left:2%;
+    div.dropdown{
+        width:85%;
+        height:4vh;
+        position: absolute;
+        top:.5vh;
+        left:13%;
+        background-color: $color-normal;
+        z-index:20;
+        overflow:hidden;
+        &.active{
+            height:20vh;
+            .dropdown-options{
+                overflow-y:scroll;
+            }
+        }
+        .dropdown-arrow{
             height:4vh;
+            width:3%;
+            display:flex;
+            justify-content: center;
+            align-items: center;
             position: absolute;
-            top:.5vh;
-            left:13%;
-            background-color: $color-normal;
-            z-index:20;
-            overflow:hidden;
-            &.active{
-                height:20vh;
-                .dropdown-options{
-                    overflow-y:scroll;
-                }
-            }
-            .dropdown-arrow{
-                height:4vh;
-                width:3%;
-                display:flex;
-                justify-content: center;
-                align-items: center;
-                position: absolute;
-                right:0;
-                color: $color-foreground;
-                background-color: $color-dark;
-                letter-spacing: 0;
-            }
-            .selected{
+            right:0;
+            color: $color-foreground;
+            background-color: $color-dark;
+            letter-spacing: 0;
+        }
+        .selected{
+            width:100%;
+            height:4vh;
+            display:flex;
+            padding-left:2%;
+            border-bottom: 1px solid $color-dark-brighter;
+            align-items: center;
+        }
+        .dropdown-options{
+            @extend  %overflowbar;
+            --thumb-color:#{$color-foreground};
+            --track-color:#{$color-dark};
+            --bar-width:3%;
+            --thumb-width:1%;
+            height: calc(100% - 4vh);
+            padding-top:.5%;
+            .option{
                 width:100%;
                 height:4vh;
                 display:flex;
                 padding-left:2%;
-                border-bottom: 1px solid $color-dark-brighter;
                 align-items: center;
-            }
-            .dropdown-options{
-                @extend  %overflowbar;
-                --thumb-color:#{$color-foreground};
-                --track-color:#{$color-dark};
-                --bar-width:3%;
-                --thumb-width:1%;
-                height: calc(100% - 4vh);
-                padding-top:.5%;
-                .option{
-                    width:100%;
-                    height:4vh;
-                    display:flex;
-                    padding-left:2%;
-                    align-items: center;
-                    cursor:pointer;
-                    border-bottom: 1px solid $color-dark-brighter;
-                }
+                cursor:pointer;
+                border-bottom: 1px solid $color-dark-brighter;
             }
         }
     }
+}
+.content#home{
     .manga-select{
         @extend  %overflowbar;
         --thumb-color:#{$color-foreground};
@@ -383,12 +389,23 @@ html, body{
             min-height:calc(100% - 20vh);
             margin-left:-1%;
             display:flex;
-            justify-content: space-between;
             flex-wrap: wrap;
             position: relative;
             .manga{
                 --background-color: #{$color-dark-brighter};
                 --shadow-color: #{$color-dark};
+                @media (max-width: 1000px) {
+                    margin-right:120px;
+                    &:nth-child(3n){
+                        margin-right:0;
+                    }
+                }
+                @media (min-width: 1000px) {
+                    margin-right:55px;
+                    &:nth-child(5n){
+                        margin-right:0;
+                    }
+                }
             }
             &>*{
                 margin: 1% 1% 1% 1%;
@@ -789,6 +806,12 @@ html, body{
             }
             
         }
+    }
+}
+.content#genrelist{
+    .genre-list{
+        display:flex;
+        flex-wrap: wrap;
     }
 }
 %overflowbar{

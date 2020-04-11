@@ -106,7 +106,7 @@ html, body {
   display: none;
 }
 
-.side-bar.hold ~ .content {
+.side-bar.hold ~ .content, .side-bar.hold ~ .source-select {
   width: calc(100% - 200px);
   left: 200px;
 }
@@ -264,6 +264,10 @@ html, body {
   margin-bottom: 2.5%;
 }
 
+.content#settings .setting-group#preload {
+  display: none;
+}
+
 .content#settings .setting-group.readingmode {
   height: 12%;
   -ms-grid-columns: 70% 10% 20%;
@@ -378,13 +382,15 @@ html, body {
   background-color: #ff7315;
 }
 
-.content#home .source-select {
-  width: 104%;
+.source-select {
   height: 5vh;
+  width: calc(100% - 75px);
+  position: absolute;
+  top: 30px;
+  left: 75px;
+  z-index: 11;
+  color: white;
   background-color: black;
-  margin: -1% -2%;
-  margin-bottom: 1%;
-  position: relative;
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
@@ -394,7 +400,7 @@ html, body {
   padding-left: 2%;
 }
 
-.content#home .source-select div.dropdown {
+.source-select div.dropdown {
   width: 85%;
   height: 4vh;
   position: absolute;
@@ -405,15 +411,15 @@ html, body {
   overflow: hidden;
 }
 
-.content#home .source-select div.dropdown.active {
+.source-select div.dropdown.active {
   height: 20vh;
 }
 
-.content#home .source-select div.dropdown.active .dropdown-options {
+.source-select div.dropdown.active .dropdown-options {
   overflow-y: scroll;
 }
 
-.content#home .source-select div.dropdown .dropdown-arrow {
+.source-select div.dropdown .dropdown-arrow {
   height: 4vh;
   width: 3%;
   display: -webkit-box;
@@ -432,7 +438,7 @@ html, body {
   letter-spacing: 0;
 }
 
-.content#home .source-select div.dropdown .selected {
+.source-select div.dropdown .selected {
   width: 100%;
   height: 4vh;
   display: -webkit-box;
@@ -445,7 +451,7 @@ html, body {
           align-items: center;
 }
 
-.content#home .source-select div.dropdown .dropdown-options {
+.source-select div.dropdown .dropdown-options {
   --thumb-color:#ff7315;
   --track-color:#232020;
   --bar-width:3%;
@@ -454,7 +460,7 @@ html, body {
   padding-top: .5%;
 }
 
-.content#home .source-select div.dropdown .dropdown-options .option, .content#home .source-select div.dropdown .dropdown-options .content#settings .setting-group .dropdown.select .selected, .content#settings .setting-group .dropdown.select .content#home .source-select div.dropdown .dropdown-options .selected {
+.source-select div.dropdown .dropdown-options .option, .source-select div.dropdown .dropdown-options .content#settings .setting-group .dropdown.select .selected, .content#settings .setting-group .dropdown.select .source-select div.dropdown .dropdown-options .selected {
   width: 100%;
   height: 4vh;
   display: -webkit-box;
@@ -488,9 +494,6 @@ html, body {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-pack: justify;
-      -ms-flex-pack: justify;
-          justify-content: space-between;
   -ms-flex-wrap: wrap;
       flex-wrap: wrap;
   position: relative;
@@ -499,6 +502,24 @@ html, body {
 .content#home .manga-select .manga-handler .manga {
   --background-color: #5F5C5C;
   --shadow-color: #232020;
+}
+
+@media (max-width: 1000px) {
+  .content#home .manga-select .manga-handler .manga {
+    margin-right: 120px;
+  }
+  .content#home .manga-select .manga-handler .manga:nth-child(3n) {
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 1000px) {
+  .content#home .manga-select .manga-handler .manga {
+    margin-right: 55px;
+  }
+  .content#home .manga-select .manga-handler .manga:nth-child(5n) {
+    margin-right: 0;
+  }
 }
 
 .content#home .manga-select .manga-handler > * {
@@ -1071,20 +1092,28 @@ html, body {
   }
 }
 
-.content#home .source-select div.dropdown .dropdown-options, .content#home .manga-select, .content#selectedManga .chapter-container .chapter-list, .content#favorites {
+.content#genrelist .genre-list {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+}
+
+.source-select div.dropdown .dropdown-options, .content#home .manga-select, .content#selectedManga .chapter-container .chapter-list, .content#favorites {
   overflow-y: scroll;
   overflow-x: hidden;
 }
 
-.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar, .content#home .manga-select::-webkit-scrollbar, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar, .content#favorites::-webkit-scrollbar {
+.source-select div.dropdown .dropdown-options::-webkit-scrollbar, .content#home .manga-select::-webkit-scrollbar, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar, .content#favorites::-webkit-scrollbar {
   width: var(--bar-width);
 }
 
-.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-track, .content#home .manga-select::-webkit-scrollbar-track, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-track, .content#favorites::-webkit-scrollbar-track {
+.source-select div.dropdown .dropdown-options::-webkit-scrollbar-track, .content#home .manga-select::-webkit-scrollbar-track, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-track, .content#favorites::-webkit-scrollbar-track {
   background: var(--track-color);
 }
 
-.content#home .source-select div.dropdown .dropdown-options::-webkit-scrollbar-thumb, .content#home .manga-select::-webkit-scrollbar-thumb, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-thumb, .content#favorites::-webkit-scrollbar-thumb {
+.source-select div.dropdown .dropdown-options::-webkit-scrollbar-thumb, .content#home .manga-select::-webkit-scrollbar-thumb, .content#selectedManga .chapter-container .chapter-list::-webkit-scrollbar-thumb, .content#favorites::-webkit-scrollbar-thumb {
   background: var(--thumb-color);
   width: var(--thumb-width);
 }

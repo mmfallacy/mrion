@@ -108,7 +108,7 @@ class Source {
 
     }
 }
-class Mangakakalots extends Source{
+class Mangakakalot extends Source{
     constructor(url){
         super(url);
         this.searchBuilder = '_';
@@ -277,5 +277,5 @@ class KissManga extends Source{
         return info
     }
 }
-module.exports.Mangakakalots = Mangakakalots
+module.exports.Mangakakalot = Mangakakalot
 module.exports.KissManga = KissManga

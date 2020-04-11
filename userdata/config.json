@@ -1,5 +1,5 @@
 {
-  "notify": 0,
+  "notify": 1,
   "preload": 1,
   "readHor": 1,
   "readVer": 1,
