@@ -14,7 +14,13 @@ $('.side-bar').children('button').each(function(){
     $(this).prepend($(main.sendSync('requestSvg',`${this.id}.svg`)))
 });
 $('.title-bar button').each(function(){
-   $(this).click(()=> main.send(this.id))
+    if(this.id=='close-electron') return
+    else
+    $(this).click(()=> main.send(this.id))
+})
+$('.title-bar button#close-electron').click(function(){
+    console.log('test')
+    $('.modal-bg').fadeIn()
 })
 $('.side-bar div.menu').dblclick(function(){
     $(this).parent().toggleClass('hold')
@@ -535,6 +541,16 @@ $('.content#settings .setting-group .switch.round input').change(function(){
     if(id==='preload') $parent.find('.dropdown').toggleClass('disabled')
     $parent.parent().find('h5').slideDown().data('changed','changed')
     setConfig(id,(this.checked)?1:0)
+})
+
+$('.modal-content#closePrompt #closeModal').click(function(){
+    $('.modal-bg').fadeOut()
+})
+$('.modal-content#closePrompt #closeElectron').click(function(){
+    main.send('close-electron')
+})
+$('.modal-content#closePrompt #minToTray').click(function(){
+    main.send('min-toTray')
 })
 //$('.content#testing').show()
 $('button.navlink#genrelist').click()

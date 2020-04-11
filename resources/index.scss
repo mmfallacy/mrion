@@ -938,6 +938,88 @@ html, body{
         }
     }
 }
+.modal-bg{
+    display:none;
+    position:fixed;
+    height:100%;
+    width:100%;
+    top:0;
+    left:0;
+    z-index:2000;
+    background-color: rgba(black,0.8);
+    .modal-content{
+        position:absolute;
+        left:50%;
+        top:50%;
+        transform: translateX(-50%) translateY(-50%);
+        height:200px;
+        width:400px;
+        background-color:white;
+    }
+    #closePrompt{
+        background-color:$color-normal;
+        color:white;
+        .modal-header{
+            height:30px;
+            width:100%;
+            background-color: $color-foreground;
+            display:flex;
+            align-items: center;
+            padding-left:5%;
+            h3{
+                font-size:1rem;
+                color:white;
+            }
+        }
+        #closeModal{
+            position: absolute;
+            top:1%;
+            right:1%;
+            font-size:1.5rem;
+            cursor: pointer;
+            padding:0;
+            color:$color-light;
+            letter-spacing: 0;
+            border:none;
+            background-color: transparent;
+        }
+        p{
+            padding:5%;
+            font-size:.8rem;
+        }
+        .button-group{
+            width:100%;
+            display:flex;
+            justify-content: space-between;
+            padding:0 5%;
+            position: absolute;
+            bottom: 10%;
+            button{
+                padding:2.5% 5%;
+                font-size:.7rem;
+                letter-spacing: .15rem;
+                border-radius: 5rem;
+                border:none;
+                cursor: pointer;
+                transition: transform .5s ease-in;
+                &:hover{
+                    transform:scale(1.05);
+                }
+            }
+            #minToTray{
+                color:white;
+                background-color: $color-foreground;
+                border:2px solid $color-foreground;
+            }
+            #closeElectron{
+                border:2px solid $color-foreground;
+                font-weight: bolder;
+                background-color: $color-normal;
+                color:$color-foreground;
+            }
+        }
+    }
+}
 %overflowbar{
     overflow-y: scroll;
     overflow-x: hidden;

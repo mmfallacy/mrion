@@ -1,5 +1,6 @@
 node_modules/
 dist/
-resources/*.css.map
-resources/*.css
+**/*.css.map
+**/*.css
+!resources/fonts/
 .vscode/
