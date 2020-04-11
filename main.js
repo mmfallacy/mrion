@@ -7,6 +7,38 @@ require('electron-reload')(__dirname, {
   ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
 });
 
+const {Mangakakalots,KissManga} = require('./resources/source-cheerio.js');
+
+let SOURCES = {
+  mangakakalots:{
+      source: new Mangakakalots('https://mangakakalots.com/'),
+      name: "Mangakakalots",
+      sourceId:0,
+      key:'mangakakalots',
+  },
+  manganelo:{
+      source: true,
+      name: "MangaNelo",
+      sourceId:1,
+      key:'manganelo',
+
+  },
+  kissmanga:{
+      source:new KissManga('https://kissmanga.in/'),
+      name:"KissManga",
+      sourceId:2,
+      key:'kissmanga',
+
+  },
+  merakiscans:{
+      source: true,
+      name: "Meraki Scans",
+      sourceId:3,
+      key:'merakiscans',
+
+  },
+}
+
 console.log(process.argv)
 
 var knex = require("knex")({
@@ -16,6 +48,9 @@ var knex = require("knex")({
   }
 });
 var CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname,'userdata','config.json')))
+
+global.SOURCES = SOURCES // EXPOSE TO RENDERER
+global.CONFIG = CONFIG
 
 var mainWindow,tray;
 function createMainWindow () {
@@ -87,4 +122,3 @@ ipcMain.on('getConfig',(evt,key)=>{
 ipcMain.on('settingsUpdated',(evt)=>{
   fs.writeFileSync(path.join(__dirname,'userdata','config.json'), JSON.stringify(CONFIG,null,2))
 })
-ipcMain.on('getConfigObj',evt=>evt.returnValue=CONFIG)

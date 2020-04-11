@@ -1,11 +1,9 @@
-const {ipcRenderer:main} = require('electron');
+const {ipcRenderer:main, remote} = require('electron');
 window.$ = require('jquery')
-const {Mangakakalots,KissManga} = require('./resources/source.js');
 
-var CONFIG = main.sendSync('getConfigObj')
+var CONFIG = remote.getGlobal('CONFIG')
 // --------------------------------------
 $(`.content#settings .setting-group#preload .dropdown .selected`).html(CONFIG.preloadNum)
-console.log(CONFIG.preload)
 if(CONFIG.preload!=0) $(`.content#settings .setting-group#preload .dropdown.select`).removeClass('disabled')
 else $(`.content#settings .setting-group#preload .dropdown.select`).addClass('disabled')
 
@@ -37,35 +35,7 @@ $('.side-bar button.navlink').click(function(){
 
 
 // DROP DOWN SOURCE HANDLER
-let SOURCES = {
-    mangakakalots:{
-        source: new Mangakakalots('https://mangakakalots.com/'),
-        name: "Mangakakalots",
-        sourceId:0,
-        key:'mangakakalots',
-    },
-    manganelo:{
-        source: true,
-        name: "MangaNelo",
-        sourceId:1,
-        key:'manganelo',
-
-    },
-    kissmanga:{
-        source:new KissManga('https://kissmanga.in/'),
-        name:"KissManga",
-        sourceId:2,
-        key:'kissmanga',
-
-    },
-    merakiscans:{
-        source: true,
-        name: "Meraki Scans",
-        sourceId:3,
-        key:'merakiscans',
-
-    },
-}
+let SOURCES = remote.getGlobal('SOURCES')
 let CURRENT_SOURCE;
 let CURRENT_SOURCE_PAGE=1;
 const mangaTemplate = $(`
@@ -167,13 +137,16 @@ async function searchManga({source},keywords){
         STATUS=false;
     }
     if(!STATUS) return
+    if(mangaList.length<1){
+        $('#home-searchManga').append('<h3>No Results</h3>').children("h3").hide().slideDown()
+    }
     for(obj of mangaList){
         appendMangaToHandler('home-searchManga',obj)
     }
 }
 
 function clearMangaHandler(id){
-    $(`#${id} .manga`).fadeOut('fast',function(){        
+    $(`#${id} .manga,#${id} h3`).fadeOut('fast',function(){        
         $(this).parent().empty()
     })
 }

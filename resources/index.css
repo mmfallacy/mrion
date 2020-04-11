@@ -539,6 +539,11 @@ html, body {
   min-height: 0;
 }
 
+.content#home .manga-select .manga-handler#home-searchManga h3 {
+  color: #5F5C5C;
+  margin: auto;
+}
+
 .content#home .manga-select .header {
   width: 98%;
   display: -webkit-box;
