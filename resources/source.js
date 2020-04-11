@@ -8,8 +8,13 @@ class Source {
     }
     async getSourceFromUrl(url){
         let directive = this.directive.discover
-        let {status, data} = await axios.get(url)
-        if(status !== 200) throw 'Not 200'
+        try{
+            var {status, data} = await axios.get(url)
+        }
+        catch(e){
+            status = e
+        }
+        if(status !== 200) return [false,false]
         var $$ = cheerio.load(data)
         return [$$,$$('html')]
     }
@@ -42,6 +47,34 @@ class Source {
     async searchSourceFor(keywords){
         let directive = this.directive.search
         var [$$,$$source] = await this.getSourceFromUrl(`${this.url}${directive.urlAdd}${keywords}`)
+        let mangaList = []
+        $$source.find(directive.mangaList).find(directive.mangaItem).each(function(){
+            let manga = {}
+
+            manga.title = (typeof directive.titleParser!=='function')
+                ? $$(this).find(directive.mangaTitle).html()
+                : directive.titleParser($$,$$(this).find(directive.mangaTitle))
+
+            manga.image = (typeof directive.imgParser!=='function')
+                ? $$(this).find(directive.mangaImage).prop('src')
+                : directive.imgParser($$,$$(this).find(directive.mangaImage))
+
+            manga.latestChap = $$(this).find(directive.latestChap).html()
+
+            manga.rating = (!directive.rating)
+                ? false 
+                : manga.rating= $$(this).find(directive.rating).html()
+            manga.href = $$(this).find(directive.mangaTitle).prop('href')
+            mangaList.push(manga)
+        });
+        
+        return mangaList
+    }
+    async getMangaListFromGenre(href,page){
+        let directive = this.directive.discover
+        var [$$,$$source] = await this.getSourceFromUrl(`${href}${this.directive.genre.pageAdd}${page}`)
+        console.log($$source)
+        if(!$$source) return 404
         let mangaList = []
         $$source.find(directive.mangaList).find(directive.mangaItem).each(function(){
             let manga = {}
@@ -108,7 +141,7 @@ class Source {
 
     }
 }
-class Mangakakalot extends Source{
+class Mangakakalots extends Source{
     constructor(url){
         super(url);
         this.searchBuilder = '_';
@@ -149,8 +182,23 @@ class Mangakakalot extends Source{
                 },
                 descriptionParser: this.descriptionParser,
                 infoParser: this.infoParser
+            },
+            genre:{
+                pageAdd:'&page='
             }
         }
+    }
+    async getGenreList(){
+        var [$$,$$source] = await this.getSourceFromUrl(`${this.url}`)
+        var genres = {}
+        $$source.find('.panel-category table tbody').find('tr').each(function(i){
+            if(i<2) return
+            $$(this).find('td:not(:nth-child(1))').each(function(){
+                let genre = $$(this).text().trim()
+                if(genre) genres[genre] = $$(this).find('a').prop('href').split('&').slice(0,-1).join('&')
+            })
+        })
+        return genres
     }
     
     infoParser($$, $$selector){
@@ -231,7 +279,20 @@ class KissManga extends Source{
                 imgParser:this.imgParser,
                 infoParser: this.infoParser
             },
+            genre:{
+                pageAdd:"/page/"
+            }
         }
+    }
+    async getGenreList(){
+        var [$$,$$source] = await this.getSourceFromUrl(`https://kissmanga.in/?s=&post_type=wp-manga`)
+        var genres = {}
+        $$source.find('.form-group.checkbox-group').find('.checkbox').find('label').each(function(i){
+            let genre = $$(this).text().trim()
+            if(genre==='Xianxia') return
+            if(genre) genres[genre] = `https://kissmanga.in/manga-genre/${genre.split(" ").join('-')}`
+        })
+        return genres
     }
     imgParser($$,$$selector){
         if(!$$selector[0]) return ''
@@ -277,5 +338,5 @@ class KissManga extends Source{
         return info
     }
 }
-module.exports.Mangakakalot = Mangakakalot
+module.exports.Mangakakalots = Mangakakalots
 module.exports.KissManga = KissManga

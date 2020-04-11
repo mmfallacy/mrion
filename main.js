@@ -10,14 +10,14 @@ require('electron-reload')(__dirname, {
   ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
 });
 
-const {Mangakakalot,KissManga} = require('./resources/source.js');
+const {Mangakakalots,KissManga} = require('./resources/source.js');
 
 let SOURCES = {
-  mangakakalot:{
-      source: new Mangakakalot('https://mangakakalot.com/'),
-      name: "Mangakakalot",
+  mangakakalots:{
+      source: new Mangakakalots('https://mangakakalots.com/'),
+      name: "Mangakakalots",
       sourceId:0,
-      key:'mangakakalot',
+      key:'mangakakalots',
   },
   kissmanga:{
       source:new KissManga('https://kissmanga.in/'),

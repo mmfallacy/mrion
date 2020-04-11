@@ -59,14 +59,14 @@ favorites = {
   }
 
 // DROP DOWN SOURCE HANDLER
-const {Mangakakalot,KissManga} = require('./resources/source.js');
+const {Mangakakalots,KissManga} = require('./resources/source.js');
 
 let SOURCES = {
   mangakakalots:{
-      source: new Mangakakalot('https://mangakakalot.com/'),
-      name: "Mangakakalot",
+      source: new Mangakakalots('https://mangakakalots.com/'),
+      name: "Mangakakalots",
       sourceId:0,
-      key:'mangakakalot',
+      key:'mangakakalots',
   },
   kissmanga:{
       source:new KissManga('https://kissmanga.in/'),
@@ -79,6 +79,8 @@ let SOURCES = {
 // let SOURCES = main.getGlobal('SOURCES') 
 let CURRENT_SOURCE;
 let CURRENT_SOURCE_PAGE=1;
+let CURRENT_GENRE_PAGE=1;
+let ISMAXGENREPAGE = false;
 const mangaTemplate = $(`
 <div class="manga">
     <img onerror="this.src='./resources/img/manga-placeholder.png'">
@@ -158,7 +160,7 @@ function appendMangaToHandler(id,obj){
     $(`#${id}`).append($manga)
     $manga.hide().fadeIn('fast')
 }
-let updateMangaTimeout;
+let updateMangaTimeout, updateGenreTimeout,updateMangaGenreTimeout;
 async function updateMangaList({source},page){
     let $loader = $("<div class='overlay'><div class='loader animating'></div></div>");
     let STATUS = true;
@@ -182,6 +184,59 @@ async function updateMangaList({source},page){
         $('.content#home .manga-select').data('loading',false)
     }
 }
+async function updateGenreList({source}){
+    let $loader = $("<div class='overlay'><div class='loader animating'></div></div>");
+    let $genre = $("<div class='genre'></div>")
+    let STATUS = true;
+    let genreList;
+    try{
+        genreList = await source.getGenreList()
+    }catch(err){
+        console.log(err)
+        STATUS = false
+        updateGenreTimeout = setTimeout(()=>{
+            updateGenreList({source})
+        },5000)
+    }
+    if(!STATUS) return
+    $('.content#genrelist .genre-list').empty()
+    for(let [text,href] of Object.entries(genreList)){
+        genre = $genre.clone()
+        genre.data('href',href)
+        genre.html(text)
+        $('.content#genrelist .genre-list').append(genre).hide().fadeIn()
+    }
+}
+async function updateMangaListFromGenre(href,page){
+    let $loader = $("<div class='overlay'><div class='loader animating'></div></div>");
+    let STATUS = true;
+    let mangaList;
+    try{
+        mangaList = await CURRENT_SOURCE.source.getMangaListFromGenre(href,page)
+    }catch(err){
+        console.log(err)
+        STATUS = false
+        $('#genre-MangaList .overlay').remove()
+        updateMangaGenreTimeout = setTimeout(()=>{
+            updateMangaListFromGenre(href,page)
+        },5000)
+    }
+    $('#genre-MangaList').append($loader)
+    $('.content#genrelist .manga-select').data('loading',true)
+    if (mangaList === 404) {
+        ISMAXGENREPAGE = true
+        $('#genre-MangaList .overlay').children().remove().end().append('<div class="nomore">End of page</div>')
+        $('.content#genrelist .manga-select').data('loading',false)
+        return
+    }
+    else ISMAXGENREPAGE = false
+    if(!STATUS) return
+    for(obj of mangaList){
+        appendMangaToHandler('genre-MangaList',obj)
+        $('#genre-MangaList .overlay').remove()
+        $('.content#genrelist .manga-select').data('loading',false)
+    }
+}
 async function searchManga({source},keywords){
     let parsed_keywords = keywords.replace(/\s/g, source.searchBuilder)
     $('#home-searchManga').empty()
@@ -203,7 +258,7 @@ async function searchManga({source},keywords){
 }
 
 function clearMangaHandler(id){
-    $(`#${id} .manga,#${id} h3`).fadeOut('fast',function(){        
+    $(`#${id} .manga,#${id} h3,#${id} .genre`).fadeOut('fast',function(){        
         $(this).parent().empty()
     })
 }
@@ -321,15 +376,25 @@ $('.source-select .option').click(function(){ // OPTION HANDLER FOR SOURCE SELEC
     $(this).hide()
     clearMangaHandler('home-searchManga')
     clearMangaHandler('home-mangaList')
+    clearMangaHandler('genre-MangaList')
     clearTimeout(updateMangaTimeout)
+    clearTimeout(updateGenreTimeout)
     CURRENT_SOURCE = SOURCES[$(this).prop('id')]
     CURRENT_SOURCE_PAGE=1
+    CURRENT_GENRE_PAGE=1
+    $('.content#genrelist .genre-list .genre').fadeOut('fast',function(){
+        $(this).parent().empty()
+    })
     $('.content#home .searchbar *').prop('disabled',false)
     $('.content#home .searchbar *').prop('placeholder',"Enter Keywords...")
     updateMangaList(CURRENT_SOURCE,CURRENT_SOURCE_PAGE)
+    updateGenreList(CURRENT_SOURCE)
 })
 $('.content#home .returnTop').click(function(){ //RETURN TO TOP BUTTON EVT HANDLER
     $('.content#home .manga-select').stop().animate({scrollTop:0}, 500, 'swing');
+})
+$('.content#genrelist .returnTop').click(function(){ //RETURN TO TOP BUTTON EVT HANDLER
+    $(this).parent().stop().animate({scrollTop:0}, 500, 'swing');
 })
 $('.content#home .manga-select').scroll(function() { //LOAD NEW PAGE ON SCROLL TO BOTTOM
     if($(this).scrollTop()>$(this).height())
@@ -343,6 +408,18 @@ $('.content#home .manga-select').scroll(function() { //LOAD NEW PAGE ON SCROLL T
     }
 });
 
+$('.content#genrelist').scroll(function() { //LOAD NEW PAGE ON SCROLL TO BOTTOM
+    if($(this).find("#genre-MangaList").children().length<1) return
+
+    if($(this).scrollTop()>$(this).height())$(this).find('.returnTop').fadeIn().css('display', 'flex');
+    else $(this).find('.returnTop').fadeOut()
+    if(!CURRENT_SOURCE) return
+    if($(this).data("loading")) return
+    let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
+    if(hasReachedBottom&&!ISMAXGENREPAGE){
+        updateMangaListFromGenre($(this).find("#genre-MangaList").data('href'),++CURRENT_GENRE_PAGE)
+    }
+});
 $('.content#home .searchbar *').prop('disabled',true)
 $('.content#home .searchbar button#searchbutton').click(function(){  // SEARCH EVT HANDLER
     searchManga(CURRENT_SOURCE,$(this).siblings('input#searchfield').val())
@@ -359,6 +436,25 @@ $('.content#home .searchbar input#searchfield').click(function(){ // SELECT CONT
 })
 
 $('.manga-handler').on('click','.manga',selectManga) // MANGA COMPONENT CLICK EVT HANDLER
+$('.genre-list').on('click','.genre',function(){
+    $(this).parent().siblings('.manga-handler').data('href',$(this).data('href'))
+    $(this).parent().parent().find('#selectedGenre').html(`${$(this).html()} Mangas`).hide().slideDown()
+    $('.genre').removeClass('active')
+    $(this).addClass('active')
+    $('#genre-MangaList').empty()
+    $('.content#genrelist .header .clear').fadeIn()
+    CURRENT_GENRE_PAGE=1
+    updateMangaListFromGenre($(this).data('href'),CURRENT_GENRE_PAGE)
+})
+$('.content#genrelist .header .clear').click(function(){
+    var $clear = $(this)
+    $("#genre-MangaList .manga").fadeOut('fast',function(){
+        $('.genre').removeClass('active')
+        $(this).parent().parent().find('#selectedGenre').html('').slideUp()
+        $clear.fadeOut()
+        $(this).parent().empty()
+    })
+})
 $('.content#favorites').on('click','.mangas .manga',selectManga) // MANGA COMPONENT CLICK EVT HANDLER (FAVORITES)
 
 $('.content#selectedManga  .manga-info .manga-info-text #back').click(function(){ // SELECTED MANGA BACK EVT HANDLER

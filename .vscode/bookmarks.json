@@ -23,22 +23,22 @@
 				"label": "Sidebar"
 			},
 			{
-				"line": 180,
+				"line": 176,
 				"column": 0,
 				"label": "General Content Class"
 			},
 			{
-				"line": 196,
+				"line": 192,
 				"column": 0,
 				"label": "Settings"
 			},
 			{
-				"line": 299,
+				"line": 295,
 				"column": 0,
 				"label": "Home"
 			},
 			{
-				"line": 509,
+				"line": 505,
 				"column": 0,
 				"label": "Selected"
 			}
@@ -58,17 +58,17 @@
 				"label": "Side-bar"
 			},
 			{
-				"line": 84,
+				"line": 89,
 				"column": 4,
 				"label": "Selected"
 			},
 			{
-				"line": 150,
+				"line": 155,
 				"column": 4,
 				"label": "Latest Manga"
 			},
 			{
-				"line": 159,
+				"line": 164,
 				"column": 4,
 				"label": "Settings"
 			}
