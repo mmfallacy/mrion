@@ -88,6 +88,7 @@ let SOURCES = {
 
   },
 }
+// let SOURCES = main.getGlobal('SOURCES') 
 let CURRENT_SOURCE;
 let CURRENT_SOURCE_PAGE=1;
 const mangaTemplate = $(`
@@ -321,7 +322,8 @@ for([key,value] of Object.entries(SOURCES)){
 for(let [href,obj] of Object.entries(main.sendSync('getFavorites'))){
     $('.content#favorites').find(`#source${SOURCES[obj.sourceKey].sourceId}`).find('.mangas').append(deserializeMangaObj(obj))
 }
-
+let UPDATES = main.sendSync("getUpdates")
+if(UPDATES) parseUpdates(UPDATES)
 $('.source-select .dropdown').click(function(){ // CUSTOM DROPDOWN FOR SOURCE SELECTION
     $(this).toggleClass('active')
 })

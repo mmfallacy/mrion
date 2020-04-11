@@ -20,7 +20,7 @@
       "target": [
         "nsis"
       ],
-      "icon": "resources/img/icon.ico"
+      "icon": "resources/img/icon.png"
     }
   },
   "repository": "https://github.com/electron/electron-quick-start",

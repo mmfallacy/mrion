@@ -95,13 +95,14 @@ class Source {
 
         return obj
     }
-    async checkHrefForUpdates(href,lastChap){
+    async checkHrefForUpdates(href,title,lastChap){
         let directive = this.directive.manga
         var [$$,$$source] = await this.getSourceFromUrl(href)
         let latestChapter = {}
         let $$chapSelector = $$source.find(directive.chapter.parent).find(directive.chapter.el).first()
         latestChapter.text = $$chapSelector.find(directive.chapter.text).text().split(':')[0].trim()
         latestChapter.date = $$chapSelector.find(directive.chapter.date).text().trim()
+        latestChapter.title = title
         if(latestChapter.text===lastChap) return false
         return latestChapter
 

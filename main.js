@@ -1,11 +1,14 @@
-const {app, BrowserWindow, ipcMain,Tray} = require('electron')
+const {app, BrowserWindow, ipcMain,Tray, Menu} = require('electron')
 const path = require('path')
 const fs = require('fs')
-const icon = path.join(__dirname,'resources','img','ico.png')
-require('electron-reload')(__dirname, {
-  electron: require(`${__dirname}/node_modules/electron`),
-  ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
-});
+const icon = path.join(__dirname,'resources','img','iconsmallx.png')
+
+const iconWBubble = path.join(__dirname,'resources','img','iconsmall.png')
+
+// require('electron-reload')(__dirname, {
+//   electron: require(`${__dirname}/node_modules/electron`),
+//   ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
+// });
 
 const {Mangakakalots,KissManga} = require('./resources/source.js');
 
@@ -48,7 +51,7 @@ var knex = require("knex")({
     filename: "./userdata/data.db"
   }
 });
-var CONFIG = JSON.parse(fs.readFileSync(path.join(__dirname,'userdata','config.json')))
+var CONFIG = JSON.parse(fs.readFileSync("./userdata/config.json"))
 var FAVORITES = {}
 
 knex.table('FAVORITES').then(res=>{
@@ -63,8 +66,9 @@ var mainWindow,tray;
 
 async function scheduleUpdater(){
   UPDATED = {}
-  for(let [href,obj] of Object.entries(FAVORITES))
-    UPDATED[href] = await SOURCES[obj.sourceKey].source.checkHrefForUpdates(href,obj.latestChap)
+  for(let [href,obj] of Object.entries(FAVORITES)){
+    UPDATED[href] = await SOURCES[obj.sourceKey].source.checkHrefForUpdates(href,obj.title,obj.latestChap)
+  }
   UPDATES = UPDATED
   return UPDATED
 }
@@ -81,22 +85,71 @@ function createMainWindow () {
   mainWindow.loadFile('index.html')
   mainWindow.webContents.openDevTools({mode:'detach'})
 }
+function showMainWindowFromTray(){
+  createMainWindow()
+  trayMode = false;
+  tray.destroy()
+}
+function createTray(){
+  tray = new Tray(icon)
+
+  
+  const contextMenu = Menu.buildFromTemplate([
+    {label:'Maximize',type:'normal',click:showMainWindowFromTray},
+    {label:'Start Updater',type:'normal',click:updateFunction},
+    {label:'Quit MRION',role:'quit'}
+  ]);
+
+  tray.setContextMenu(contextMenu)
+  tray.setToolTip('MRION')
+
+  trayMode = true;
+
+  
+  tray.on('double-click',(evt)=>{
+    showMainWindowFromTray()
+  })
+  tray.on('balloon-click',(evt)=>{
+    if(!trayMode) return
+    showMainWindowFromTray()
+  })
+}
+function updateFunction(){
+  scheduleUpdater().then((result)=>{
+    let mangas = []
+    for(let [href, obj] of Object.entries(result)){
+      if(typeof obj === 'boolean') continue
+      mangas.push(obj.title)
+      console.log('UPDATE '+obj.title)
+      if(!trayMode) {
+        mainWindow.webContents.send('favoritesUpdate')
+        return
+      }
+    }
+    if(trayMode) {
+      console.log('tray bubble')
+      tray.setImage(iconWBubble)
+      tray.displayBalloon({
+        icon:icon,
+        iconType:'custom',
+        title:'MRION',
+        content: `${mangas.length} mangas updated!`,
+        largeIcon:true
+      })
+    }
+  })
+}
+
 app.whenReady().then(function(){
   if(process.argv[2]=='tray'){
-    console.log('tray opened')
-    tray = new Tray(icon)
+    createTray()
   }
   else createMainWindow()
 })
 
-app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
+app.on('window-all-closed', function (e) {
+  e.preventDefault()
 })
-
-app.on('activate', function () {
-  if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
-})
-
 ipcMain.on('requestSvg',(evt,filename)=>{
   fs.readFile(path.join(__dirname,'resources','img','svg',filename), 'utf8', (err,data)=>{
     if (err) throw err;
@@ -141,19 +194,15 @@ ipcMain.on('getUpdates',(evt)=>{
 })
 
 ipcMain.on('runUpdater',(evt)=>{
-  scheduleUpdater().then((result)=>{
-    for(let [href, obj] of Object.entries(result)){
-      if(typeof obj === 'boolean') continue
-      if(trayMode) console.log("UPDATE ON TRAY")
-      if(mainWindow.isVisible()) {
-        mainWindow.webContents.send('favoritesUpdate')
-        return
-      }
-    }
-  })
+  updateFunction()
 })
 ipcMain.on('updateLatestChap',(evt,data)=>{
   knex.table('FAVORITES').where({href:data.href}).update({latestChap:data.text}).then(()=>{
     FAVORITES[data.href].latestChap = data.text
+    UPDATES[data.href] = false;
   })
+})
+ipcMain.on('min-toTray',(evt)=>{
+  mainWindow.destroy()
+  createTray()
 })
