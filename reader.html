@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';connect-src *;">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self';connect-src *;"> -->
+    <title>Manga Reader</title>
+    <link rel="stylesheet" href="./resources/reader.css">
+    <link rel="stylesheet" href="./resources/fonts/remixicon/remixicon.css">
+  </head>
+  <body class=''>
+    <!-- TITLE -->
+    <div class="side-bar">
+        <img class="logo" src="resources/img/icon.svg"/>
+        <div class="spacer"></div>
+        <button id="editLayout"><span class="ri-layout-5-line"></span>Edit Layout</button>
+        <button id="options"><span class="ri-settings-5-fill"></span>Options</button>
+
+    </div>
+    <button class="ri-arrow-go-back-fill top-button" id="show-main"></button>
+    <div class="content">
+        <div class="image-handler">
+            <img src="resources/img/test.png">
+        </div>
+        <div class="draggable">
+            <div class="button-group">
+                <button class="ri-eye-fill" id="visible"></button>
+                <div class="ri-drag-move-2-line" id="handle"></div>
+            </div>
+            <div class="draggable-content" id="chapterNum">
+                <span class="label">Chapter: </span>
+                <div class="dropdown">
+                    <span class="selected"></span>
+                    <span class="ri-arrow-down-s-fill arrow"></span>
+                    <div class="options">
+                        <span class="option">225</span>
+                        <span class="option">224</span>
+                        <span class="option">223</span>
+                        <span class="option">222</span>
+                        <span class="option">221</span>
+                        <span class="option">220</span>
+                        <span class="option">219</span>
+                        <span class="option">218</span>
+                    </div>
+                </div>
+                <span class="sep">/</span>
+                <span class="text">226</span>
+            </div>
+        </div>
+        <div class="draggable">
+            <div class="button-group">
+                <button class="ri-eye-fill" id="visible"></button>
+                <div class="ri-drag-move-2-line" id="handle"></div>
+            </div>
+            <div class="draggable-content" id="controls">
+                <button id="prevChap"class="ri-arrow-left-circle-fill"></button>
+                <button id="prevImg" class="ri-arrow-left-s-line"></button>
+                
+                <button id="nextImg" class="ri-arrow-right-s-line"></button>
+                <button id="nextChap" class="ri-arrow-right-circle-fill"></button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-bg">
+        <div class="modal-content" id="options">
+            <div class="header"><span>Options</span><button class="ri-close-line closeModal"></button></div>
+
+        </div>
+        <div class="modal-content" id="backprompt">
+            <div class="header"><span>Close Reader</span><button class="ri-close-line closeModal"></button></div>
+
+        </div>  
+    </div>
+  </body>
+  <script>window.jQuery = window.$ = require('jquery')</script>
+  <script src='resources/jquery-ui.min.js'></script>
+  <script src='resources/reader-renderer.js'></script>
+</html>

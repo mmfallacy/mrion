@@ -39,14 +39,25 @@ var knex = require("knex")({
 });
 var CONFIG = JSON.parse(fs.readFileSync("./userdata/config.json"))
 var FAVORITES = {}
+var POSITIONS = {
+  chapterNum:{}
+}
 
 knex.table('FAVORITES').then(res=>{
   for(fav of res)
     FAVORITES[fav.href] = fav
 })
+knex.table('POSITIONS').then(res=>{
+  for(row of res){
+    let {id,...rest} = row
+    POSITIONS[id] = rest
+  }
+  console.log(POSITIONS)
+})
 
 global.SOURCES = SOURCES // EXPOSE TO RENDERER
 global.CONFIG = CONFIG
+
 
 var mainWindow,tray;
 
@@ -70,6 +81,19 @@ function createMainWindow () {
   })
   mainWindow.loadFile('index.html')
   //mainWindow.webContents.openDevTools({mode:'detach'})
+}
+function createReaderWindow(){
+  readerWindow = new BrowserWindow({
+    width: 800,
+    height:900,
+    frame:false,
+    resizable:false,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  })
+  readerWindow.loadFile('reader.html')
+  readerWindow.webContents.openDevTools({mode:'detach'})
 }
 function showMainWindowFromTray(){
   createMainWindow()
@@ -130,7 +154,7 @@ app.whenReady().then(function(){
   if(process.argv[2]=='tray'){
     createTray()
   }
-  else createMainWindow()
+  else createReaderWindow() //createMainWindow()
 })
 
 app.on('window-all-closed', function (e) {
@@ -152,6 +176,11 @@ ipcMain.on('min-electron',(evt)=>{
 ipcMain.on('max-electron',(evt)=>{
   window = mainWindow//BrowserWindow.fromId(evt.frameId)
   window.setFullScreen(!window.isFullScreen());
+})
+
+ipcMain.on('min-toTray',(evt)=>{
+  mainWindow.destroy()
+  createTray()
 })
 ipcMain.on('getFavorites',(evt)=>{
   evt.returnValue = FAVORITES
@@ -188,7 +217,16 @@ ipcMain.on('updateLatestChap',(evt,data)=>{
     UPDATES[data.href] = false;
   })
 })
-ipcMain.on('min-toTray',(evt)=>{
-  mainWindow.destroy()
-  createTray()
+ipcMain.on('getLayoutPositions',(evt)=>{
+  evt.returnValue = POSITIONS
+})
+ipcMain.on('setLayoutPositions',(evt,data)=>{
+  POSITIONS = data
+  for(let[id,val] of Object.entries(data)){
+    if(val.changed){
+      console.log("UPDATED "+id)
+      val.changed = false;
+      knex.table('POSITIONS').where({id:id}).update(val).then()
+    }
+  }
 })

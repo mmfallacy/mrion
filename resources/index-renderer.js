@@ -6,7 +6,7 @@ var CONFIG = remote.getGlobal('CONFIG')
 $(`.content#settings .setting-group#preload .dropdown .selected`).html(CONFIG.preloadNum)
 if(CONFIG.preload!=0) $(`.content#settings .setting-group#preload .dropdown.select`).removeClass('disabled')
 else $(`.content#settings .setting-group#preload .dropdown.select`).addClass('disabled')
-
+$('img').attr('draggable',false)
 for([id,val] of Object.entries(CONFIG))
     $(`.content#settings #${id} input`).prop('checked',val)
 
