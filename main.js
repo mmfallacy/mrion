@@ -5,10 +5,10 @@ const icon = path.join(__dirname,'resources','img','iconsmallx.png')
 
 const iconWBubble = path.join(__dirname,'resources','img','iconsmall.png')
 
-// require('electron-reload')(__dirname, {
-//   electron: require(`${__dirname}/node_modules/electron`),
-//   ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
-// });
+require('electron-reload')(__dirname, {
+  electron: require(`${__dirname}/node_modules/electron`),
+  ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
+});
 
 const {Mangakakalots,KissManga} = require('./resources/source.js');
 

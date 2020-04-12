@@ -831,8 +831,12 @@ html, body{
             margin:10px 1%;
             cursor:pointer;
             transition: background-color .2s ease-in;
-            &:hover, &.active{
+            &:hover{
                 background-color: $color-foreground;
+            }
+            &.active{
+                background-color: $color-foreground;
+                pointer-events: none;
             }
         }
     }
