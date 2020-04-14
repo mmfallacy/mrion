@@ -13,15 +13,18 @@
     <!-- TITLE -->
     <div class="title-bar">
       <img class="logo" src="resources/img/icon.svg"/>
-      <span id="title">MRION <span class="subtitle" id="title-bar-subtitle">Manga Name</span></span>
+      <span id="title">MRION</span>
       <button class="ri-notification-badge-line" id="min-toTray"></button>
       <button class="ri-subtract-line" id="min-electron"></button>
       <button class="ri-checkbox-multiple-blank-line" id="max-electron"></button>
       <button class="ri-close-line" id="close-electron"></button>
     </div>
-    <!-- SIDE BAR -->
+<!-- SIDE BAR -->
     <div class="side-bar">
-      <div class="ri-menu-fill menu"><span class="ri-lock-unlock-line ulock"></span><span class="ri-lock-line lock"></span></div>
+      <div class="ri-menu-fill menu"></div>
+      <button class="navlink" id="search">
+        <span>Search</span>
+      </button>
       <button class="navlink" id="home">
         <span>Home</span>
       </button>
@@ -36,192 +39,66 @@
         <span>Settings</span>
       </button>
     </div>
-    <!-- HOME -->
-    <div class="source-select">Source:
-      <div class="dropdown">
-        <span class="dropdown-arrow ri-arrow-down-s-fill"></span>
-        <div class="selected"></div>
-        <div class="dropdown-options">
-        </div>
-      </div>
+<!-- SOURCE SELECT -->
+    <div class="source-select">
+      <h3 class="selected">Mangakakalots</h3>
+      <button id="changeSource" class="ri-settings-fill"></button>
     </div>
-    <div class="content" id="home">
+<!-- SEARCH -->
+    <div class="content" id="search">
+      <h2>Search</h2>
+      <hr>
+      <div class="searchBar">
+        <input id="searchInput"/>
+        <button id="searchClear" class="ri-close-line"></button>
+        <button id="searchSubmit" class="ri-search-eye-line"></button>
+      </div>
       <br>
-      <br>
-      <div class="manga-select">
+      <div class="searchResults">
         <div class="header">
-          <h2>Search</h2>
-          <div class="searchbar">
-            <input class="searchfield" placeholder="Select Source to Enable" id="searchfield" type="text" />
-            <button id="clearsearchbutton" class="ri-close-line"></button>
-            <button id="searchbutton" class="ri-search-eye-line"></button>
-          </div>
-        </div>
-        <hr>
-        <br>
-        <div class="manga-handler" id="home-searchManga">
-          <!-- MANGA HANDLER -->
-        </div>
-        <h2>Discover</h2>
-        <hr>
-        <br>
-        <div class="manga-handler" id="home-mangaList">
-          <!-- MANGA HANDLER -->
-        </div>
-        <div class="returnTop ri-arrow-up-line"></div>
-      </div>
-    </div>
-    <div class="content" id="genrelist">
-      <br>
-      <br>
-      <h2>Genres</h2>
-      <hr>
-      <div class="genre-list">
-        <h4>Select A Source</h4>
-      </div>
-      <hr>
-      <div class="header"><h2 id="selectedGenre"></h2><button class="clear ri-close-line"></button></div>
-      <hr class="mini">
-      <div class="manga-handler" id="genre-MangaList"></div>
-      <div class="returnTop ri-arrow-up-line"></div>
-    </div>
-    <div class="content" id="favorites">
-      <h2>Favorites</h2>
-      <hr>
-      <br>
-    </div>
-    <div class="content" id="settings">
-      <h2>Settings</h2>
-      <h5>Settings will be saved upon tab change.</h5>
-      <hr>
-      <br>
-      <div class="setting-group" id="notify">
-        <span class="label" >Notify whenever a manga is updated</span>
-        <label class="switch round">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="setting-group" id="startup">
-        <span class="label" >Enable at Startup</span>
-        <label class="switch round">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-      </div>
-      <!-- <div class="setting-group readingmode" id="readMode">
-        <span class="label" >Reading Mode</span>
-        <label class="switch round" id="readHor">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-        <span class="sublabel">Horizontal</span>
-        <span class="label blank"></span>
-        <label class="switch round" id="readVer">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-        <span class="sublabel">Normal</span>
-      </div> -->
-      <div class="setting-group additional" id="preload">
-        <span class="label" >Preload Chapters</span>
-        <label class="switch round">
-          <input type="checkbox">
-          <span class="slider"></span>
-        </label>
-        <div class="dropdown select">
-          <span class="selected">0</span>
-          <span class="ri-arrow-down-s-fill arrow"></span>
-          <div class="options">
-            <span class="option">1</span>
-            <span class="option">2</span>
-            <span class="option">3</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="content" id="selectedManga">
-      <div class="manga-info">
-        <div class="manga-image">
-          <img src="resources/img/manga-placeholder.png" onerror="this.src='resources/img/manga-placeholder.png'"/>
-          <button id="bookmark" class="ri-star-fill"></button>
-        </div>
-        <div class="manga-info-text">
-          <button class="ri-arrow-go-back-fill" id="back"></button>
-          <h2 id="title"> Title </h2>
-          <span id="alt-titles">
-            Alternative 
-          </span>
+          <h4>Results for: "<span id="keywords"></span>"</h4>
           <hr>
-          <div class="absolute-snap">
-            <div class="more-info-card">
-              <div class="info-row" id="author">
-                <span class="label">Author</span>
-                <span class="text">AUTHOR</span>
-              </div>
-              <div class="info-row" id="status">
-                <span class="label">Status</span>
-                <span class="text">STATUS</span>
-              </div>
-              <div class="info-row" id="lastUpdate">
-                <span class="label">Last Update</span>
-                <span class="text">DATE</span>
-              </div>
-              <div class="info-row" id="genres">
-                <span class="label">Genres</span>
-                <div class="text genre">
-                  <span class="genre">GENRE</span>
-                </div>
-              </div>
-              <div class="info-row" id="chapters">
-                <span class="label">Chapters</span>
-                <span class="text">CHAPTERS</span>
-              </div>
-              <div class="info-row" id="rating">
-                <span class="label">Rating</span>
-                <div class="rating text">
-                  <span class="ri-star-line"></span>
-                  <span class="ri-star-line"></span>
-                  <span class="ri-star-line"></span>
-                  <span class="ri-star-line"></span>
-                  <span class="ri-star-line"></span>
-                </div>
-              </div>
-            </div>
-            <div class="description-card" id="description">
-              <span class="label">Description</span>
-              <div class="description text">
-                DESCRIPTION
-              </div>
-              <br>
-            </div>
-          </div>
         </div>
-      </div>
-      <div class="chapter-container">
-        <span class="label">Chapter List: </span>
-        <hr>
-        <div class="chapter-list">
-          <button class="chapter">
-            <span class="chapter-num">Chapter 199</span>
-            <span class="chapter-date">March 31, 2020</span>
-          </button>
+        <div class="manga-wrapper" id='search'>
+        </div>
+        <div class="ri-arrow-up-s-line" id="scrollToTop"></div> 
+        <div class="loading-wrapper">
+          <div class="loader"></div>
         </div>
       </div>
     </div>
+<!-- HOME -->
+    <div class="content" id="home">
+    </div>
+<!-- GENRES -->
+    <div class="content" id="genrelist">
+    </div>
+<!-- FAVORITES -->
+    <div class="content" id="favorites">
+    </div>
+<!-- SETTINGS -->
+    <div class="content" id="settings">
+    </div>
+<!-- MODALS -->
     <div class="modal-bg">
       <div class="modal-content" id="closePrompt">
-        <div class="modal-header">
-          <button id="closeModal" class='ri-close-line'></button>
-          <h3>Close MRION</h3>
+        <div class="header">
+          <span class="title">Close MRION</span>
+          <button id="closeModal" class="ri-close-line"></button>
         </div>
-        <p class='text'>
-          Are you sure you want to close MRION?
-        </p>
+        <p>Are you sure you want to close the app?</p>
         <div class="button-group">
-          <button id="closeElectron">Close App</button>
-          <button id="minToTray">Minimize to Tray</button>
+          <button id="close-electron">Close App</button>
+          <button id="min-toTray">Minimize to Tray</button>
+        </div>
+      </div>
+      <div class="modal-content" id="changeSource">
+        <div class="header">
+          <span class="title">Change Source</span>
+          <button id="closeModal" class="ri-close-line"></button>
+        </div>
+        <h3>Available Sources</h3>
+        <div class="source-list">
         </div>
       </div>
     </div>
