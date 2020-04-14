@@ -4,3 +4,5 @@ dist/
 **/*.css
 !resources/fonts/
 .vscode/
+**/backup-*.*
+userdata/
