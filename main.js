@@ -14,15 +14,13 @@ const {Mangakakalots,KissManga} = require('./resources/source.js');
 
 let SOURCES = {
   mangakakalots:{
-      source: new Mangakakalots('https://mangakakalots.com/'),
+      obj: new Mangakakalots('https://mangakakalots.com/'),
       name: "Mangakakalots",
-      sourceId:0,
       key:'mangakakalots',
   },
   kissmanga:{
-      source:new KissManga('https://kissmanga.in/'),
+      obj:new KissManga('https://kissmanga.in/'),
       name:"KissManga",
-      sourceId:2,
       key:'kissmanga',
 
   }
@@ -69,7 +67,7 @@ function createMainWindow () {
     }
   })
   mainWindow.loadFile('index.html')
-  //mainWindow.webContents.openDevTools({mode:'detach'})
+  mainWindow.webContents.openDevTools({mode:'detach'})
 }
 function showMainWindowFromTray(){
   createMainWindow()

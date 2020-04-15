@@ -5,6 +5,7 @@ class Source {
         this.url = url
         this.directive = {
         }
+        this.sourceKey = 'source';
     }
     async getSourceFromUrl(url){
         let directive = this.directive.discover
@@ -14,14 +15,20 @@ class Source {
         catch(e){
             status = e
         }
-        if(status !== 200) return [false,false]
+        if(status !== 200) {
+            console.log(status)
+            return [false,status]
+        }
         var $$ = cheerio.load(data)
         return [$$,$$('html')]
     }
     async getMangaList(page){
         let directive = this.directive.discover
         var [$$,$$source] = await this.getSourceFromUrl(`${this.url}${directive.urlAdd}${directive.pageAdd}${page}`)
+        if(!$$) return Promise.reject($$source)
+        
         let mangaList = []
+        let sourceKey = this.sourceKey
         $$source.find(directive.mangaList).find(directive.mangaItem).each(function(i,element){
             let manga = {}
             manga.title = (typeof directive.titleParser!=='function')
@@ -32,13 +39,15 @@ class Source {
                 ? $$(this).find(directive.mangaImage).prop('src')
                 : directive.imgParser( $$ , $$(this).find(directive.mangaImage) )
 
-            manga.latestChap = $$(this).find(directive.latestChap).html()
+            manga.latestChap = $$(this).find(directive.latestChap).html().trim()
 
-            manga.rating = (!directive.rating)?
-                false 
+            manga.rating = (!directive.rating)
+                ? -1
                 : manga.rating= $$(this).find(directive.rating).html()
 
             manga.href = $$(this).find(directive.mangaTitle).prop('href')
+
+            manga.sourceKey = sourceKey
 
             mangaList.push(manga)
         });
@@ -47,7 +56,9 @@ class Source {
     async searchSourceFor(keywords){
         let directive = this.directive.search
         var [$$,$$source] = await this.getSourceFromUrl(`${this.url}${directive.urlAdd}${keywords}`)
+        if(!$$) return Promise.reject($$source)
         let mangaList = []
+        let sourceKey = this.sourceKey
         $$source.find(directive.mangaList).find(directive.mangaItem).each(function(){
             let manga = {}
 
@@ -60,11 +71,14 @@ class Source {
                 : directive.imgParser($$,$$(this).find(directive.mangaImage))
 
             manga.latestChap = $$(this).find(directive.latestChap).html()
-
+            if(manga.latestChap) manga.latestChap = manga.latestChap.trim()
             manga.rating = (!directive.rating)
-                ? false 
+                ? -1 
                 : manga.rating= $$(this).find(directive.rating).html()
             manga.href = $$(this).find(directive.mangaTitle).prop('href')
+            
+            manga.sourceKey = sourceKey
+            
             mangaList.push(manga)
         });
         
@@ -73,9 +87,9 @@ class Source {
     async getMangaListFromGenre(href,page){
         let directive = this.directive.discover
         var [$$,$$source] = await this.getSourceFromUrl(`${href}${this.directive.genre.pageAdd}${page}`)
-        console.log($$source)
-        if(!$$source) return 404
+        if(!$$) return Promise.reject(new Error(404))
         let mangaList = []
+        let sourceKey = this.sourceKey
         $$source.find(directive.mangaList).find(directive.mangaItem).each(function(){
             let manga = {}
 
@@ -87,12 +101,15 @@ class Source {
                 ? $$(this).find(directive.mangaImage).prop('src')
                 : directive.imgParser($$,$$(this).find(directive.mangaImage))
 
-            manga.latestChap = $$(this).find(directive.latestChap).html()
+            manga.latestChap = $$(this).find(directive.latestChap).html().trim()
 
             manga.rating = (!directive.rating)
-                ? false 
+                ? -1
                 : manga.rating= $$(this).find(directive.rating).html()
             manga.href = $$(this).find(directive.mangaTitle).prop('href')
+            
+            manga.sourceKey = sourceKey
+            
             mangaList.push(manga)
         });
         
@@ -101,6 +118,8 @@ class Source {
     async scanMangaHref(href){
         let directive = this.directive.manga
         var [$$,$$source] = await this.getSourceFromUrl(href)
+        if(!$$) return Promise.reject($$source)
+
         let obj = {}
 
         obj.image = $$source.find(directive.image).prop('src')
@@ -145,6 +164,7 @@ class Mangakakalots extends Source{
     constructor(url){
         super(url);
         this.searchBuilder = '_';
+        this.sourceKey = 'mangakakalots';
         this.directive = {
             discover: {
                 mangaList : '.truyen-list',
@@ -242,6 +262,7 @@ class KissManga extends Source{
     constructor(url){
         super(url);
         this.searchBuilder = '+';
+        this.sourceKey = 'kissmanga';
         this.directive = {
             discover: {
                 mangaList : '.page-content-listing',

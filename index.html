@@ -41,11 +41,15 @@
     </div>
 <!-- SOURCE SELECT -->
     <div class="source-select">
-      <h3 class="selected">Mangakakalots</h3>
+      <h3 class="selected">Select Source</h3>
       <button id="changeSource" class="ri-settings-fill"></button>
     </div>
 <!-- SEARCH -->
-    <div class="content" id="search">
+    <div class="content no-source" id="search">
+      <div class="overlay">
+        <span>Please select a source first</span>
+      </div>
+      
       <h2>Search</h2>
       <hr>
       <div class="searchBar">
@@ -66,18 +70,29 @@
           <div class="loader"></div>
         </div>
       </div>
+
     </div>
 <!-- HOME -->
-    <div class="content" id="home">
+    <div class="content no-source" id="home">
+      <div class="overlay">
+        <span>Please select a source first</span>
+      </div>
     </div>
 <!-- GENRES -->
-    <div class="content" id="genrelist">
+    <div class="content no-source" id="genrelist">
+      <div class="overlay">
+        <span>Please select a source first</span>
+      </div>
     </div>
 <!-- FAVORITES -->
     <div class="content" id="favorites">
     </div>
 <!-- SETTINGS -->
     <div class="content" id="settings">
+    </div>
+  <!-- SELECTED MANGA -->
+    <div class="selectedManga">
+
     </div>
 <!-- MODALS -->
     <div class="modal-bg">
@@ -100,6 +115,15 @@
         <h3>Available Sources</h3>
         <div class="source-list">
         </div>
+      </div>
+    </div>
+    <div class="popup" id="error">
+      <span class="icon ri-error-warning-fill"></span>
+      <div class="text">
+        <span class="title">ERROR</span>
+        <span id='errorMsg'>
+          
+        </span>
       </div>
     </div>
   </body>

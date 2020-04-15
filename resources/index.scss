@@ -40,7 +40,7 @@ html, body{
     pointer-events:auto;
     display:grid;
     padding-left:1%;
-    grid-template-columns: 4% auto 5% 5% 5% 5%;
+    grid-template-columns: 4% auto 50px 50px 50px 50px;
     align-items: center;
     font-size:.9rem;
     img{
@@ -181,7 +181,6 @@ html, body{
 }
 .content#search{
     @extend %overflowbar;
-    overflow-y: scroll !important;
     padding-top: calc(50px + 1.5%);
     .searchBar{
         border:1px solid white;
@@ -243,6 +242,17 @@ html, body{
 .content#settings{
     background-color: green;
 }
+
+.selectedManga{
+    height:calc(100% - 30px);
+    width:100%;
+    position:absolute;
+    top:30px;
+    left:0;
+    background-color:$color-normal;
+    z-index:100;
+}
+
 
 .modal-bg{
     height:100%;
@@ -328,7 +338,7 @@ html, body{
 .modal-content#changeSource{
     color:white;
     h3{
-        margin-bottom:3%;
+        margin-bottom:5%;
     }
     .source-list{
         @extend %overflowbar;
@@ -347,6 +357,9 @@ html, body{
             color:white;
             margin-bottom:15px;
             cursor:pointer;
+            &.active{
+                background-color: $color-foreground;
+            }
         }
     }
 }
@@ -405,11 +418,9 @@ hr{
     top:0;
     left:0;
     display:none;
-    justify-content: center;
-    align-items: center;
     background-color: $color-light-darker;
     .loading &{
-        display:flex;
+        display:block;
     }
     .loader{
         height:50px;
@@ -417,7 +428,8 @@ hr{
         border: 7.5px solid $color-normal;
         border-top-color: $color-foreground;
         border-radius: 50%;
-        transform: translate(-50%,-50%);
+        margin:30% auto;
+        transform: translate(-50%);
         animation: loading 1s linear infinite;
         @keyframes loading{
             0%{transform: rotate(0deg);}
@@ -429,4 +441,83 @@ hr{
     height:300vh;
     width:20px;
     background-color: green;
+}
+
+.no-source .overlay{
+    height:100%;
+    width:100%;
+    background-color: rgba(black,.9);
+    position: absolute;
+    top:0;
+    left:0;
+    z-index:100;
+    span{
+        color:$color-dark-brighter;
+        font-weight:bolder;
+        position: absolute;
+        left:50%;
+        top:50%;
+        transform: translate(-50%);
+        animation: threeDot 1s ease-in-out infinite;
+        @keyframes threeDot{
+            0%{top:50%}
+            50%{top:52.5%}
+            0%{top:50%}
+        }
+    }
+}
+.popup{
+    height:100px;
+    width:350px;
+    background-color:$color-light;
+    border-radius:1rem;
+    position:fixed;
+    z-index:1000;
+    bottom:2%;
+    right:1.5%;
+    padding:1%;
+    display:none;
+    align-items:center;
+    box-shadow: 0 5px 6px $color-dark;
+    .icon{
+        font-size:5rem;
+        color:$color-invalid;
+        margin-right:10px;
+    }
+    .text{
+        height:87%;
+        width:70%;
+        .title{
+            display:block;
+            color:$color-invalid;
+            font-weight:bolder;
+            font-size:1rem;
+            margin-bottom:1%;
+        }
+        #errorMsg{
+            display:block;
+            font-size:.8rem;
+            text-align:justify;
+            letter-spacing:.125rem;
+        }
+    }
+}
+.manga-wrapper{
+    display:flex;
+    flex-wrap:wrap;
+    .manga{
+        margin-bottom:20px;
+        @media (max-width: 1000px) {
+            margin-right:115px;
+            &:nth-child(3n){
+                margin-right:0;
+            }
+        }
+        @media (min-width: 1000px) {
+            margin-right:55px;
+            &:nth-child(5n){
+                margin-right:0;
+            }
+        }
+    }
 }
