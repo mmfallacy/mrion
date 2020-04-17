@@ -127,11 +127,11 @@ class Source {
         obj.altTitles = $$source.find(directive.altTitle).text().split(',')
         
         let chapters = []
-        
         $$source.find(directive.chapter.parent).find(directive.chapter.el).each(function(){
             let chapter = {}
             chapter.text = $$(this).find(directive.chapter.text).text().split(':')[0].trim()
             chapter.date = $$(this).find(directive.chapter.date).text().trim()
+            chapter.href = $$(this).find(directive.chapter.text).prop('href')
             chapters.push(chapter)
         })
 
@@ -360,4 +360,5 @@ class KissManga extends Source{
     }
 }
 module.exports.Mangakakalots = Mangakakalots
-module.exports.KissManga = KissManga
+//TEMPORARILY DEPRECATED
+//module.exports.KissManga = KissManga

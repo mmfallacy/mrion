@@ -8,12 +8,6 @@ const {Mangakakalots,KissManga} = require('./resources/source.js');
             obj: new Mangakakalots('https://mangakakalots.com/'),
             name: "Mangakakalots",
             key:'mangakakalots',
-        },
-        kissmanga:{
-            obj:new KissManga('https://kissmanga.in/'),
-            name:"KissManga",
-            key:'kissmanga',
-    
         }
     }
     var MRION = {
@@ -244,15 +238,125 @@ const {Mangakakalots,KissManga} = require('./resources/source.js');
     }
 
 // MANGA SELECT HANDLER
+    //* Height of desc set
+    function reflowSMHeight(){
+        let $parent = $('.selectedManga .main-container')
+        let heightTaken = $parent.children('.header-wrapper').height()
+        
+        $parent.find('.desc-wrapper, .cl-wrapper')
+            .height($parent.height() - heightTaken)
+    }
+    $('.selectedManga #smBack').click(function(){
+        let $selectManga = $(this).parent()
+        $selectManga
+            .fadeOut(function(){
+                $(this)
+                    .find('#genres')
+                        .empty()
+                        .end()
+                    .find('#chapter-list')
+                        .empty()
+                        .end()
+                        .find('#title')
+                        .html("TITLE")
+                        .end()
+                    .find('.img-wrapper img')
+                        .prop('src', './resources/img/manga-placeholder.png')
+                        .end()
+                    .find('#status .text')
+                        .html('STATUS')
+                        .end()
+                    .find('#chapters .text')
+                        .html("CHAP")
+                        .end()
+                    .find('#altTitle')
+                        .html("ALT TITLE")
+                        .end()
+                    .find('#authors')
+                        .html("AUTHOR")
+                        .end()
+                    .find('#rating')
+                        .html("RATE")
+                        .end()
+                    .find('#description')
+                        .html(`
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                        `)
+                        .end()
+            })
+    })
+    $('.selectedManga .desc-wrapper .header').click(function(){
+        $(this).parent()
+            .fadeOut(function(){
+                $(this).siblings('.cl-wrapper')
+                    .fadeIn()
+            })
+    })
+    $('.selectedManga .cl-wrapper .header').click(function(){
+        $(this).parent()
+            .fadeOut(function(){
+                $(this).siblings('.desc-wrapper')
+                    .fadeIn()
+            })
+    })
     $('.manga-wrapper').on('click','.manga',
         function(){
             let href = $(this).data('href')
             let source = $(this).data('source')
-            
+            let $selectManga = $('.selectedManga')
+            $selectManga.fadeIn().css('display','flex')
+            $selectManga.addClass('loading')
+            console.log(href)
             source.obj.scanMangaHref(href)
                 .then(function(result){
                     console.log(result)
-                })
+                    result.info.genres.map(function(value){
+                        $selectManga.find('#genres')
+                            .append(`<span class='genre'>${value}</span>`)
+                    })
+                    result.chapters.map(function(obj){
+                        $selectManga.find('#chapter-list')
+                            .append(`
+                            <div class="chapter">
+                                <span class="text">${obj.text}</span>
+                                <span class='date'>${obj.date}</span>
+                            </div>
+                            `)
+                    })
+                    $selectManga
+                        .find('#title')
+                            .html(result.title)
+                            .end()
+                        .find('.img-wrapper img')
+                            .prop('src', result.image)
+                            .end()
+                        .find('#status .text')
+                            .html(result.info.status)
+                            .end()
+                        .find('#chapters .text')
+                            .html(result.chapters.length)
+                            .end()
+                        .find('#altTitle')
+                            .html(result.altTitles.join(', '))
+                            .end()
+                        .find('#authors')
+                            .html(result.info.author.join(', '))
+                            .end()
+                        .find('#rating')
+                            .html(result.info.rating)
+                            .end()
+                        .find('#description')
+                            .html(result.description)
+                            .end()
+            })
+            .then(function(){
+                $selectManga
+                    .find('.loading-wrapper')
+                            .fadeOut(function(){
+                                $(this).parent()
+                                    .removeClass('loading')
+                            })
+            })
         });
 
 // SPAWN ERROR POPUP

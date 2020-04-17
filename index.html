@@ -92,7 +92,62 @@
     </div>
   <!-- SELECTED MANGA -->
     <div class="selectedManga">
-
+      <button id="smBack" class="ri-arrow-go-back-fill"></button>
+      <div class="loading-wrapper">
+        <div class="loader"></div>
+      </div>
+      <div class="side-container">
+        <div class="img-wrapper">
+          <img src='resources/img/manga-placeholder.png' onerror="this.src='./resources/img/manga-placeholder.png'">
+        </div>
+        <div class="button-wrapper">
+          <button id='favorite' class="ri-book-mark-fill">
+          </button>
+          <button id='toggleRead' class="ri-book-mark-fill">
+          </button>
+          <button id='mark' class="ri-book-mark-fill">
+          </button>
+        </div>
+        <div class="info-wrapper">
+          <div class="info completed" id="status">
+            <span class="label">Status:</span>
+            <span class="text">STATUS</span>
+          </div>
+          <div class="info" id="chapters">
+            <span class="label">Chapters:</span>
+            <span class="text">CHAP</span>
+          </div>
+          <div class="rating">
+            <span id='rating'>RATE</span>
+            <span class="star ri-star-fill"></span>
+          </div>
+        </div>
+      </div>
+      <div class="main-container">
+        <div class="header-wrapper">
+          <h2 id='title'>TITLE</h2>
+          <h5 id='altTitle'>ALT TITLE</h5>
+          <hr>
+          <h5 id='authors'>AUTHOR</h5>
+          <div id="genres">
+          </div>
+        </div>
+        <div class='desc-wrapper'>
+          <span class="header">
+            Description
+          </span>
+          <div id="description">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          </div>
+        </div>
+        <div class='cl-wrapper'>
+          <span class="header">
+            Chapter List
+          </span>
+          <div id="chapter-list">
+          </div>
+        </div>
+      </div>
     </div>
 <!-- MODALS -->
     <div class="modal-bg">
