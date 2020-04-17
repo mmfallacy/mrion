@@ -139,7 +139,7 @@ class Source {
             ? 'test'
             : directive.infoParser($$, $$source.find(directive.info))
 
-        obj.chapters = chapters
+        obj.chapters = chapters.reverse()
 
         obj.description = (typeof directive.descriptionParser!=='function')
             ? $$source.find(directive.description).html()

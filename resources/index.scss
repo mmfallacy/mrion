@@ -248,7 +248,7 @@ html, body{
 .selectedManga{
     height:calc(100% - 30px);
     width:100%;
-    display:none;
+    display:flex;
     position:absolute;
     top:30px;
     left:0;
@@ -270,6 +270,10 @@ html, body{
         cursor:pointer;
         &:hover{
             background-color:$color-dark-brighter;
+        }
+        &:disabled{
+            background-color: $color-dark-brighter;
+            cursor:default;
         }
     }
     .loading-wrapper{
@@ -313,13 +317,13 @@ html, body{
                 font-size:1.5rem;
                 letter-spacing:0;
                 position:relative;
+                cursor:pointer;
                 &.active{
                     background-color:$color-foreground;
                 }
-                &:hover{
-                    .tooltip{
-                        display:block;
-                    }
+                &:disabled{
+                    cursor:default;
+                    color:$color-dark-brighter;
                 }
             }
         }
@@ -468,26 +472,66 @@ html, body{
                 box-shadow:0 2px 2px $color-normal;
             }
             #chapter-list{
-                height:93%;
+                height:94%;
                 @extend %overflowbar;
                         --bar-width:1%;
+                display:flex;
+                flex-direction: column-reverse;
                 .chapter{
                     width:100%;
                     padding:1% 2%;
                     color: $color-dark;
-                    border-bottom:1px solid $color-normal;
+                    border-top:1px solid $color-normal;
                     cursor:pointer;
                     display:flex;
+                    align-items: center;
                     .text{
                         display:block;
                         width:70%;
+                        margin-left: 30px;
                     }
                     .date{
                         display:block;
                         width:30%;
                         font-size:.8rem;
+                        height:25px;
+                        line-height: 25px;
                         color:$color-light-darker;
                         text-align:center;
+                    }
+                    #ch-eye,#ch-mark{
+                        height:25px;
+                        width:25px;
+                        letter-spacing: 0;
+                        line-height:25px;
+                        margin-right:5px;
+                        margin-bottom:0;
+                        color: $color-normal;
+                        display:none;
+                    }
+                    &.marked{
+                        background-color: rgb(96, 150, 245) !important;
+                        #ch-mark{
+                            display:block;
+                        }
+                        .text{
+                            margin-left:0;
+                        }
+                        .date{
+                            color:$color-light;
+                        }
+                    }
+                    &.read{
+                        background-color: $color-light-darker;
+                        .text{
+                            margin-left:0;
+                        }
+                        .date{
+                            color:$color-light;
+                        }
+                        #ch-eye{
+                            display:block;
+                        }
                     }
                 }
             }

@@ -30,7 +30,8 @@ const {Mangakakalots} = require('./resources/source.js');
         }
     }
 
-
+// CHAPTER MARK
+    let CHAPTERMARK = main.sendSync('getCHAPTERMARK')
 // | SIDEBAR
     $('.side-bar').children('button').each(function(){
         $(this).prepend($(main.sendSync('requestSvg',`${this.id}.svg`)))
@@ -300,6 +301,61 @@ const {Mangakakalots} = require('./resources/source.js');
                     .fadeIn()
             })
     })
+    $('.selectedManga #chapter-list').on('click', '.chapter', function(){
+        let $parent = $(this).parent()
+        let index = $(this).data('index')
+        let href = $(this).parent().data('href')
+        if($parent.hasClass('readToggle')||$parent.hasClass('markToggle')){
+            let tclass = ($parent.hasClass('readToggle'))?'read':'marked'
+            if($(this).hasClass(tclass)){
+                $(this).removeClass(tclass)
+                CHAPTERMARK[href][tclass.toUpperCase()] = CHAPTERMARK[href][tclass.toUpperCase()].filter(el=>el!==index)
+            }
+            else{
+                $(this).addClass(tclass)
+                if(!Object.keys(CHAPTERMARK).includes(href)) CHAPTERMARK[href] = {READ:[],MARKED:[]}
+                CHAPTERMARK[href][tclass.toUpperCase()].push(index)
+            }
+            return
+        }
+        else{
+            // TOGGLE READ ON FIRST TIME READ
+            if(!Object.keys(CHAPTERMARK).includes(href)) CHAPTERMARK[href] = {READ:[],MARKED:[]}
+            if(!CHAPTERMARK[href].READ.includes(index)){
+                CHAPTERMARK[href].READ.push(index)
+                $(this).addClass('read')
+                main.send('syncCHAPTERMARK', CHAPTERMARK)
+            }
+            console.log('chapter clicked')
+        }
+    })
+    // FAVORITE
+        $('.selectedManga .button-wrapper #toggleFavorite').click(function(){
+
+        });
+        $('.selectedManga .button-wrapper button:not(#toggleFavorite)').click(function(){
+            let tclass = (this.id==='toggleRead')?'readToggle':'markToggle';
+            if($(this).hasClass('active')){
+                // DISABLE BUTTON
+                $('.selectedManga #smBack')
+                    .prop('disabled',false)
+
+                $(this).siblings().not('#toggleFavorite')
+                    .prop('disabled',false)
+                $(this).removeClass('active')
+                $('.selectedManga').find('#chapter-list')
+                    .removeClass(tclass)
+                main.send('syncCHAPTERMARK', CHAPTERMARK)
+            }
+            else{
+                $('.selectedManga #smBack')
+                    .prop('disabled',true)
+                $(this).siblings().not('#toggleFavorite').prop('disabled',true)
+                $(this).addClass('active')
+                $('.selectedManga').find('#chapter-list')
+                    .addClass(tclass)
+            }
+        });
     $('.manga-wrapper').on('click','.manga',
         function(){
             let href = $(this).data('href')
@@ -314,19 +370,42 @@ const {Mangakakalots} = require('./resources/source.js');
                             .css('display','flex')
                         source.obj.scanMangaHref(href)
                             .then(function(result){
-                                console.log(result)
+                                var chapterTemplate = $(`
+                                    <div class="chapter">
+                                        <span class="ri-eye-fill" id="ch-eye"></span>
+                                        <span class="ri-markup-fill" id="ch-mark"></span>
+                                        <span class="text"></span>
+                                        <span class='date'></span>
+                                    </div>
+                                    `)
                                 result.info.genres.map(function(value){
                                     $selectManga.find('#genres')
                                         .append(`<span class='genre'>${value}</span>`)
                                 })
-                                result.chapters.map(function(obj){
+                                var hasCHAPDATA = false;
+                                if(Object.keys(CHAPTERMARK).includes(href)){
+                                    var {READ,MARKED} = CHAPTERMARK[href]
+                                    hasCHAPDATA = true;
+                                }
+                                result.chapters.map(function(obj, i){
+                                    let $chapter = chapterTemplate.clone()
+                                    $chapter
+                                        .data('href', obj.href)
+                                        .data('index', i)
+                                        .find('.text')
+                                            .html(obj.text)
+                                            .end()
+                                        .find('.date')
+                                            .html(obj.date)
+                                            .end()
+
                                     $selectManga.find('#chapter-list')
-                                        .append(`
-                                        <div class="chapter">
-                                            <span class="text">${obj.text}</span>
-                                            <span class='date'>${obj.date}</span>
-                                        </div>
-                                        `)
+                                        .append($chapter)
+
+                                    if(!hasCHAPDATA) return
+
+                                    if(MARKED.includes(i)) $chapter.addClass('marked')
+                                    if(READ.includes(i)) $chapter.addClass('read')
                                 })
                                 $selectManga
                                     .find('#title')
@@ -340,6 +419,10 @@ const {Mangakakalots} = require('./resources/source.js');
                                         .end()
                                     .find('#chapters .text')
                                         .html(result.chapters.length)
+                                        .end()
+                                    .find('#chapter-list')
+                                        .data('href', href)
+                                        .scrollTop(0)
                                         .end()
                                     .find('#altTitle')
                                         .html(result.altTitles.join(', '))

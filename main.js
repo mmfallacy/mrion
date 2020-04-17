@@ -30,6 +30,7 @@ var knex = require("knex")({
   }
 });
 var CONFIG = JSON.parse(fs.readFileSync("./userdata/config.json"))
+var CHAPTERMARK  = JSON.parse(fs.readFileSync("./userdata/chapterdata.json"))
 var FAVORITES = {}
 
 knex.table('FAVORITES').then(res=>{
@@ -179,6 +180,16 @@ ipcMain.on('updateLatestChap',(evt,data)=>{
     FAVORITES[data.href].latestChap = data.text
     UPDATES[data.href] = false;
   })
+})
+ipcMain.on('getCHAPTERMARK',(evt)=>evt.returnValue=CHAPTERMARK)
+ipcMain.on('syncCHAPTERMARK',(evt,data)=>{
+  CHAPTERMARK = data
+
+  // CLEAN CHAPTERMARK OF EMPTY HREFS
+    for(let [href,value] of Object.entries(CHAPTERMARK))
+      if(value.READ.length == 0 && value.MARKED.length == 0)
+        delete CHAPTERMARK[href]
+  fs.writeFileSync(path.join(__dirname,'userdata','chapterdata.json'), JSON.stringify(CHAPTERMARK,null,2))
 })
 ipcMain.on('min-toTray',(evt)=>{
   mainWindow.destroy()
