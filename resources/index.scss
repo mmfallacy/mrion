@@ -349,7 +349,7 @@ html, body{
                 span{
                     letter-spacing:.1rem;
                     color:white;
-                    line-height:30px;
+                    line-height:20px;
                     display:block;
                     height:20px;
                     text-align:center;
@@ -468,9 +468,9 @@ html, body{
                 box-shadow:0 2px 2px $color-normal;
             }
             #chapter-list{
-                height:calc(100% -30px);
+                height:93%;
                 @extend %overflowbar;
-                        --bar-width:5%;
+                        --bar-width:1%;
                 .chapter{
                     width:100%;
                     padding:1% 2%;
