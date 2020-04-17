@@ -470,6 +470,8 @@ html, body{
                 padding-left:2%;
                 background-color: $color-foreground;
                 box-shadow:0 2px 2px $color-normal;
+                position:relative;
+                z-index:101;
             }
             #chapter-list{
                 height:94%;
