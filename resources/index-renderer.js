@@ -218,8 +218,7 @@ const {Mangakakalots} = require('./resources/source.js');
             .html(obj.title)
             
         $manga.find('img')
-            .prop('src',obj.cachedPath || obj.image)
-
+            .prop('src',obj.cachedImage || obj.image)
         if(!obj.latestChap)
             $manga.find('#latestChap, #latestChap+.label')
                 .hide()
@@ -258,6 +257,10 @@ const {Mangakakalots} = require('./resources/source.js');
         obj.sourceKey = $node.data('source').key
 
         return obj
+    }
+// SERIALIZATION OF SELECT MANGA
+    function serializeSelectManga(){
+        
     }
 // MANGA SELECT HANDLER
     //* Height of desc set
@@ -374,6 +377,7 @@ const {Mangakakalots} = require('./resources/source.js');
             console.log('test')
             setTimeout(()=>$this.removeClass('tempDisabled'),2000)
             if(STATUS){
+                
                 main.send('removeFavorite',href)
                 main.once('promise', (event,resolved)=>{
                     if(resolved){

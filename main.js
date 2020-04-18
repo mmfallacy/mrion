@@ -169,8 +169,14 @@ ipcMain.on('getFavorites',(evt)=>{
 })
 ipcMain.on('addFavorite',(evt,data)=>{
   let filename = data.image.split('/').pop()
-  data.cachedPath = `./userdata/fav-cache/${filename}`
-  downloadImage(data.image,data.cachedPath).then(()=>{
+  let [name, ext] = filename.split('.')
+  data.cachedPath = `./userdata/fav-cache/${data.sourceKey}/${name}`
+  data.cachedImage = `${data.cachedPath}/image.${ext}`
+  if (!fs.existsSync(`./userdata/fav-cache/${data.sourceKey}`)){
+    fs.mkdirSync(`./userdata/fav-cache/${data.sourceKey}`);
+  }
+  fs.mkdirSync(data.cachedPath)
+  downloadImage(data.image,data.cachedImage).then(()=>{
     knex.table('FAVORITES').insert(data).then(function(){
       FAVORITES[data.href] = data
       evt.sender.send('promise', true)
@@ -183,7 +189,7 @@ ipcMain.on('addFavorite',(evt,data)=>{
 ipcMain.on('removeFavorite',(evt,href)=>{
   knex.table('FAVORITES').where({href:href}).del().then(function(){
     if(FAVORITES[href].cachedPath)
-      fs.unlink(FAVORITES[href].cachedPath, (err)=>{if(err) throw err})
+      fs.rmdir(FAVORITES[href].cachedPath,{recursive:true}, (err)=>{if(err) throw err})
     delete FAVORITES[href]
     evt.sender.send('promise', true)
   })
