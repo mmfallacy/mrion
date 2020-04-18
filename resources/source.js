@@ -3,14 +3,22 @@ var cheerio = require('cheerio')
 class Source {
     constructor(url){
         this.url = url
+        this.puppeteer = false;
         this.directive = {
         }
         this.sourceKey = 'source';
     }
     async getSourceFromUrl(url){
-        let directive = this.directive.discover
         try{
-            var {status, data} = await axios.get(url)
+            if(!this.puppeteer)
+                var {status, data} = await axios.get(url)
+            else{
+                const browser =  await puppeteer.launch()
+                const page = await browser.newPage()
+                await page.goto(url)
+                await page.waitF
+            }
+
         }
         catch(e){
             status = e
@@ -165,6 +173,7 @@ class Mangakakalots extends Source{
         super(url);
         this.searchBuilder = '_';
         this.sourceKey = 'mangakakalots';
+        this.puppeteer = false;
         this.directive = {
             discover: {
                 mangaList : '.truyen-list',
@@ -263,6 +272,7 @@ class KissManga extends Source{
         super(url);
         this.searchBuilder = '+';
         this.sourceKey = 'kissmanga';
+        this.puppeteer = true;
         this.directive = {
             discover: {
                 mangaList : '.page-content-listing',
@@ -273,7 +283,8 @@ class KissManga extends Source{
                 urlAdd: 'manga-list/',
                 pageAdd: '',
                 rating: '.item-summary .post-total-rating .total_votes',
-                imgParser: this.imgParser
+                imgParser: this.imgParser,
+                waitSelector: '.page-item-detail.manga '
             },
             search: {
                 mangaList : '.c-tabs-item',
@@ -283,7 +294,9 @@ class KissManga extends Source{
                 latestChap: '.tab-meta .latest-chap .chapter a',
                 urlAdd: '?post_type=wp-manga&s=',
                 rating: '.tab-meta .rating .post-total-rating .total_votes',
-                imgParser: this.imgParser
+                imgParser: this.imgParser,
+                waitSelector: '.row.c-tabs-item__content'
+
             },
             manga:{
                 image : '.container .tab-summary .summary_image a img',
@@ -298,7 +311,9 @@ class KissManga extends Source{
                     date: '.chapter-release-date'
                 },
                 imgParser:this.imgParser,
-                infoParser: this.infoParser
+                infoParser: this.infoParser,
+                waitSelector: '.wp-manga-chapter'
+
             },
             genre:{
                 pageAdd:"/page/"

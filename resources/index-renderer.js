@@ -32,6 +32,9 @@ const {Mangakakalots} = require('./resources/source.js');
 
 // CHAPTER MARK
     let CHAPTERMARK = main.sendSync('getCHAPTERMARK')
+
+// FAVORITES
+    let FAVORITES = main.sendSync('getFavorites')
 // | SIDEBAR
     $('.side-bar').children('button').each(function(){
         $(this).prepend($(main.sendSync('requestSvg',`${this.id}.svg`)))
@@ -210,12 +213,12 @@ const {Mangakakalots} = require('./resources/source.js');
         `)
 // DESERIALIZATION OF MANGA OBJECT (OBJ->NODE)
     function deserializeMangaObj(obj){
-        $manga = mangaTemplate.clone()
+        let $manga = mangaTemplate.clone()
         $manga.find('#title')
             .html(obj.title)
             
         $manga.find('img')
-            .prop('src',obj.image)
+            .prop('src',obj.cachedPath || obj.image)
 
         if(!obj.latestChap)
             $manga.find('#latestChap, #latestChap+.label')
@@ -233,11 +236,29 @@ const {Mangakakalots} = require('./resources/source.js');
             })
 
         $manga
+            .data('rating', obj.rating)
             .data('href', obj.href)
-            .data('source', MRION.CURRENT_SOURCE)
+            .data('source', SOURCES[obj.sourceKey])
+            .data('isFavorite', false)
         return $manga
     }
+// SERIALIZATION OF MANGA OBJ (NODE -> OBJ)
+    function serializeMangaNode($node){
+        let obj = {}
+        obj.title = $node.find('#title').html()
+            
+        obj.image = $node.find('img').prop('src')
 
+        obj.latestChap = $node.find('#latestChap').html()
+        
+        obj.rating = $node.data('rating')
+
+        obj.href = $node.data('href')
+
+        obj.sourceKey = $node.data('source').key
+
+        return obj
+    }
 // MANGA SELECT HANDLER
     //* Height of desc set
     function reflowSMHeight(){
@@ -252,8 +273,17 @@ const {Mangakakalots} = require('./resources/source.js');
         $selectManga
             .fadeOut(function(){
                 $(this)
+                    .find('.cl-wrapper .header')
+                        .click()
+                        .end()
+                    .removeData('href')
+                    .removeData('source-group')
+                    .removeData('mangaObj')
                     .find('#genres')
                         .empty()
+                        .end()
+                    .find('#toggleFavorite')
+                        .removeClass('active')
                         .end()
                     .find('#chapter-list')
                         .empty()
@@ -331,7 +361,49 @@ const {Mangakakalots} = require('./resources/source.js');
     })
     // FAVORITE
         $('.selectedManga .button-wrapper #toggleFavorite').click(function(){
-
+            let STATUS = $(this).hasClass('active')
+            let href = $('.selectedManga').data('href')
+            let SGID = $('.selectedManga').data('source-group')
+            let mangaObj = $('.selectedManga').data('mangaObj')
+            let $this = $(this)
+            if($this.hasClass('tempDisabled')) {
+                spawnErrorPopup('Please do not spam the Favorite button.', 'warning')
+                return;
+            }
+            $this.addClass('tempDisabled')
+            console.log('test')
+            setTimeout(()=>$this.removeClass('tempDisabled'),2000)
+            if(STATUS){
+                main.send('removeFavorite',href)
+                main.once('promise', (event,resolved)=>{
+                    if(resolved){
+                        $('.content#favorites').find(`.source-group#${SGID}`)
+                            .find('.manga').filter(function(){return $(this).data('href')===href})
+                                .remove()
+                        $(this).removeClass('active')
+                    }
+                    else{
+                        console.log('error')
+                        spawnErrorPopup(resolved)
+                    }
+                })
+            }
+            else{
+                main.send('addFavorite',mangaObj)
+                main.once('promise', (event,resolved)=>{
+                    if(resolved){
+                        let $manga = deserializeMangaObj(mangaObj)
+                        $manga.data('isFavorite',true)
+                        $('.content#favorites').find(`.source-group#${SGID}`)
+                            .find('.manga-wrapper')
+                                .append($manga)
+                        $(this).addClass('active')
+                    }
+                    else{
+                        spawnErrorPopup(resolved)
+                    }
+                })
+            }
         });
         $('.selectedManga .button-wrapper button:not(#toggleFavorite)').click(function(){
             let tclass = (this.id==='toggleRead')?'readToggle':'markToggle';
@@ -356,11 +428,13 @@ const {Mangakakalots} = require('./resources/source.js');
                     .addClass(tclass)
             }
         });
-    $('.manga-wrapper').on('click','.manga',
+    $('html').on('click','.manga-wrapper .manga',
         function(){
             let href = $(this).data('href')
             let source = $(this).data('source')
+            let isFavorite = $(this).data('isFavorite')
             let $selectManga = $('.selectedManga')
+            let mangaObj = serializeMangaNode($(this))
             $selectManga
                 .addClass('loading')
                 .find('.loading-wrapper')
@@ -408,11 +482,18 @@ const {Mangakakalots} = require('./resources/source.js');
                                     if(READ.includes(i)) $chapter.addClass('read')
                                 })
                                 $selectManga
+                                    .data('href',href)
+                                    .data('source-group',source.key)
+                                    .data('mangaObj', mangaObj)
                                     .find('#title')
                                         .html(result.title)
                                         .end()
                                     .find('.img-wrapper img')
                                         .prop('src', result.image)
+                                        .end()
+                                    .find('#toggleFavorite')
+                                        .addClass((isFavorite)?'active':'')
+                                        .removeClass('tempDisabled')
                                         .end()
                                     .find('#status .text')
                                         .html(result.info.status)
@@ -436,22 +517,76 @@ const {Mangakakalots} = require('./resources/source.js');
                                     .find('#description')
                                         .html(result.description)
                                         .end()
+
+                                reflowSMHeight()
+                                $selectManga
                                     .find('.loading-wrapper')
                                         .fadeOut(function(){
-                                            reflowSMHeight()
                                             $(this).parent()
                                                 .removeClass('loading')
                                         })
-                        })
+                            })
+                            .catch(function(err){
+                                $selectManga.find('#smBack').click()
+                                spawnErrorPopup(err)
+                            })
                     });
         });
+// FAVORITES HANDLER
+    // APPEND CURRENT SOURCES AS SG
+    (function appendSourcesSG(){
+        let SGTemplate = $(`
+            <div class="source-group">
+                <div class="header">
+                    <h3></h3>
+                    <hr>
+                </div>
+                <div class="manga-wrapper">
+                </div>
+                </div>
+            </div>
+        `)
+        for(const [key,value] of Object.entries(SOURCES)){
+            let $SG = SGTemplate.clone()
+            $SG
+                .attr('id', key)
+                .find('.header h3')
+                    .html(value.name)
+            $('.content#favorites')
+                .append($SG)
+        }
+    })();
+    // APPEND CURRENT FAVORITES TO SG
+    (function appendFavoritesToSG(){
+        for(const [href,obj] of Object.entries(FAVORITES)){
+            let $manga = deserializeMangaObj(obj)
+            $manga.data('isFavorite', true)
+            $('.content#favorites').find(`.source-group#${obj.sourceKey}`).find('.manga-wrapper')
+                .append($manga)
+        }
+    })();
+    // SOURCE-GROUP HANDLER
+        $('.content#favorites').on('click','.source-group .header',function(){
+            let $this = $(this).parent()
+            if($this.hasClass('expand')){
+                $this
+                    .height(45)
+                    .removeClass('expand')
+            }
+            else{
+                $this
+                    .height($this.find('.manga-wrapper').height() + 55)
+                    .addClass('expand')
+            }
+        })
 
 // SPAWN ERROR POPUP
-    function spawnErrorPopup(errMsg){
-        let $popup = $('.popup#error')
+    function spawnErrorPopup(msg,type){
+        let id = type || 'error'
+        let $popup = $(`.popup#${id}`)
         $popup
-            .find('#errorMsg')
-                .html(errMsg)
+            .find('#msg')
+                .html(msg)
                 .end()
             .fadeIn()
             .css('display','flex')
@@ -459,12 +594,12 @@ const {Mangakakalots} = require('./resources/source.js');
         setTimeout(function(){
             $popup
                 .fadeOut(function(){
-                    $(this).find('#errorMsg')
+                    $(this).find('#msg')
                         .html('')
                 })
         },5000)
     }
-$('.navlink#search').click()
+$('.navlink#favorites').click()
 
 
 // const Menu = remote.require('electron').Menu

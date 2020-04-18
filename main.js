@@ -1,6 +1,7 @@
 const {app, BrowserWindow, ipcMain,Tray, Menu} = require('electron')
 const path = require('path')
 const fs = require('fs')
+const axios = require('axios')
 const icon = path.join(__dirname,'resources','img','iconsmallx.png')
 
 const iconWBubble = path.join(__dirname,'resources','img','iconsmall.png')
@@ -19,6 +20,23 @@ let SOURCES = {
       key:'mangakakalots',
   }
 }
+
+//https://stackoverflow.com/questions/12740659/downloading-images-with-node-js
+
+const downloadImage = (url, image_path) =>
+  axios({
+    url,
+    responseType: 'stream',
+  }).then(
+    response =>
+      new Promise((resolve, reject) => {
+        response.data
+          .pipe(fs.createWriteStream(image_path))
+          .on('finish', () => resolve())
+          .on('error', e => reject(e));
+      }),
+  );
+
 
 console.log(process.argv)
 var trayMode = false;
@@ -150,12 +168,28 @@ ipcMain.on('getFavorites',(evt)=>{
   evt.returnValue = FAVORITES
 })
 ipcMain.on('addFavorite',(evt,data)=>{
-  knex.table('FAVORITES').insert(data).then()
-  FAVORITES[data.href] = data
+  let filename = data.image.split('/').pop()
+  data.cachedPath = `./userdata/fav-cache/${filename}`
+  downloadImage(data.image,data.cachedPath).then(()=>{
+    knex.table('FAVORITES').insert(data).then(function(){
+      FAVORITES[data.href] = data
+      evt.sender.send('promise', true)
+    })
+  })
+  .catch(function(err){
+    evt.sender.send('promise', err)
+  })
 })
 ipcMain.on('removeFavorite',(evt,href)=>{
-  knex.table('FAVORITES').where({href:href}).del().then()
-  delete FAVORITES[href]
+  knex.table('FAVORITES').where({href:href}).del().then(function(){
+    if(FAVORITES[href].cachedPath)
+      fs.unlink(FAVORITES[href].cachedPath, (err)=>{if(err) throw err})
+    delete FAVORITES[href]
+    evt.sender.send('promise', true)
+  })
+  .catch(function(err){
+    evt.sender.send('promise', err)
+  })
 })
 ipcMain.on('setConfig',(evt,args)=>{
   let [key,val] = args

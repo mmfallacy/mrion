@@ -238,7 +238,23 @@ html, body{
 }
 
 .content#favorites{
-    background-color: orange;
+    .source-group{
+        height:55px;
+        width:100%;
+        background-color:$color-dark-brighter;
+        padding:10px;
+        padding-bottom:5px;
+        overflow:hidden;
+        transition: height .5s ease-in-out;
+        .header{
+            height:45px;
+            cursor:pointer;
+        }
+    }
+    .manga-wrapper{
+        margin:5px;
+        margin-top:10px;
+    }
 }
 
 .content#settings{
@@ -248,7 +264,7 @@ html, body{
 .selectedManga{
     height:calc(100% - 30px);
     width:100%;
-    display:flex;
+    display:none;
     position:absolute;
     top:30px;
     left:0;
@@ -318,6 +334,7 @@ html, body{
                 letter-spacing:0;
                 position:relative;
                 cursor:pointer;
+                transition: background-color .25s ease-in;
                 &.active{
                     background-color:$color-foreground;
                 }
@@ -326,6 +343,14 @@ html, body{
                     color:$color-dark-brighter;
                 }
             }
+            #toggleFavorite{
+                &.tempDisabled{
+                    color: $color-invalid !important;
+                    &.active{
+                        color: $color-dark-brighter !important;
+                    }
+                }
+            }   
         }
         .info-wrapper{
             width:100%;
@@ -437,7 +462,7 @@ html, body{
         .desc-wrapper{
             width:100%;
             background-color:$color-dark-brighter;
-            display:none;
+            display:block;
             .header{
                 display:block;
                 height:30px;
@@ -446,6 +471,7 @@ html, body{
                 padding-left:2%;
                 background-color: $color-foreground;
                 box-shadow:0 2px 2px $color-normal;
+                cursor:pointer;
             }
             #description{
                 @extend %overflowbar;
@@ -462,6 +488,7 @@ html, body{
             width:100%;
             height:70%;
             background-color:$color-light;
+            display:none;
             .header{
                 display:block;
                 height:30px;
@@ -472,10 +499,13 @@ html, body{
                 box-shadow:0 2px 2px $color-normal;
                 position:relative;
                 z-index:101;
+                cursor:pointer;
+
             }
             #chapter-list{
                 height:94%;
                 @extend %overflowbar;
+                        --track-color:$color-dark-brighter;
                         --bar-width:1%;
                 display:flex;
                 flex-direction: column-reverse;
@@ -782,12 +812,20 @@ hr{
             font-size:1rem;
             margin-bottom:1%;
         }
-        #errorMsg{
+        #msg{
             display:block;
             font-size:.8rem;
             text-align:justify;
             letter-spacing:.125rem;
         }
+    }
+}
+.popup#warning{
+    .icon{
+        color:$color-foreground;
+    }
+    .title{
+        color:$color-foreground;
     }
 }
 .manga-wrapper{
