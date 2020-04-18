@@ -219,6 +219,14 @@ const {Mangakakalots} = require('./resources/source.js');
             
         $manga.find('img')
             .prop('src',obj.cachedImage || obj.image)
+
+        if(obj.cachedPath){
+            $manga.data('cached', true)
+            $manga.data('cachedPath', obj.cachedPath)
+        }
+        else 
+            $manga.data('cached', false)
+
         if(!obj.latestChap)
             $manga.find('#latestChap, #latestChap+.label')
                 .hide()
@@ -259,8 +267,82 @@ const {Mangakakalots} = require('./resources/source.js');
         return obj
     }
 // SERIALIZATION OF SELECT MANGA
-    function serializeSelectManga(){
-        
+    function populateSelectManga(result,href,source,isFavorite,mangaObj){
+        let $selectManga = $('.selectedManga')
+        var chapterTemplate = $(`
+                <div class="chapter">
+                    <span class="ri-eye-fill" id="ch-eye"></span>
+                    <span class="ri-markup-fill" id="ch-mark"></span>
+                    <span class="text"></span>
+                    <span class='date'></span>
+                </div>
+                `)
+            result.info.genres.map(function(value){
+                $selectManga.find('#genres')
+                    .append(`<span class='genre'>${value}</span>`)
+            })
+            var hasCHAPDATA = false;
+            if(Object.keys(CHAPTERMARK).includes(href)){
+                var {READ,MARKED} = CHAPTERMARK[href]
+                hasCHAPDATA = true;
+            }
+            result.chapters.map(function(obj, i){
+                let $chapter = chapterTemplate.clone()
+                $chapter
+                    .data('href', obj.href)
+                    .data('index', i)
+                    .find('.text')
+                        .html(obj.text)
+                        .end()
+                    .find('.date')
+                        .html(obj.date)
+                        .end()
+
+                $selectManga.find('#chapter-list')
+                    .append($chapter)
+
+                if(!hasCHAPDATA) return
+
+                if(MARKED.includes(i)) $chapter.addClass('marked')
+                if(READ.includes(i)) $chapter.addClass('read')
+            })
+            $selectManga
+                .data('href',href)
+                .data('source-group',source.key)
+                .data('mangaObj', mangaObj)
+                .data('result',result)
+                .find('#title')
+                    .html(result.title)
+                    .end()
+                .find('.img-wrapper img')
+                    .prop('src', result.image)
+                    .end()
+                .find('#toggleFavorite')
+                    .addClass((isFavorite)?'active':'')
+                    .removeClass('tempDisabled')
+                    .end()
+                .find('#status .text')
+                    .html(result.info.status)
+                    .end()
+                .find('#chapters .text')
+                    .html(result.chapters.length)
+                    .end()
+                .find('#chapter-list')
+                    .data('href', href)
+                    .scrollTop(0)
+                    .end()
+                .find('#altTitle')
+                    .html(result.altTitles.join(', '))
+                    .end()
+                .find('#authors')
+                    .html(result.info.author.join(', '))
+                    .end()
+                .find('#rating')
+                    .html(result.info.rating)
+                    .end()
+                .find('#description')
+                    .html(result.description)
+                    .end()
     }
 // MANGA SELECT HANDLER
     //* Height of desc set
@@ -279,6 +361,7 @@ const {Mangakakalots} = require('./resources/source.js');
                     .find('.cl-wrapper .header')
                         .click()
                         .end()
+                    .removeClass('cached')
                     .removeData('href')
                     .removeData('source-group')
                     .removeData('mangaObj')
@@ -368,6 +451,7 @@ const {Mangakakalots} = require('./resources/source.js');
             let href = $('.selectedManga').data('href')
             let SGID = $('.selectedManga').data('source-group')
             let mangaObj = $('.selectedManga').data('mangaObj')
+            let cachedResult = $('.selectedManga').data('result')
             let $this = $(this)
             if($this.hasClass('tempDisabled')) {
                 spawnErrorPopup('Please do not spam the Favorite button.', 'warning')
@@ -393,7 +477,7 @@ const {Mangakakalots} = require('./resources/source.js');
                 })
             }
             else{
-                main.send('addFavorite',mangaObj)
+                main.send('addFavorite',[mangaObj,cachedResult])
                 main.once('promise', (event,resolved)=>{
                     if(resolved){
                         let $manga = deserializeMangaObj(mangaObj)
@@ -439,6 +523,7 @@ const {Mangakakalots} = require('./resources/source.js');
             let isFavorite = $(this).data('isFavorite')
             let $selectManga = $('.selectedManga')
             let mangaObj = serializeMangaNode($(this))
+            let $this = $(this)
             $selectManga
                 .addClass('loading')
                 .find('.loading-wrapper')
@@ -448,80 +533,10 @@ const {Mangakakalots} = require('./resources/source.js');
                             .css('display','flex')
                         source.obj.scanMangaHref(href)
                             .then(function(result){
-                                var chapterTemplate = $(`
-                                    <div class="chapter">
-                                        <span class="ri-eye-fill" id="ch-eye"></span>
-                                        <span class="ri-markup-fill" id="ch-mark"></span>
-                                        <span class="text"></span>
-                                        <span class='date'></span>
-                                    </div>
-                                    `)
-                                result.info.genres.map(function(value){
-                                    $selectManga.find('#genres')
-                                        .append(`<span class='genre'>${value}</span>`)
-                                })
-                                var hasCHAPDATA = false;
-                                if(Object.keys(CHAPTERMARK).includes(href)){
-                                    var {READ,MARKED} = CHAPTERMARK[href]
-                                    hasCHAPDATA = true;
-                                }
-                                result.chapters.map(function(obj, i){
-                                    let $chapter = chapterTemplate.clone()
-                                    $chapter
-                                        .data('href', obj.href)
-                                        .data('index', i)
-                                        .find('.text')
-                                            .html(obj.text)
-                                            .end()
-                                        .find('.date')
-                                            .html(obj.date)
-                                            .end()
-
-                                    $selectManga.find('#chapter-list')
-                                        .append($chapter)
-
-                                    if(!hasCHAPDATA) return
-
-                                    if(MARKED.includes(i)) $chapter.addClass('marked')
-                                    if(READ.includes(i)) $chapter.addClass('read')
-                                })
-                                $selectManga
-                                    .data('href',href)
-                                    .data('source-group',source.key)
-                                    .data('mangaObj', mangaObj)
-                                    .find('#title')
-                                        .html(result.title)
-                                        .end()
-                                    .find('.img-wrapper img')
-                                        .prop('src', result.image)
-                                        .end()
-                                    .find('#toggleFavorite')
-                                        .addClass((isFavorite)?'active':'')
-                                        .removeClass('tempDisabled')
-                                        .end()
-                                    .find('#status .text')
-                                        .html(result.info.status)
-                                        .end()
-                                    .find('#chapters .text')
-                                        .html(result.chapters.length)
-                                        .end()
-                                    .find('#chapter-list')
-                                        .data('href', href)
-                                        .scrollTop(0)
-                                        .end()
-                                    .find('#altTitle')
-                                        .html(result.altTitles.join(', '))
-                                        .end()
-                                    .find('#authors')
-                                        .html(result.info.author.join(', '))
-                                        .end()
-                                    .find('#rating')
-                                        .html(result.info.rating)
-                                        .end()
-                                    .find('#description')
-                                        .html(result.description)
-                                        .end()
-
+                                console.log('FRESH')
+                                if($this.data('cached'))
+                                    main.send('updateFavCache',[result,$this.data('cachedPath')])
+                                populateSelectManga(result,href,source,isFavorite,mangaObj)
                                 reflowSMHeight()
                                 $selectManga
                                     .find('.loading-wrapper')
@@ -531,6 +546,22 @@ const {Mangakakalots} = require('./resources/source.js');
                                         })
                             })
                             .catch(function(err){
+                                if($this.data('cached')){
+                                    console.log('CACHED')
+                                    spawnErrorPopup('Using Cached Mode due to '+err, 'warning')
+                                    $selectManga.addClass('cached')
+                                    let result = main.sendSync('readFavCache',$this.data('cachedPath'))
+                                    result.image = $this.find('img').prop('src')
+                                    populateSelectManga(result,href,source,isFavorite,mangaObj)
+                                    reflowSMHeight()
+                                    $selectManga
+                                        .find('.loading-wrapper')
+                                            .fadeOut(function(){
+                                                $(this).parent()
+                                                    .removeClass('loading')
+                                            })
+                                    return
+                                }
                                 $selectManga.find('#smBack').click()
                                 spawnErrorPopup(err)
                             })

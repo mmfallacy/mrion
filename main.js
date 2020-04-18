@@ -167,7 +167,8 @@ ipcMain.on('max-electron',(evt)=>{
 ipcMain.on('getFavorites',(evt)=>{
   evt.returnValue = FAVORITES
 })
-ipcMain.on('addFavorite',(evt,data)=>{
+ipcMain.on('addFavorite',(evt,args)=>{
+  let [data,result] = args
   let filename = data.image.split('/').pop()
   let [name, ext] = filename.split('.')
   data.cachedPath = `./userdata/fav-cache/${data.sourceKey}/${name}`
@@ -179,6 +180,7 @@ ipcMain.on('addFavorite',(evt,data)=>{
   downloadImage(data.image,data.cachedImage).then(()=>{
     knex.table('FAVORITES').insert(data).then(function(){
       FAVORITES[data.href] = data
+      fs.writeFileSync(`${data.cachedPath}/result.json`, JSON.stringify(result,null,2))
       evt.sender.send('promise', true)
     })
   })
@@ -197,6 +199,14 @@ ipcMain.on('removeFavorite',(evt,href)=>{
     evt.sender.send('promise', err)
   })
 })
+ipcMain.on('updateFavCache',(evt,data)=>{
+  console.log('Updating Cache')
+  let [result,path] = data
+  fs.writeFileSync(`${path}/result.json`, JSON.stringify(result,null,2))
+})
+ipcMain.on('readFavCache',(evt,path)=>{
+  evt.returnValue = JSON.parse(fs.readFileSync(`${path}/result.json`))
+})
 ipcMain.on('setConfig',(evt,args)=>{
   let [key,val] = args
   CONFIG[key] = val
@@ -206,7 +216,7 @@ ipcMain.on('getConfig',(evt,key)=>{
   evt.returnValue = CONFIG[key]
 })
 ipcMain.on('settingsUpdated',(evt)=>{
-  fs.writeFileSync(path.join(__dirname,'userdata','config.json'), JSON.stringify(CONFIG,null,2))
+  fs.writeFileSync('./userdata/config.json', JSON.stringify(CONFIG,null,2))
 })
 ipcMain.on('getUpdates',(evt)=>{
   evt.returnValue = UPDATES
