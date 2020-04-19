@@ -32,11 +32,13 @@
     "electron-builder": "^22.4.1"
   },
   "dependencies": {
+    "@panzoom/panzoom": "^4.1.0",
     "axios": "^0.19.2",
     "cheerio": "^1.0.0-rc.3",
     "fs": "0.0.1-security",
     "jquery": "^3.4.1",
     "knex": "^0.20.13",
+    "mousetrap": "^1.6.5",
     "os": "^0.1.1",
     "puppeteer": "^3.0.0",
     "sqlite3": "^4.1.1"

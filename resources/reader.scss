@@ -130,9 +130,20 @@ button.top-button{
     transform: translateX(-50%) translateY(-50%);
     margin:auto;
 
-    img{
+    .img-container{
         width:98%;
+        background-color:black;
+        img{
+            width:100%;
+        }
     }
+}
+.pointer{
+    position:fixed;
+    top:50%;
+    left:55%;
+    color:red;
+    transform:translate(-50%);
 }
 .draggable{
     position:absolute;
@@ -235,14 +246,23 @@ button.top-button{
         height:30px;
         width:30px;
         color:white;
-        background-color: $color-foreground;
+        background-color: $color-normal;
         border:none;
         border-radius:5rem;
         font-size:1.2rem;
         cursor:pointer;
+        &:hover{
+            background-color: $color-foreground;
+        }
+        &:disabled{
+            pointer-events: none;
+            color:$color-normal;
+        }
     }
 }
-
+#zoom-controls{
+    @extend #controls;
+}
 .modal-bg{
     display:none;
     position:fixed;

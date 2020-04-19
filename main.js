@@ -288,6 +288,7 @@ ipcMain.on('syncCHAPTERMARK',(evt,data)=>{
         delete CHAPTERMARK[href]
   fs.writeFileSync(path.join(__dirname,'userdata','chapterdata.json'), JSON.stringify(CHAPTERMARK,null,2))
 })
+
 ipcMain.on('min-toTray',(evt)=>{
   mainWindow.destroy()
   createTray()

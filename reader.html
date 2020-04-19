@@ -19,9 +19,41 @@
     </div>
     <button class="ri-arrow-go-back-fill top-button" id="show-main"></button>
     <div class="content">
+        <!-- IMAGE HANDLER -->
         <div class="image-handler">
-            <img src="resources/img/test.png">
+
+            <div class="img-container">
+                <img src="resources/img/test.png">
+            </div>
+
+            <div class="img-container">
+                <img src="resources/img/test.png">
+            </div>
+
+            <div class="img-container">
+                <img src="resources/img/test.png">
+            </div>
+            
+            <div class="img-container">
+                <img src="resources/img/test.png">
+            </div>
+            
+            <div class="img-container">
+                <img src="resources/img/test.png">
+            </div>
+
+            <div class="img-container">
+                <img src="resources/img/test.png">
+            </div>
+
+            <div class="img-container">
+                <img src="resources/img/test.png">
+            </div>
         </div>
+        <!-- FOR CHECKING CURRENT IMG -->
+        <div class="pointer"></div> 
+
+        <!-- DRAGGABLES -->
         <div class="draggable">
             <div class="button-group">
                 <button class="ri-eye-fill" id="visible"></button>
@@ -60,7 +92,21 @@
                 <button id="nextChap" class="ri-arrow-right-circle-fill"></button>
             </div>
         </div>
+        <div class="draggable">
+            <div class="button-group">
+                <button class="ri-eye-fill" id="visible"></button>
+                <div class="ri-drag-move-2-line" id="handle"></div>
+            </div>
+            <div class="draggable-content" id="zoom-controls">
+                <button id="zoomIn"class="ri-zoom-in-fill"></button>
+                <button id="zoomOut" class="ri-zoom-out-fill"></button>
+                <button id="reset" class="ri-find-replace-line"></button>
+               
+            </div>
+        </div>
     </div>
+
+    <!-- MODALS -->
     <div class="modal-bg">
         <div class="modal-content" id="options">
             <div class="header"><span>Options</span><button class="ri-close-line closeModal"></button></div>
