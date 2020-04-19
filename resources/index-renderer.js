@@ -13,6 +13,7 @@ const {Mangakakalots} = require('./resources/source.js');
     var MRION = {
         internalSource:false,
         internalMainPage:1,
+        internalGenrePage:1,
         get CURRENT_SOURCE(){
             return this.internalSource
         },
@@ -25,8 +26,15 @@ const {Mangakakalots} = require('./resources/source.js');
         set CURRENT_MANGA_PAGE(value){
             this.internalMainPage = value
         },
+        get CURRENT_GENRE_MANGA_PAGE(){
+            return this.internalGenrePage;
+        },
+        set CURRENT_GENRE_MANGA_PAGE(value){
+            this.internalGenrePage = value
+        },
         sourceListener: function(newObj){
             this.internalMainPage = 1;
+            this.internalGenrePage = 1;
             if(!this.internalSource){
                 $(".content").filter('#search, #home, #genrelist')
                     .find('.overlay')
@@ -42,6 +50,10 @@ const {Mangakakalots} = require('./resources/source.js');
                             $(".content").filter('#search, #home, #genrelist')
                                 .find('.manga-wrapper')
                                     .empty()
+                                    .end()
+                                .filter('#genrelist')
+                                    .find('.genre-wrapper')
+                                        .empty()
                         })
                 setTimeout(()=>$('.global-loading-wrapper').fadeOut(),2000)
             }
@@ -50,9 +62,18 @@ const {Mangakakalots} = require('./resources/source.js');
             
             let visibleContent = $(".content:visible").attr('id')
 
-            if(visibleContent === 'home'){
+            if(visibleContent === 'home')
                 updateHomeMangaList(this.internalMainPage)
+            else 
+                $('.navlink#home').one('click',()=>updateHomeMangaList(this.internalMainPage))
+            
+            if(visibleContent === 'genrelist'){
+                getGenreList()
             }
+            else
+            $('.navlink#genrelist').one('click',()=>getGenreList())
+                
+            
             $(".content#search #searchClear").click()
         }
     }
@@ -691,6 +712,97 @@ const {Mangakakalots} = require('./resources/source.js');
             updateHomeMangaList(++MRION.CURRENT_MANGA_PAGE)
         }
     })
+// GENRELIST
+    function getGenreList(){
+        let genreTemplate = $(`<div class="genre"></div>`)
+        let $parent = $('.content#genrelist')
+        $parent.find('.genre-list').find('.loading-wrapper')
+            .fadeIn()
+        MRION.CURRENT_SOURCE.obj.getGenreList().then((result)=>{
+            for(const [genre,href] of Object.entries(result)){
+                let $genre = genreTemplate.clone()
+                $genre.html(genre)
+                $genre.data('href',href)
+                $parent.find('.genre-wrapper').append($genre)    
+            }
+        }).then(()=>{
+            $parent.find('.genre-list')
+            .find('.loading-wrapper')
+                .fadeOut()
+                .end()
+            .find('.genre-wrapper').children('.genre')
+                .fadeIn(600)
+        })
+    }
+    function updateGenreMangaList(page){
+        let $parent = $('.content#genrelist')
+        let href = $parent.find('#currentGenre').data('href')
+        $parent.children('.loading-wrapper')
+            .fadeIn()
+        MRION.CURRENT_SOURCE.obj.getMangaListFromGenre(href,page)
+            .then(function(result){
+                if(result ==='NO-MORE'){
+                    $parent
+                        .data('disabled',true)
+                        .children('.loading-wrapper')
+                            .fadeOut()
+                            .end()
+                    spawnErrorPopup('Reached the end of genre page!','warning')
+                }
+                result.map((obj)=>{
+                    let $manga = deserializeMangaObj(obj)
+                    $manga.hide()
+                    $parent.find('.manga-wrapper').append($manga)
+                })
+            })
+            .then(()=>{
+                $parent
+                    .children('.loading-wrapper')
+                        .fadeOut()
+                        .end()
+                    .find('.manga-wrapper').children('.manga')
+                        .fadeIn(600)
+            })
+        console.log('G-PAGE:' + page)
+    }
+    $('.content#genrelist .genre-wrapper').on('click','.genre',function(){
+        let $parent = $('.content#genrelist')
+        $(this)
+            .siblings()
+                .removeClass('active')
+                .end()
+            .addClass('active')
+        MRION.CURRENT_GENRE_MANGA_PAGE = 1;
+        $parent
+            .find('#currentGenre')
+                .html($(this).html())
+                .data('href',$(this).data('href'))
+                .parent()
+                    .hide()
+                    .fadeIn(600)
+                    .end()
+                .end()
+            .find('.manga-wrapper')
+                .children()
+                    .fadeOut(function(){
+                        $(this).remove()
+                    })
+        updateGenreMangaList(MRION.CURRENT_GENRE_MANGA_PAGE)
+    })
+    bindSTTToSelector($('.content#genrelist'))
+    $('.content#genrelist').scroll(function(){
+        if($(this).find('.manga-wrapper').children('.manga').length<1) return;
+        
+        if($(this).scrollTop()>$(this).height())
+            $(this).find('#scrollToTop').fadeIn()
+        else 
+            $(this).find('#scrollToTop').fadeOut()
+        
+        let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
+        if(hasReachedBottom && !$(this).data('disabled')){
+            updateGenreMangaList(++MRION.CURRENT_GENRE_MANGA_PAGE)
+        }
+    })
 // SPAWN ERROR POPUP
     function spawnErrorPopup(msg,type){
         let id = type || 'error'
@@ -710,7 +822,7 @@ const {Mangakakalots} = require('./resources/source.js');
                 })
         },5000)
     }
-$('.navlink#home').click()
+$('.navlink#genrelist').click()
 //$('.source#mangakakalots').click()
 
 // const Menu = remote.require('electron').Menu

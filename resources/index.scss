@@ -257,7 +257,75 @@ html, body{
 }
 
 .content#genrelist{
-    background-color: blue;
+    @extend %overflowbar;
+        --bar-width:0;
+    padding-top: calc(50px + 1.5%);
+    .genre-list{
+        width:100%;
+        min-height:200px;
+        position:relative;
+        margin-bottom:10px;
+        .loading-wrapper{
+            .loader{
+                margin:75px auto;
+            }
+        }
+    }
+    .genre-wrapper{
+        width:100%;
+        background-color:$color-dark-brighter;
+        display:flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        padding-bottom:10px;
+        .genre{
+            background-color: $color-dark;
+            box-shadow: 0 5px 6px rgba($color-dark,0.5);
+            padding:1% 2%;
+            margin:10px;
+            cursor:pointer;
+            transition: background-color .2s ease-in;
+            &:hover{
+                background-color: $color-foreground;
+            }
+            &.active{
+                background-color: $color-foreground;
+                pointer-events: none;
+            }
+        }
+    }
+    .genre-header{
+        display:none;
+        position: sticky;
+        z-index:100;
+        top:-30px;
+        margin:0% -1.5%;
+        width:103%;
+        padding:1.5%;
+        padding-top:30px;
+        background-color:$color-normal;
+    }
+    & > .loading-wrapper{
+        background-color: $color-normal;
+        top:auto;
+        left:auto;
+        position:fixed;
+        bottom:10px;
+        left:75px;
+        height:50px;
+        z-index:12;
+        width:calc(100% - 75px);
+        .loader{
+            margin-top:5px;
+            border: 7.5px solid $color-dark;
+            border-top-color: $color-foreground;
+        }
+    }
+    .manga-wrapper{
+        .manga{
+            --background-color:#{$color-dark-brighter};
+        }
+    }
 }
 
 .content#favorites{

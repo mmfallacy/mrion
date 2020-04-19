@@ -96,7 +96,8 @@ class Source {
     async getMangaListFromGenre(href,page){
         let directive = this.directive.discover
         var [$$,$$source] = await this.getSourceFromUrl(`${href}${this.directive.genre.pageAdd}${page}`)
-        if(!$$) return Promise.reject(new Error(404))
+        if($$source.message==='Network Error') return Promise.reject($$source)
+        if(!$$) return Promise.resolve('NO-MORE')
         let mangaList = []
         let sourceKey = this.sourceKey
         $$source.find(directive.mangaList).find(directive.mangaItem).each(function(){
