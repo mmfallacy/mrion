@@ -30,6 +30,7 @@ const downloadImage = (url, image_path) =>
   }).then(
     response =>
       new Promise((resolve, reject) => {
+        // GET EXT 
         response.data
           .pipe(fs.createWriteStream(image_path))
           .on('finish', () => resolve())
@@ -167,24 +168,17 @@ ipcMain.on('max-electron',(evt)=>{
 ipcMain.on('getFavorites',(evt)=>{
   evt.returnValue = FAVORITES
 })
-ipcMain.on('addFavorite',(evt,args)=>{
-  let [data,result] = args
-  let filename = data.image.split('/').pop()
-  let [name, ext] = filename.split('.')
-  data.cachedPath = `./userdata/fav-cache/${data.sourceKey}/${name}`
-  data.cachedImage = `${data.cachedPath}/image.${ext}`
-  if (!fs.existsSync(`./userdata/fav-cache/${data.sourceKey}`)){
-    fs.mkdirSync(`./userdata/fav-cache/${data.sourceKey}`);
-  }
-  fs.mkdirSync(data.cachedPath)
-  downloadImage(data.image,data.cachedImage).then(()=>{
-    knex.table('FAVORITES').insert(data).then(function(){
-      FAVORITES[data.href] = data
-      fs.writeFileSync(`${data.cachedPath}/result.json`, JSON.stringify(result,null,2))
-      evt.sender.send('promise', true)
-    })
+ipcMain.on('addFavorite',(evt,data)=>{
+  data.cachedPath = 
+    `./userdata/fav-cache/${data.sourceKey}/${data.href.split('/').pop()}`
+  console.log(data)
+
+  knex.table('FAVORITES').insert(data).then(function(){
+    FAVORITES[data.href] = data
+    evt.sender.send('promise', true)
   })
   .catch(function(err){
+    console.log('ERROR: ' + err)
     evt.sender.send('promise', err)
   })
 })
@@ -199,10 +193,22 @@ ipcMain.on('removeFavorite',(evt,href)=>{
     evt.sender.send('promise', err)
   })
 })
+
 ipcMain.on('updateFavCache',(evt,data)=>{
-  console.log('Updating Cache')
-  let [result,path] = data
-  fs.writeFileSync(`${path}/result.json`, JSON.stringify(result,null,2))
+  let [result,href,sourceKey] = data
+  let name = href.split('/').pop()
+  console.log('UPDATING CACHE FOR: ' + name)
+  let path = `./userdata/fav-cache/${sourceKey}/${name}`
+  let image_ext = '.' + result.image.split('.').pop()
+
+  if(!fs.existsSync(`./userdata/fav-cache/${sourceKey}`))
+    fs.mkdirSync(`./userdata/fav-cache/${sourceKey}`)
+  if(!fs.existsSync(path))
+    fs.mkdirSync(path)
+  downloadImage(result.image,`${path}/image` + image_ext).then(()=>{
+    result.image = `${path}/image` + image_ext
+    fs.writeFileSync(`${path}/result.json`, JSON.stringify(result,null,2))
+  })
 })
 ipcMain.on('readFavCache',(evt,path)=>{
   evt.returnValue = JSON.parse(fs.readFileSync(`${path}/result.json`))

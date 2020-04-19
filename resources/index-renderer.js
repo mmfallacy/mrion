@@ -214,18 +214,20 @@ const {Mangakakalots} = require('./resources/source.js');
 // DESERIALIZATION OF MANGA OBJECT (OBJ->NODE)
     function deserializeMangaObj(obj){
         let $manga = mangaTemplate.clone()
+
+        if(obj.cachedPath){
+            $manga.data('cached', true)
+            $manga.data('cachedPath', obj.cachedPath)
+            obj.cachedImage = `${obj.cachedPath}/image.` + obj.image.split('.').pop()
+        }
+        else 
+            $manga.data('cached', false)
+
         $manga.find('#title')
             .html(obj.title)
             
         $manga.find('img')
             .prop('src',obj.cachedImage || obj.image)
-
-        if(obj.cachedPath){
-            $manga.data('cached', true)
-            $manga.data('cachedPath', obj.cachedPath)
-        }
-        else 
-            $manga.data('cached', false)
 
         if(!obj.latestChap)
             $manga.find('#latestChap, #latestChap+.label')
@@ -264,6 +266,9 @@ const {Mangakakalots} = require('./resources/source.js');
 
         obj.sourceKey = $node.data('source').key
 
+        if($node.data('cached')){
+            obj.cachedPath = $node.data('cachedPath')
+        }
         return obj
     }
 // SERIALIZATION OF SELECT MANGA
@@ -451,6 +456,7 @@ const {Mangakakalots} = require('./resources/source.js');
             let href = $('.selectedManga').data('href')
             let SGID = $('.selectedManga').data('source-group')
             let mangaObj = $('.selectedManga').data('mangaObj')
+            // LOAD CURRENT CACHED RESULT
             let cachedResult = $('.selectedManga').data('result')
             let $this = $(this)
             if($this.hasClass('tempDisabled')) {
@@ -477,9 +483,10 @@ const {Mangakakalots} = require('./resources/source.js');
                 })
             }
             else{
-                main.send('addFavorite',[mangaObj,cachedResult])
+                main.send('addFavorite',mangaObj)
                 main.once('promise', (event,resolved)=>{
                     if(resolved){
+                        main.send('updateFavCache',[cachedResult,href,SGID])
                         let $manga = deserializeMangaObj(mangaObj)
                         $manga.data('isFavorite',true)
                         $('.content#favorites').find(`.source-group#${SGID}`)
@@ -499,7 +506,6 @@ const {Mangakakalots} = require('./resources/source.js');
                 // DISABLE BUTTON
                 $('.selectedManga #smBack')
                     .prop('disabled',false)
-
                 $(this).siblings().not('#toggleFavorite')
                     .prop('disabled',false)
                 $(this).removeClass('active')
@@ -535,7 +541,7 @@ const {Mangakakalots} = require('./resources/source.js');
                             .then(function(result){
                                 console.log('FRESH')
                                 if($this.data('cached'))
-                                    main.send('updateFavCache',[result,$this.data('cachedPath')])
+                                    main.send('updateFavCache',[result,href,source.key])
                                 populateSelectManga(result,href,source,isFavorite,mangaObj)
                                 reflowSMHeight()
                                 $selectManga
@@ -551,7 +557,6 @@ const {Mangakakalots} = require('./resources/source.js');
                                     spawnErrorPopup('Using Cached Mode due to '+err, 'warning')
                                     $selectManga.addClass('cached')
                                     let result = main.sendSync('readFavCache',$this.data('cachedPath'))
-                                    result.image = $this.find('img').prop('src')
                                     populateSelectManga(result,href,source,isFavorite,mangaObj)
                                     reflowSMHeight()
                                     $selectManga
