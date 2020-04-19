@@ -47,7 +47,8 @@ class Source {
                 ? $$(this).find(directive.mangaImage).prop('src')
                 : directive.imgParser( $$ , $$(this).find(directive.mangaImage) )
 
-            manga.latestChap = $$(this).find(directive.latestChap).html().trim()
+            manga.latestChap = $$(this).find(directive.latestChap).html()
+            if(manga.latestChap) manga.latestChap = manga.latestChap.trim()
 
             manga.rating = (!directive.rating)
                 ? -1
@@ -109,7 +110,8 @@ class Source {
                 ? $$(this).find(directive.mangaImage).prop('src')
                 : directive.imgParser($$,$$(this).find(directive.mangaImage))
 
-            manga.latestChap = $$(this).find(directive.latestChap).html().trim()
+            manga.latestChap = $$(this).find(directive.latestChap).html()
+            if(manga.latestChap) manga.latestChap = manga.latestChap.trim()
 
             manga.rating = (!directive.rating)
                 ? -1

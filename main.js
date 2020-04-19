@@ -171,7 +171,6 @@ ipcMain.on('getFavorites',(evt)=>{
 ipcMain.on('addFavorite',(evt,data)=>{
   data.cachedPath = 
     `./userdata/fav-cache/${data.sourceKey}/${data.href.split('/').pop()}`
-  console.log(data)
 
   knex.table('FAVORITES').insert(data).then(function(){
     FAVORITES[data.href] = data

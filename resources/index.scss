@@ -230,7 +230,30 @@ html, body{
     }
 }
 .content#home{
-    background-color: red;
+    @extend %overflowbar;
+        --bar-width:0;
+    padding-top: calc(50px + 1.5%);
+    .manga-wrapper{
+        .manga{
+            --background-color:#{$color-dark-brighter};
+        }
+    }
+    .loading-wrapper{
+        background-color: $color-normal;
+        top:auto;
+        left:auto;
+        position:fixed;
+        bottom:10px;
+        left:75px;
+        height:50px;
+        z-index:12;
+        width:calc(100% - 75px);
+        .loader{
+            margin-top:5px;
+            border: 7.5px solid $color-dark;
+            border-top-color: $color-foreground;
+        }
+    }
 }
 
 .content#genrelist{
@@ -718,6 +741,7 @@ hr{
     bottom:1%;
     right:1.75%;
     cursor:pointer;
+    z-index:999;
     &:hover{
         animation: pointUp .5s ease infinite;
     }
@@ -754,6 +778,13 @@ hr{
             100%{transform: rotate(360deg);}
         }
     }
+}
+.global-loading-wrapper{
+    @extend .loading-wrapper;
+    z-index:1000 !important;
+    top:30px;
+    height:calc(100% - 30px);
+    background-color:$color-dark;
 }
 .overflowTest{
     height:300vh;

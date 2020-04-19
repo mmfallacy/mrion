@@ -11,21 +11,48 @@ const {Mangakakalots} = require('./resources/source.js');
         }
     }
     var MRION = {
-        internalSource:0,
+        internalSource:false,
+        internalMainPage:1,
         get CURRENT_SOURCE(){
             return this.internalSource
         },
         set CURRENT_SOURCE(obj){
-            this.internalSource = obj;
             this.sourceListener(obj)
         },
-        sourceListener: (newObj)=>{
-            $(".content").filter('#search, #home, #genrelist')
-                .find('.overlay')
-                    .fadeOut(function(){
-                        $(this).parent()
-                            .removeClass('no-source')
-                    })
+        get CURRENT_MANGA_PAGE(){
+            return this.internalMainPage;
+        },
+        set CURRENT_MANGA_PAGE(value){
+            this.internalMainPage = value
+        },
+        sourceListener: function(newObj){
+            this.internalMainPage = 1;
+            if(!this.internalSource){
+                $(".content").filter('#search, #home, #genrelist')
+                    .find('.overlay')
+                        .fadeOut(function(){
+                            $(this).parent()
+                                .removeClass('no-source')
+                        })
+            }
+            else{
+                //CLEAR MANGA WRAPPERS
+                $('.global-loading-wrapper')
+                        .fadeIn(function(){
+                            $(".content").filter('#search, #home, #genrelist')
+                                .find('.manga-wrapper')
+                                    .empty()
+                        })
+                setTimeout(()=>$('.global-loading-wrapper').fadeOut(),2000)
+            }
+            
+            this.internalSource = newObj;
+            
+            let visibleContent = $(".content:visible").attr('id')
+
+            if(visibleContent === 'home'){
+                updateHomeMangaList(this.internalMainPage)
+            }
             $(".content#search #searchClear").click()
         }
     }
@@ -223,6 +250,11 @@ const {Mangakakalots} = require('./resources/source.js');
         else 
             $manga.data('cached', false)
 
+        if(Object.keys(FAVORITES).includes(obj.href))
+            $manga.data('isFavorite',true)
+        else
+            $manga.data('isFavorite',false)
+
         $manga.find('#title')
             .html(obj.title)
             
@@ -248,7 +280,6 @@ const {Mangakakalots} = require('./resources/source.js');
             .data('rating', obj.rating)
             .data('href', obj.href)
             .data('source', SOURCES[obj.sourceKey])
-            .data('isFavorite', false)
         return $manga
     }
 // SERIALIZATION OF MANGA OBJ (NODE -> OBJ)
@@ -334,7 +365,6 @@ const {Mangakakalots} = require('./resources/source.js');
                     .end()
                 .find('#chapter-list')
                     .data('href', href)
-                    .scrollTop(0)
                     .end()
                 .find('#altTitle')
                     .html(result.altTitles.join(', '))
@@ -411,8 +441,11 @@ const {Mangakakalots} = require('./resources/source.js');
     $('.selectedManga .desc-wrapper .header').click(function(){
         $(this).parent()
             .fadeOut(function(){
-                $(this).siblings('.cl-wrapper')
-                    .fadeIn()
+                $(this)
+                    .siblings('.cl-wrapper')
+                        .fadeIn()
+                    .children('#chapter-list')
+                        .scrollTop(0)
             })
     })
     $('.selectedManga .cl-wrapper .header').click(function(){
@@ -487,8 +520,9 @@ const {Mangakakalots} = require('./resources/source.js');
                 main.once('promise', (event,resolved)=>{
                     if(resolved){
                         main.send('updateFavCache',[cachedResult,href,SGID])
+                        FAVORITES[href] = mangaObj
                         let $manga = deserializeMangaObj(mangaObj)
-                        $manga.data('isFavorite',true)
+                        
                         $('.content#favorites').find(`.source-group#${SGID}`)
                             .find('.manga-wrapper')
                                 .append($manga)
@@ -620,6 +654,43 @@ const {Mangakakalots} = require('./resources/source.js');
             }
         })
 
+// HOME HANDLER
+    function updateHomeMangaList(page){
+        let $parent = $('.content#home')
+        $parent.find('.loading-wrapper')
+            .fadeIn()
+        MRION.CURRENT_SOURCE.obj.getMangaList(page)
+            .then(function(result){
+                result.map((obj)=>{
+                    let $manga = deserializeMangaObj(obj)
+                    $manga.hide()
+                    $parent.find('.manga-wrapper').append($manga)
+                })
+            })
+            .then(()=>{
+                $parent
+                    .find('.loading-wrapper')
+                        .fadeOut()
+                        .end()
+                    .find('.manga-wrapper').children('.manga')
+                        .fadeIn(600)
+            })
+        console.log('PAGE:' + page)
+    }
+    bindSTTToSelector($('.content#home'))
+    $('.content#home').scroll(function(){
+        if($(this).find('.manga-wrapper').children('.manga').length<1) return;
+        
+        if($(this).scrollTop()>$(this).height())
+            $(this).find('#scrollToTop').fadeIn()
+        else 
+            $(this).find('#scrollToTop').fadeOut()
+        
+        let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
+        if(hasReachedBottom){
+            updateHomeMangaList(++MRION.CURRENT_MANGA_PAGE)
+        }
+    })
 // SPAWN ERROR POPUP
     function spawnErrorPopup(msg,type){
         let id = type || 'error'
@@ -639,8 +710,8 @@ const {Mangakakalots} = require('./resources/source.js');
                 })
         },5000)
     }
-$('.navlink#favorites').click()
-
+$('.navlink#home').click()
+//$('.source#mangakakalots').click()
 
 // const Menu = remote.require('electron').Menu
 // const MenuItem = remote.require('electron').MenuItem
