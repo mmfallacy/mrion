@@ -128,7 +128,7 @@ $('#controls')
             
             $('.image-handler').animate({
                 scrollTop: offset
-            },1000, 'swing')
+            },500, 'swing')
         })
         .end()
     .find('#prevImg')
@@ -138,7 +138,7 @@ $('#controls')
             
             $('.image-handler').animate({
                 scrollTop: offset
-            },1000, 'swing')
+            },500, 'swing')
         })
         .end()
 
@@ -264,8 +264,14 @@ function getCurrentShownImage(){
 
 
 // BINDINGS
+KEYBINDS = {
+    PZ_RESET:'ctrl+r',
+    NEXT_IMAGE: 'right',
+    PREV_IMAGE: 'left',
+}
 
-Mousetrap.bind('ctrl+r', function(e){
+
+Mousetrap.bind(KEYBINDS.PZ_RESET, function(e){
     e.preventDefault()
     let target = $(document.elementFromPoint(MOUSE.x,MOUSE.y))
     if(target.is('img'))
@@ -276,4 +282,19 @@ Mousetrap.bind('ctrl+r', function(e){
         target
             .data('panzoom')
                 .reset()
+})
+Mousetrap.bind(KEYBINDS.PREV_IMAGE,function(e){
+    e.preventDefault()
+    let $button = $('#controls').find('#prevImg')
+
+    if(!$button.attr('disabled'))
+        $button.click()
+})
+
+Mousetrap.bind(KEYBINDS.NEXT_IMAGE,function(e){
+    e.preventDefault()
+    let $button = $('#controls').find('#nextImg')
+
+    if(!$button.attr('disabled'))
+        $button.click()
 })
