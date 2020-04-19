@@ -1,562 +1,846 @@
 const {ipcRenderer:main, remote} = require('electron');
 window.$ = require('jquery')
+const {Mangakakalots} = require('./resources/source.js');
 
-var CONFIG = remote.getGlobal('CONFIG')
-// --------------------------------------
-$(`.content#settings .setting-group#preload .dropdown .selected`).html(CONFIG.preloadNum)
-if(CONFIG.preload!=0) $(`.content#settings .setting-group#preload .dropdown.select`).removeClass('disabled')
-else $(`.content#settings .setting-group#preload .dropdown.select`).addClass('disabled')
-$('img').attr('draggable',false)
-for([id,val] of Object.entries(CONFIG))
-    $(`.content#settings #${id} input`).prop('checked',val)
-
-$('.side-bar').children('button').each(function(){
-    $(this).prepend($(main.sendSync('requestSvg',`${this.id}.svg`)))
-});
-$('.title-bar button').each(function(){
-    if(this.id=='close-electron') return
-    else
-    $(this).click(()=> main.send(this.id))
-})
-$('.title-bar button#close-electron').click(function(){
-    console.log('test')
-    $('.modal-bg').fadeIn()
-})
-$('.side-bar div.menu').dblclick(function(){
-    $(this).parent().toggleClass('hold')
-    $(".content.shown").toggleClass('side-bar-docked')
-})
-$('.side-bar button.navlink').click(function(){
-    $('.side-bar button.navlink').removeClass('active')
-    $('.content').removeClass('shown').hide()
-    $(this).addClass('active')
-    $(`.content#${this.id}`).addClass('shown').fadeIn()
-    if(this.id=="settings") $('.side-bar button.navlink:not(#settings)').one('click',()=>{
-        if($('.content#settings').find('h5').data('changed')!=='changed') return;
-        console.log('changed')
-        $('.content#settings').find('h5').slideUp()
-        main.send('settingsUpdated')
-    })
-    if(['home','genrelist'].includes(this.id)) $('.source-select').slideDown()
-    else $('.source-select').slideUp()
-})
-main.on('favoritesUpdate', async () =>{
-    let UPDATES = main.sendSync("getUpdates")
-    parseUpdates(UPDATES)
-    console.log("updated")
-})
-
-//CUSTOM LISTENER TO FAVORITES BUBBLE
-favorites = {
-    aInternal: 0,
-    aListener: function(val) {
-        if(val<=0)
-            $('button.navlink#favorites').children('.bubble').fadeOut()
-        else
-            $('button.navlink#favorites').children('.bubble').fadeIn()
-    },
-    set bubble(val) {
-      this.aInternal = val;
-      this.aListener(val);
-    },
-    get bubble() {
-      return this.aInternal;
+// | SOURCES 
+    let SOURCES = {
+        mangakakalots:{
+            obj: new Mangakakalots('https://mangakakalots.com/'),
+            name: "Mangakakalots",
+            key:'mangakakalots',
+        }
     }
-  }
+    var MRION = {
+        internalSource:false,
+        internalMainPage:1,
+        internalGenrePage:1,
+        get CURRENT_SOURCE(){
+            return this.internalSource
+        },
+        set CURRENT_SOURCE(obj){
+            this.sourceListener(obj)
+        },
+        get CURRENT_MANGA_PAGE(){
+            return this.internalMainPage;
+        },
+        set CURRENT_MANGA_PAGE(value){
+            this.internalMainPage = value
+        },
+        get CURRENT_GENRE_MANGA_PAGE(){
+            return this.internalGenrePage;
+        },
+        set CURRENT_GENRE_MANGA_PAGE(value){
+            this.internalGenrePage = value
+        },
+        sourceListener: function(newObj){
+            this.internalMainPage = 1;
+            this.internalGenrePage = 1;
+            if(!this.internalSource){
+                $(".content").filter('#search, #home, #genrelist')
+                    .find('.overlay')
+                        .fadeOut(function(){
+                            $(this).parent()
+                                .removeClass('no-source')
+                        })
+            }
+            else{
+                //CLEAR MANGA WRAPPERS
+                $('.global-loading-wrapper')
+                        .fadeIn(function(){
+                            $(".content").filter('#search, #home, #genrelist')
+                                .find('.manga-wrapper')
+                                    .empty()
+                                    .end()
+                                .filter('#genrelist')
+                                    .find('.genre-wrapper')
+                                        .empty()
+                        })
+                setTimeout(()=>$('.global-loading-wrapper').fadeOut(),2000)
+            }
+            
+            this.internalSource = newObj;
+            
+            let visibleContent = $(".content:visible").attr('id')
 
-// DROP DOWN SOURCE HANDLER
-const {Mangakakalots,KissManga} = require('./resources/source.js');
+            if(visibleContent === 'home')
+                updateHomeMangaList(this.internalMainPage)
+            else 
+                $('.navlink#home').one('click',()=>updateHomeMangaList(this.internalMainPage))
+            
+            if(visibleContent === 'genrelist'){
+                getGenreList()
+            }
+            else
+            $('.navlink#genrelist').one('click',()=>getGenreList())
+                
+            
+            $(".content#search #searchClear").click()
+        }
+    }
 
-let SOURCES = {
-  mangakakalots:{
-      source: new Mangakakalots('https://mangakakalots.com/'),
-      name: "Mangakakalots",
-      sourceId:0,
-      key:'mangakakalots',
-  },
-  kissmanga:{
-      source:new KissManga('https://kissmanga.in/'),
-      name:"KissManga",
-      sourceId:2,
-      key:'kissmanga',
+// CHAPTER MARK
+    let CHAPTERMARK = main.sendSync('getCHAPTERMARK')
 
-  }
-}
-// let SOURCES = main.getGlobal('SOURCES') 
-let CURRENT_SOURCE;
-let CURRENT_SOURCE_PAGE=1;
+// FAVORITES
+    let FAVORITES = main.sendSync('getFavorites')
+// | SIDEBAR
+    $('.side-bar').children('button').each(function(){
+        $(this).prepend($(main.sendSync('requestSvg',`${this.id}.svg`)))
+    });
+    $('.side-bar button.navlink').click(function(){
+        $('button.navlink')
+            .removeClass('active')
+            .filter(`#${this.id}`)
+            .addClass('active')
 
-let CURRENT_GENRE_PAGE=1;
-let ISMAXGENREPAGE = false;
+        $('.content')
+            .fadeOut()
+            .filter(`#${this.id}`)
+            .fadeIn()
+        // ** ACTIVATE SOURCE SELECT ON CERTAIN CONTENT ELEMENTS ONLY
+        if(['search','home','genrelist'].includes(this.id))
+            $('.source-select').slideDown().css('display','flex')
+        else 
+        $('.source-select').slideUp()
+    })
 
-const mangaTemplate = $(`
-<div class="manga">
-    <img onerror="this.src='./resources/img/manga-placeholder.png'">
-    <div id="rating">
-        <span class="ri-star-line"></span>
-        <span class="ri-star-line"></span>
-        <span class="ri-star-line"></span>
-        <span class="ri-star-line"></span>
-        <span class="ri-star-line"></span>
-    </div>
-    <div class="manga-info">
-        <span id="latestchap">CHAP</span>
-        <span class="label">Latest Chapter:</span>
-        <hr>
-        <span id='title'>TITLE</span>
-    </div>
-</div>
-`)
-const sourceGroupTemplate = $(`
-<div class="source-group">
-    <div class="header">
-        <h3>Mangakakalots</h3>
-        <hr>
-    </div>
-    <div class="mangas-wrapper">
-        <div class="mangas">
-        </div>
-    </div>
-</div>
-`) 
+// | TITLEBAR
+    $('.title-bar button').click(function(){
+        if(this.id=='close-electron')
+            showModal('closePrompt')
+        else
+            main.send(this.id)
+    })
 
+// | MODALS
+    function showModal(id){
+        $('.modal-content')
+            .hide()
+            .filter(`#${id}`)
+            .show()
+        $('.modal-bg').fadeIn()
+    }
+    $('.modal-content #closeModal')
+        .click(()=>$('.modal-bg').fadeOut())
 
-// -------------------------------------- FUNCTIONS
-function parseUpdates(UPDATES){
-    for(let[href, obj] of Object.entries(UPDATES)){
-        if(typeof obj === 'boolean') continue
-        favorites.bubble++;
-        let $manga =
-            $(`.content#favorites .source-group`).find('.mangas').find('.manga').filter(function(){
-                return $(this).data('href') === href
+// | SOURCE SELECT{
+    $('.source-select #changeSource')
+        .click(()=>showModal('changeSource'))
+    // ** ADD OPTIONS TO MODAL
+        for(let [key,value] of Object.entries(SOURCES))
+            $('.modal-content#changeSource .source-list')
+                .append(`<button class="source" id="${key}">${value.name}</button>`)
+    // ** CLICK HANDLER
+        $('.modal-content#changeSource .source-list')
+            .on('click','.source',function(){
+                changeSourceTo(this.id)
+                $(this).parent().find('.source')
+                    .removeClass('active')
+                $(this).addClass('active')
+                $('.modal-bg').fadeOut()
             })
-        $manga.find('.bubble').fadeIn();
-        $manga.one('click',function(){
-            $(this).find('.bubble').fadeOut();
-            favorites.bubble--;
-            main.send('updateLatestChap',{href:href,text:obj.text})
+        function changeSourceTo(key){
+            MRION.CURRENT_SOURCE = SOURCES[key]
+            $('.source-select')
+                .find('.selected')
+                    .hide()
+                    .html(MRION.CURRENT_SOURCE.name)
+                    .fadeIn()
+                    .end()
+        }
+
+// | Search Content
+    bindSTTToSelector($('.content#search'))
+    $('.content#search .searchBar')
+        .find('#searchInput')
+            .keydown(function(e){
+                switch(e.which){
+                    case 13:
+                        $(this).siblings('#searchSubmit')
+                            .click()
+                    break;
+                    case 46:
+                        $(this).siblings('#searchClear')
+                            .click()
+                    break;
+                }
+            }).end()
+        .find('#searchSubmit')
+            .click(function(){
+                let keywords = $(this).siblings('#searchInput').val()
+                console.log(keywords)
+                $searchResults = $('.content#search').find('.searchResults')
+                $searchResults
+                    .addClass('loading')
+                    .find('.loading-wrapper')
+                        .fadeIn(function(){
+                            $(this).parent()
+                                .find('#keywords')
+                                .hide()
+                                .html(keywords)
+                                .fadeIn()
+                        })
+                
+                MRION.CURRENT_SOURCE.obj.searchSourceFor(keywords)
+                    .then(function(result){
+                        // REMOVE LOADER
+                        console.table(result)
+                        $searchResults
+                            .find('.loading-wrapper')
+                                .fadeOut(function(){
+                                    $(this).parent()
+                                        .removeClass('loading')
+                                }).end()
+                            .find('.manga-wrapper#search')
+                                .empty()
+                        for(manga of result)
+                            $searchResults.find('.manga-wrapper#search')
+                                .append(deserializeMangaObj(manga))
+                    })
+                    .catch(function(err){
+                        $searchResults
+                            .find('.loading-wrapper')
+                                .fadeOut(function(){
+                                    $(this).parent()
+                                        .removeClass('loading')
+                                }).end()
+                            .find('.manga-wrapper#search')
+                                .empty()
+                        spawnErrorPopup(err)
+                    })
+            }).end()
+        .find('#searchClear')
+            .click(function(){
+                $(this).siblings('#searchInput').val('')
+                $('.content#search').find('.searchResults')
+                    .find('#keywords')
+                        .fadeOut(function(){
+                            $(this)
+                                .html('')
+                        }).end()
+                    .find('.manga-wrapper#search').children()
+                        .fadeOut(function(){
+                            $(this).remove()
+                        })
+            })
+
+// | ScrollToTop Event
+    function bindSTTToSelector($selector){
+        $selector
+        .scroll(function(){
+            if($(this).scrollTop()>$(this).height())
+                $selector.find('#scrollToTop').fadeIn()
+            else 
+                $selector.find('#scrollToTop').fadeOut()
+        })
+        $selector.find('#scrollToTop')
+            .click(function(){
+                $selector.stop().animate({scrollTop:0}, 500, 'swing');
+            })
+    }
+
+// MANGA OBJECT TEMPLATE
+    const mangaTemplate = $(`
+        <div class="manga">
+            <img onerror="this.src='./resources/img/manga-placeholder.png'">
+            <div id="rating">
+                <span class="ri-star-line"></span>
+                <span class="ri-star-line"></span>
+                <span class="ri-star-line"></span>
+                <span class="ri-star-line"></span>
+                <span class="ri-star-line"></span>
+            </div>
+            <div class="manga-info">
+                <span id="latestChap">CHAP</span>
+                <span class="label">Latest Chapter:</span>
+                <hr>
+                <span id='title'>TITLE</span>
+            </div>
+            <div class="bubble"></div>
+        </div>
+        `)
+// DESERIALIZATION OF MANGA OBJECT (OBJ->NODE)
+    function deserializeMangaObj(obj){
+        let $manga = mangaTemplate.clone()
+
+        if(obj.cachedPath){
+            $manga.data('cached', true)
+            $manga.data('cachedPath', obj.cachedPath)
+            obj.cachedImage = `${obj.cachedPath}/image.` + obj.image.split('.').pop()
+        }
+        else 
+            $manga.data('cached', false)
+
+        if(Object.keys(FAVORITES).includes(obj.href))
+            $manga.data('isFavorite',true)
+        else
+            $manga.data('isFavorite',false)
+
+        $manga.find('#title')
+            .html(obj.title)
+            
+        $manga.find('img')
+            .prop('src',obj.cachedImage || obj.image)
+
+        if(!obj.latestChap)
+            $manga.find('#latestChap, #latestChap+.label')
+                .hide()
+        else
+            $manga.find('#latestChap')
+                .html(obj.latestChap)
+
+        if(obj.rating==-1) 
+            $manga.find('#rating').hide()
+        else
+            $manga.find('#rating span').each(function(i){
+                if(obj.rating-i>.75) $(this).attr('class','ri-star-fill')
+                else if(obj.rating-i>.25) $(this).attr('class','ri-star-half-line')
+            })
+
+        $manga
+            .data('rating', obj.rating)
+            .data('href', obj.href)
+            .data('source', SOURCES[obj.sourceKey])
+        return $manga
+    }
+// SERIALIZATION OF MANGA OBJ (NODE -> OBJ)
+    function serializeMangaNode($node){
+        let obj = {}
+        obj.title = $node.find('#title').html()
+            
+        obj.image = $node.find('img').prop('src')
+
+        obj.latestChap = $node.find('#latestChap').html()
+        
+        obj.rating = $node.data('rating')
+
+        obj.href = $node.data('href')
+
+        obj.sourceKey = $node.data('source').key
+
+        if($node.data('cached')){
+            obj.cachedPath = $node.data('cachedPath')
+        }
+        return obj
+    }
+// SERIALIZATION OF SELECT MANGA
+    function populateSelectManga(result,href,source,isFavorite,mangaObj){
+        let $selectManga = $('.selectedManga')
+        var chapterTemplate = $(`
+                <div class="chapter">
+                    <span class="ri-eye-fill" id="ch-eye"></span>
+                    <span class="ri-markup-fill" id="ch-mark"></span>
+                    <span class="text"></span>
+                    <span class='date'></span>
+                </div>
+                `)
+            result.info.genres.map(function(value){
+                $selectManga.find('#genres')
+                    .append(`<span class='genre'>${value}</span>`)
+            })
+            var hasCHAPDATA = false;
+            if(Object.keys(CHAPTERMARK).includes(href)){
+                var {READ,MARKED} = CHAPTERMARK[href]
+                hasCHAPDATA = true;
+            }
+            result.chapters.map(function(obj, i){
+                let $chapter = chapterTemplate.clone()
+                $chapter
+                    .data('href', obj.href)
+                    .data('index', i)
+                    .find('.text')
+                        .html(obj.text)
+                        .end()
+                    .find('.date')
+                        .html(obj.date)
+                        .end()
+
+                $selectManga.find('#chapter-list')
+                    .append($chapter)
+
+                if(!hasCHAPDATA) return
+
+                if(MARKED.includes(i)) $chapter.addClass('marked')
+                if(READ.includes(i)) $chapter.addClass('read')
+            })
+            $selectManga
+                .data('href',href)
+                .data('source-group',source.key)
+                .data('mangaObj', mangaObj)
+                .data('result',result)
+                .find('#title')
+                    .html(result.title)
+                    .end()
+                .find('.img-wrapper img')
+                    .prop('src', result.image)
+                    .end()
+                .find('#toggleFavorite')
+                    .addClass((isFavorite)?'active':'')
+                    .removeClass('tempDisabled')
+                    .end()
+                .find('#status .text')
+                    .html(result.info.status)
+                    .end()
+                .find('#chapters .text')
+                    .html(result.chapters.length)
+                    .end()
+                .find('#chapter-list')
+                    .data('href', href)
+                    .end()
+                .find('#altTitle')
+                    .html(result.altTitles.join(', '))
+                    .end()
+                .find('#authors')
+                    .html(result.info.author.join(', '))
+                    .end()
+                .find('#rating')
+                    .html(result.info.rating)
+                    .end()
+                .find('#description')
+                    .html(result.description)
+                    .end()
+    }
+// MANGA SELECT HANDLER
+    //* Height of desc set
+    function reflowSMHeight(){
+        let $parent = $('.selectedManga .main-container')
+        let heightTaken = $parent.children('.header-wrapper').height()
+        
+        $parent.find('.desc-wrapper, .cl-wrapper')
+            .height($parent.height() - heightTaken)
+    }
+    $('.selectedManga #smBack').click(function(){
+        let $selectManga = $(this).parent()
+        $selectManga
+            .fadeOut(function(){
+                $(this)
+                    .find('.cl-wrapper .header')
+                        .click()
+                        .end()
+                    .removeClass('cached')
+                    .removeData('href')
+                    .removeData('source-group')
+                    .removeData('mangaObj')
+                    .find('#genres')
+                        .empty()
+                        .end()
+                    .find('#toggleFavorite')
+                        .removeClass('active')
+                        .end()
+                    .find('#chapter-list')
+                        .empty()
+                        .end()
+                        .find('#title')
+                        .html("TITLE")
+                        .end()
+                    .find('.img-wrapper img')
+                        .prop('src', './resources/img/manga-placeholder.png')
+                        .end()
+                    .find('#status .text')
+                        .html('STATUS')
+                        .end()
+                    .find('#chapters .text')
+                        .html("CHAP")
+                        .end()
+                    .find('#altTitle')
+                        .html("ALT TITLE")
+                        .end()
+                    .find('#authors')
+                        .html("AUTHOR")
+                        .end()
+                    .find('#rating')
+                        .html("RATE")
+                        .end()
+                    .find('#description')
+                        .html(`
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                        `)
+                        .end()
+                    .addClass('loading')
+            })
+    })
+    $('.selectedManga .desc-wrapper .header').click(function(){
+        $(this).parent()
+            .fadeOut(function(){
+                $(this)
+                    .siblings('.cl-wrapper')
+                        .fadeIn()
+                    .children('#chapter-list')
+                        .scrollTop(0)
+            })
+    })
+    $('.selectedManga .cl-wrapper .header').click(function(){
+        $(this).parent()
+            .fadeOut(function(){
+                $(this).siblings('.desc-wrapper')
+                    .fadeIn()
+            })
+    })
+    $('.selectedManga #chapter-list').on('click', '.chapter', function(){
+        let $parent = $(this).parent()
+        let index = $(this).data('index')
+        let href = $(this).parent().data('href')
+        if($parent.hasClass('readToggle')||$parent.hasClass('markToggle')){
+            let tclass = ($parent.hasClass('readToggle'))?'read':'marked'
+            if($(this).hasClass(tclass)){
+                $(this).removeClass(tclass)
+                CHAPTERMARK[href][tclass.toUpperCase()] = CHAPTERMARK[href][tclass.toUpperCase()].filter(el=>el!==index)
+            }
+            else{
+                $(this).addClass(tclass)
+                if(!Object.keys(CHAPTERMARK).includes(href)) CHAPTERMARK[href] = {READ:[],MARKED:[]}
+                CHAPTERMARK[href][tclass.toUpperCase()].push(index)
+            }
+            return
+        }
+        else{
+            // TOGGLE READ ON FIRST TIME READ
+            if(!Object.keys(CHAPTERMARK).includes(href)) CHAPTERMARK[href] = {READ:[],MARKED:[]}
+            if(!CHAPTERMARK[href].READ.includes(index)){
+                CHAPTERMARK[href].READ.push(index)
+                $(this).addClass('read')
+                main.send('syncCHAPTERMARK', CHAPTERMARK)
+            }
+            console.log('chapter clicked')
+        }
+    })
+    // FAVORITE
+        $('.selectedManga .button-wrapper #toggleFavorite').click(function(){
+            let STATUS = $(this).hasClass('active')
+            let href = $('.selectedManga').data('href')
+            let SGID = $('.selectedManga').data('source-group')
+            let mangaObj = $('.selectedManga').data('mangaObj')
+            // LOAD CURRENT CACHED RESULT
+            let cachedResult = $('.selectedManga').data('result')
+            let $this = $(this)
+            if($this.hasClass('tempDisabled')) {
+                spawnErrorPopup('Please do not spam the Favorite button.', 'warning')
+                return;
+            }
+            $this.addClass('tempDisabled')
+            console.log('test')
+            setTimeout(()=>$this.removeClass('tempDisabled'),2000)
+            if(STATUS){
+                
+                main.send('removeFavorite',href)
+                main.once('promise', (event,resolved)=>{
+                    if(resolved){
+                        $('.content#favorites').find(`.source-group#${SGID}`)
+                            .find('.manga').filter(function(){return $(this).data('href')===href})
+                                .remove()
+                        $(this).removeClass('active')
+                    }
+                    else{
+                        console.log('error')
+                        spawnErrorPopup(resolved)
+                    }
+                })
+            }
+            else{
+                main.send('addFavorite',mangaObj)
+                main.once('promise', (event,resolved)=>{
+                    if(resolved){
+                        main.send('updateFavCache',[cachedResult,href,SGID])
+                        FAVORITES[href] = mangaObj
+                        let $manga = deserializeMangaObj(mangaObj)
+                        
+                        $('.content#favorites').find(`.source-group#${SGID}`)
+                            .find('.manga-wrapper')
+                                .append($manga)
+                        $(this).addClass('active')
+                    }
+                    else{
+                        spawnErrorPopup(resolved)
+                    }
+                })
+            }
+        });
+        $('.selectedManga .button-wrapper button:not(#toggleFavorite)').click(function(){
+            let tclass = (this.id==='toggleRead')?'readToggle':'markToggle';
+            if($(this).hasClass('active')){
+                // DISABLE BUTTON
+                $('.selectedManga #smBack')
+                    .prop('disabled',false)
+                $(this).siblings().not('#toggleFavorite')
+                    .prop('disabled',false)
+                $(this).removeClass('active')
+                $('.selectedManga').find('#chapter-list')
+                    .removeClass(tclass)
+                main.send('syncCHAPTERMARK', CHAPTERMARK)
+            }
+            else{
+                $('.selectedManga #smBack')
+                    .prop('disabled',true)
+                $(this).siblings().not('#toggleFavorite').prop('disabled',true)
+                $(this).addClass('active')
+                $('.selectedManga').find('#chapter-list')
+                    .addClass(tclass)
+            }
+        });
+    $('html').on('click','.manga-wrapper .manga',
+        function(){
+            let href = $(this).data('href')
+            let source = $(this).data('source')
+            let isFavorite = $(this).data('isFavorite')
+            let $selectManga = $('.selectedManga')
+            let mangaObj = serializeMangaNode($(this))
+            let $this = $(this)
+            $selectManga
+                .addClass('loading')
+                .find('.loading-wrapper')
+                    .fadeIn(function(){
+                        $selectManga
+                            .fadeIn()
+                            .css('display','flex')
+                        source.obj.scanMangaHref(href)
+                            .then(function(result){
+                                console.log('FRESH')
+                                if($this.data('cached'))
+                                    main.send('updateFavCache',[result,href,source.key])
+                                populateSelectManga(result,href,source,isFavorite,mangaObj)
+                                reflowSMHeight()
+                                $selectManga
+                                    .find('.loading-wrapper')
+                                        .fadeOut(function(){
+                                            $(this).parent()
+                                                .removeClass('loading')
+                                        })
+                            })
+                            .catch(function(err){
+                                if($this.data('cached')){
+                                    console.log('CACHED')
+                                    spawnErrorPopup('Using Cached Mode due to '+err, 'warning')
+                                    $selectManga.addClass('cached')
+                                    let result = main.sendSync('readFavCache',$this.data('cachedPath'))
+                                    populateSelectManga(result,href,source,isFavorite,mangaObj)
+                                    reflowSMHeight()
+                                    $selectManga
+                                        .find('.loading-wrapper')
+                                            .fadeOut(function(){
+                                                $(this).parent()
+                                                    .removeClass('loading')
+                                            })
+                                    return
+                                }
+                                $selectManga.find('#smBack').click()
+                                spawnErrorPopup(err)
+                            })
+                    });
+        });
+// FAVORITES HANDLER
+    // APPEND CURRENT SOURCES AS SG
+    (function appendSourcesSG(){
+        let SGTemplate = $(`
+            <div class="source-group">
+                <div class="header">
+                    <h3></h3>
+                    <hr>
+                </div>
+                <div class="manga-wrapper">
+                </div>
+                </div>
+            </div>
+        `)
+        for(const [key,value] of Object.entries(SOURCES)){
+            let $SG = SGTemplate.clone()
+            $SG
+                .attr('id', key)
+                .find('.header h3')
+                    .html(value.name)
+            $('.content#favorites')
+                .append($SG)
+        }
+    })();
+    // APPEND CURRENT FAVORITES TO SG
+    (function appendFavoritesToSG(){
+        for(const [href,obj] of Object.entries(FAVORITES)){
+            let $manga = deserializeMangaObj(obj)
+            $manga.data('isFavorite', true)
+            $('.content#favorites').find(`.source-group#${obj.sourceKey}`).find('.manga-wrapper')
+                .append($manga)
+        }
+    })();
+    // SOURCE-GROUP HANDLER
+        $('.content#favorites').on('click','.source-group .header',function(){
+            let $this = $(this).parent()
+            if($this.hasClass('expand')){
+                $this
+                    .height(45)
+                    .removeClass('expand')
+            }
+            else{
+                $this
+                    .height($this.find('.manga-wrapper').height() + 55)
+                    .addClass('expand')
+            }
+        })
+
+// HOME HANDLER
+    function updateHomeMangaList(page){
+        let $parent = $('.content#home')
+        $parent.find('.loading-wrapper')
+            .fadeIn()
+        MRION.CURRENT_SOURCE.obj.getMangaList(page)
+            .then(function(result){
+                result.map((obj)=>{
+                    let $manga = deserializeMangaObj(obj)
+                    $manga.hide()
+                    $parent.find('.manga-wrapper').append($manga)
+                })
+            })
+            .then(()=>{
+                $parent
+                    .find('.loading-wrapper')
+                        .fadeOut()
+                        .end()
+                    .find('.manga-wrapper').children('.manga')
+                        .fadeIn(600)
+            })
+        console.log('PAGE:' + page)
+    }
+    bindSTTToSelector($('.content#home'))
+    $('.content#home').scroll(function(){
+        if($(this).find('.manga-wrapper').children('.manga').length<1) return;
+        
+        if($(this).scrollTop()>$(this).height())
+            $(this).find('#scrollToTop').fadeIn()
+        else 
+            $(this).find('#scrollToTop').fadeOut()
+        
+        let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
+        if(hasReachedBottom){
+            updateHomeMangaList(++MRION.CURRENT_MANGA_PAGE)
+        }
+    })
+// GENRELIST
+    function getGenreList(){
+        let genreTemplate = $(`<div class="genre"></div>`)
+        let $parent = $('.content#genrelist')
+        $parent.find('.genre-list').find('.loading-wrapper')
+            .fadeIn()
+        MRION.CURRENT_SOURCE.obj.getGenreList().then((result)=>{
+            for(const [genre,href] of Object.entries(result)){
+                let $genre = genreTemplate.clone()
+                $genre.html(genre)
+                $genre.data('href',href)
+                $parent.find('.genre-wrapper').append($genre)    
+            }
+        }).then(()=>{
+            $parent.find('.genre-list')
+            .find('.loading-wrapper')
+                .fadeOut()
+                .end()
+            .find('.genre-wrapper').children('.genre')
+                .fadeIn(600)
         })
     }
-}
-function setConfig(key,value){
-    if(!Object.keys(CONFIG).includes(key)) throw "CONFIG DOES NOT CONTAIN KEY : " + key
-    CONFIG[key] = value
-    return main.sendSync('setConfig',[key,value])
-}
-function getConfig(key){
-    MAINCONFIGVAL = main.sendSync('getConfig',key)
-    if (CONFIG[key] !== MAINCONFIGVAL) throw "CONFIG MISMATCH" 
-    return CONFIG[key]
-}
-function appendMangaToHandler(id,obj){
-    $manga = mangaTemplate.clone()
-    $manga.data('source',CURRENT_SOURCE)
-    $manga.data('bookmarked',false)
-    $manga.find('#title').html(obj.title)
-    $manga.find('img').prop('src',obj.image).prop('alt',obj.title)
-    $manga.find('#latestchap').html(obj.latestChap)
-    $manga.data('href',obj.href)
-    $manga.data('rating',obj.rating)
-    $manga.find('#rating span').each(function(i){
-        if(obj.rating-i>.75) $(this).attr('class','ri-star-fill')
-        else if(obj.rating-i>.25) $(this).attr('class','ri-star-half-line')
+    function updateGenreMangaList(page){
+        let $parent = $('.content#genrelist')
+        let href = $parent.find('#currentGenre').data('href')
+        $parent.children('.loading-wrapper')
+            .fadeIn()
+        MRION.CURRENT_SOURCE.obj.getMangaListFromGenre(href,page)
+            .then(function(result){
+                if(result ==='NO-MORE'){
+                    $parent
+                        .data('disabled',true)
+                        .children('.loading-wrapper')
+                            .fadeOut()
+                            .end()
+                    spawnErrorPopup('Reached the end of genre page!','warning')
+                }
+                result.map((obj)=>{
+                    let $manga = deserializeMangaObj(obj)
+                    $manga.hide()
+                    $parent.find('.manga-wrapper').append($manga)
+                })
+            })
+            .then(()=>{
+                $parent
+                    .children('.loading-wrapper')
+                        .fadeOut()
+                        .end()
+                    .find('.manga-wrapper').children('.manga')
+                        .fadeIn(600)
+            })
+        console.log('G-PAGE:' + page)
+    }
+    $('.content#genrelist .genre-wrapper').on('click','.genre',function(){
+        let $parent = $('.content#genrelist')
+        $(this)
+            .siblings()
+                .removeClass('active')
+                .end()
+            .addClass('active')
+        MRION.CURRENT_GENRE_MANGA_PAGE = 1;
+        $parent
+            .find('#currentGenre')
+                .html($(this).html())
+                .data('href',$(this).data('href'))
+                .parent()
+                    .hide()
+                    .fadeIn(600)
+                    .end()
+                .end()
+            .find('.manga-wrapper')
+                .children()
+                    .fadeOut(function(){
+                        $(this).remove()
+                    })
+        updateGenreMangaList(MRION.CURRENT_GENRE_MANGA_PAGE)
     })
-    if(!obj.latestChap)
-        $manga.find('#latestchap, #latestchap+label').hide()
-    if(!obj.rating) 
-        $manga.find('#rating').hide()
-    $(`#${id}`).append($manga)
-    $manga.hide().fadeIn('fast')
-}
-let updateMangaTimeout, updateGenreTimeout,updateMangaGenreTimeout;
-async function updateMangaList({source},page){
-    let $loader = $("<div class='overlay'><div class='loader animating'></div></div>");
-    let STATUS = true;
-    let mangaList;
-    try{
-        mangaList = await source.getMangaList(page)
-    }catch(err){
-        console.log(err)
-        STATUS = false
-        $('#home-mangaList .overlay').remove()
-        updateMangaTimeout = setTimeout(()=>{
-            updateMangaList({source},page)
+    bindSTTToSelector($('.content#genrelist'))
+    $('.content#genrelist').scroll(function(){
+        if($(this).find('.manga-wrapper').children('.manga').length<1) return;
+        
+        if($(this).scrollTop()>$(this).height())
+            $(this).find('#scrollToTop').fadeIn()
+        else 
+            $(this).find('#scrollToTop').fadeOut()
+        
+        let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
+        if(hasReachedBottom && !$(this).data('disabled')){
+            updateGenreMangaList(++MRION.CURRENT_GENRE_MANGA_PAGE)
+        }
+    })
+// SPAWN ERROR POPUP
+    function spawnErrorPopup(msg,type){
+        let id = type || 'error'
+        let $popup = $(`.popup#${id}`)
+        $popup
+            .find('#msg')
+                .html(msg)
+                .end()
+            .fadeIn()
+            .css('display','flex')
+        
+        setTimeout(function(){
+            $popup
+                .fadeOut(function(){
+                    $(this).find('#msg')
+                        .html('')
+                })
         },5000)
     }
-    $('#home-mangaList').append($loader)
-    $('.content#home .manga-select').data('loading',true)
-    if(!STATUS) return
-    for(obj of mangaList){
-        appendMangaToHandler('home-mangaList',obj)
-        $('#home-mangaList .overlay').remove()
-        $('.content#home .manga-select').data('loading',false)
-    }
-}
-async function updateGenreList({source}){
-    let $loader = $("<div class='overlay'><div class='loader animating'></div></div>");
-    let $genre = $("<div class='genre'></div>")
-    let STATUS = true;
-    let genreList;
-    try{
-        genreList = await source.getGenreList()
-    }catch(err){
-        console.log(err)
-        STATUS = false
-        updateGenreTimeout = setTimeout(()=>{
-            updateGenreList({source})
-        },5000)
-    }
-    if(!STATUS) return
-    $('.content#genrelist .genre-list').empty()
-    for(let [text,href] of Object.entries(genreList)){
-        genre = $genre.clone()
-        genre.data('href',href)
-        genre.html(text)
-        $('.content#genrelist .genre-list').append(genre).hide().fadeIn()
-    }
-}
-async function updateMangaListFromGenre(href,page){
-    let $loader = $("<div class='overlay'><div class='loader animating'></div></div>");
-    let STATUS = true;
-    let mangaList;
-    try{
-        mangaList = await CURRENT_SOURCE.source.getMangaListFromGenre(href,page)
-    }catch(err){
-        console.log(err)
-        STATUS = false
-        $('#genre-MangaList .overlay').remove()
-        updateMangaGenreTimeout = setTimeout(()=>{
-            updateMangaListFromGenre(href,page)
-        },5000)
-    }
-    $('#genre-MangaList').append($loader)
-    $('.content#genrelist .manga-select').data('loading',true)
-    if (mangaList === 404) {
-        ISMAXGENREPAGE = true
-        $('#genre-MangaList .overlay').children().remove().end().append('<div class="nomore">End of page</div>')
-        $('.content#genrelist .manga-select').data('loading',false)
-        return
-    }
-    else ISMAXGENREPAGE = false
-    if(!STATUS) return
-    for(obj of mangaList){
-        appendMangaToHandler('genre-MangaList',obj)
-        $('#genre-MangaList .overlay').remove()
-        $('.content#genrelist .manga-select').data('loading',false)
-    }
-}
-async function searchManga({source},keywords){
-    let parsed_keywords = keywords.replace(/\s/g, source.searchBuilder)
-    $('#home-searchManga').empty()
-    let mangaList;
-    let STATUS=true;
-    try{
-        mangaList = await source.searchSourceFor(parsed_keywords)
-    }catch(err){
-        console.log(err)
-        STATUS=false;
-    }
-    if(!STATUS) return
-    if(mangaList.length<1){
-        $('#home-searchManga').append('<h3>No Results</h3>').children("h3").hide().slideDown()
-    }
-    for(obj of mangaList){
-        appendMangaToHandler('home-searchManga',obj)
-    }
-}
+$('.navlink#genrelist').click()
+//$('.source#mangakakalots').click()
 
-function clearMangaHandler(id){
-    $(`#${id} .manga,#${id} h3,#${id} .genre`).fadeOut('fast',function(){        
-        $(this).parent().empty()
-    })
-}
-function selectedMangaReset(){
-    $(".manga-info .manga-image img").removeAttr('src')
-    $(".manga-info").removeData('mangaObj')
-    $(".manga-info").removeData('source')
-    $('.manga-info .manga-image #bookmark').removeClass('bookmarked')
-    let $parent = $('.content#selectedManga')
-    let $mangaInfo = $parent.find(".manga-info .manga-info-text")
-    $mangaInfo.find('#title').html('')
-    $mangaInfo.find('#alt-titles').html('')
-    $mangaInfo.find('#description .text').html('')
-    $mangaInfo.find('#author .text').html('')
-    $mangaInfo.find('#status .text').html('')
-    $mangaInfo.find('#lastUpdate .text').html('')
-    $mangaInfo.find('#chapters .text').html('')
-    $mangaInfo.find('#genres .text').empty()
-    $mangaInfo.find('#rating .text').children().attr('class', 'ri-star-line')
-    $mangaInfo.find('.more-info-card').removeClass('shown')
-    $parent.find('.chapter-list').empty()
+// const Menu = remote.require('electron').Menu
+// const MenuItem = remote.require('electron').MenuItem
 
-}
-function stripTagsFromString(string){
-    var doc = new DOMParser().parseFromString(string, 'text/html');
-    return doc.body.textContent || "";
- }
-async function selectManga(){
-    let manga = await $(this).data('source').source.scanMangaHref($(this).data('href'))
-    selectedMangaReset()
-    $(".manga-info .manga-image img").prop('src', manga.image)
-    $(".manga-info").data('mangaObj', $(this))
-    $('.manga-info').data('source',$(this).data('source'))
-    if($(this).data('bookmarked'))
-        $('.manga-info .manga-image #bookmark').addClass('bookmarked')
-    let $parent = $('.content#selectedManga')
-    let $mangaInfo = $parent.find(".manga-info .manga-info-text")
-    $mangaInfo.find('#title').html(manga.title)
-    $mangaInfo.find('#alt-titles').html(manga.altTitles.join(", "))
-    $mangaInfo.find('#description .text').html(stripTagsFromString(manga.description))
-    $mangaInfo.find('#author .text').html(manga.info.author.join(", "))
-    $mangaInfo.find('#status .text').html(manga.info.status)
-    $mangaInfo.find('#lastUpdate .text').html(manga.info.lastUpdated)
-    $mangaInfo.find('#chapters .text').html(manga.chapters.length)
-    manga.info.genres.map(el=>$mangaInfo.find('#genres .text').append(`<span class="genre">${el}</span>`))
-    $mangaInfo.find('#rating .text span').each(function(i){
-        if(manga.info.rating-i>.75) $(this).attr('class','ri-star-fill')
-        else if(manga.info.rating-i>.25) $(this).attr('class','ri-star-half-line')
-    })
-    let $chapters = $parent.find('.chapter-list')
-    manga.chapters.map(function(obj){
-        $chapters.append(`
-            <button class="chapter">
-                <span class="chapter-num">${obj.text}</span>
-                <span class="chapter-date">${obj.date}</span>
-            </button>
-        `)
-    })
-    $parent.fadeIn()
-    $parent.find('.chapter-list').scrollTop(0)
-}
-function serializeMangaObj($selector){
-    let obj = {}
-    obj.title = $selector.find("#title").html()
-    obj.image = $selector.find("img").prop('src')
-    obj.latestChap = $selector.find("#latestchap").html()
-    obj.href = $selector.data('href')
-    obj.rating = $selector.data('rating')
-    obj.sourceKey = $selector.data('source').key
-    obj.bookmarked = $selector.data('bookmarked')
-    return obj
-}
-function deserializeMangaObj(obj){
-    $manga = mangaTemplate.clone()
-    $manga.data('source',SOURCES[obj.sourceKey])
-    $manga.data('bookmarked',obj.bookmarked)
-    $manga.find('#title').html(obj.title)
-    $manga.append('<div class="bubble"></div>')
-    $manga.find('img').prop('src',obj.image).prop('alt',obj.title)
-    $manga.find('#latestchap').html(obj.latestChap)
-    $manga.data('href',obj.href)
-    $manga.data('rating',obj.rating)
-    $manga.find('#rating span').each(function(i){
-        if(obj.rating-i>.75) $(this).attr('class','ri-star-fill')
-        else if(obj.rating-i>.25) $(this).attr('class','ri-star-half-line')
-    })
-    if(!obj.latestChap)
-        $manga.find('#latestchap, #latestchap+label').hide()
-    if(obj.rating==-1) 
-        $manga.find('#rating').hide()
-    return $manga
-}
-// --------------------------------------
-for([key,value] of Object.entries(SOURCES)){
-    $('.source-select .dropdown-options').append(
-        `<div class="option" id="${key}">${value.name}</div>`
-    )
-    let $SG = sourceGroupTemplate.clone()
-    $SG.prop('id',`source${value.sourceId}`)
-    $SG.find('.header').find('h3').html(value.name)
-    $('.content#favorites').append($SG)
-    //let favorites = main.sendSync('getFavorites',key)
-}
-for(let [href,obj] of Object.entries(main.sendSync('getFavorites'))){
-    $('.content#favorites').find(`#source${SOURCES[obj.sourceKey].sourceId}`).find('.mangas').append(deserializeMangaObj(obj))
-}
-let UPDATES = main.sendSync("getUpdates")
-if(UPDATES) parseUpdates(UPDATES)
-$('.source-select .dropdown').click(function(){ // CUSTOM DROPDOWN FOR SOURCE SELECTION
-    $(this).toggleClass('active')
-})
-$('.source-select .option').click(function(){ // OPTION HANDLER FOR SOURCE SELECTION
-    $('.source-select .option').show()
-    $('.source-select .selected').html($(this).html())
-    $(this).hide()
-    clearMangaHandler('home-searchManga')
-    clearMangaHandler('home-mangaList')
-    clearMangaHandler('genre-MangaList')
-    clearTimeout(updateMangaTimeout)
-    clearTimeout(updateGenreTimeout)
-    clearTimeout(updateMangaGenreTimeout)
-    CURRENT_SOURCE = SOURCES[$(this).prop('id')]
-    CURRENT_SOURCE_PAGE=1
-    CURRENT_GENRE_PAGE=1
-    $('.content#genrelist .genre-list .genre').fadeOut('fast',function(){
-        $(this).parent().empty()
-    })
-    $('.content#home .searchbar *').prop('disabled',false)
-    $('.content#home .searchbar *').prop('placeholder',"Enter Keywords...")
-    updateMangaList(CURRENT_SOURCE,CURRENT_SOURCE_PAGE)
-    updateGenreList(CURRENT_SOURCE)
-})
-$('.content#home .returnTop').click(function(){ //RETURN TO TOP BUTTON EVT HANDLER
-    $('.content#home .manga-select').stop().animate({scrollTop:0}, 500, 'swing');
-})
-$('.content#genrelist .returnTop').click(function(){ //RETURN TO TOP BUTTON EVT HANDLER
-    $(this).parent().stop().animate({scrollTop:0}, 500, 'swing');
-})
-$('.content#home .manga-select').scroll(function() { //LOAD NEW PAGE ON SCROLL TO BOTTOM
-    if($(this).scrollTop()>$(this).height())
-        $('.content#home .returnTop').fadeIn().css('display', 'flex');
-    else $('.content#home .returnTop').fadeOut()
-    if(!CURRENT_SOURCE) return
-    if($(this).data("loading")) return
-    let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
-    if(hasReachedBottom){
-        updateMangaList(CURRENT_SOURCE,++CURRENT_SOURCE_PAGE)
-    }
-});
+// let rightClickPosition = null
 
-$('.content#genrelist').scroll(function() { //LOAD NEW PAGE ON SCROLL TO BOTTOM
-    if($(this).find("#genre-MangaList").children().length<1) return
+// const menu = new Menu()
+// const menuItem = new MenuItem({
+//   label: 'Inspect Element',
+//   click: () => {
+//     remote.getCurrentWindow().inspectElement(rightClickPosition.x, rightClickPosition.y)
+//   }
+// })
+// menu.append(menuItem)
 
-    if($(this).scrollTop()>$(this).height())$(this).find('.returnTop').fadeIn().css('display', 'flex');
-    else $(this).find('.returnTop').fadeOut()
-    if(!CURRENT_SOURCE) return
-    if($(this).data("loading")) return
-    let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
-    if(hasReachedBottom&&!ISMAXGENREPAGE){
-        updateMangaListFromGenre($(this).find("#genre-MangaList").data('href'),++CURRENT_GENRE_PAGE)
-    }
-});
-
-$('.content#home .searchbar *').prop('disabled',true)
-$('.content#home .searchbar button#searchbutton').click(function(){  // SEARCH EVT HANDLER
-    searchManga(CURRENT_SOURCE,$(this).siblings('input#searchfield').val())
-})
-$('.content#home .searchbar button#clearsearchbutton').click(function(){ // CLEAR SEARCH EVT HANDLER
-    $(this).siblings('input#searchfield').val('')
-    clearMangaHandler('home-searchManga')
-})
-$('.content#home .searchbar input#searchfield').click(function(){ // SELECT CONTENTS OF INPUT ONCE CLICKED
-    $(this).select()
-}).keydown(function(e){ // SUBMIT ON ENTER
-    if(e.which==13)
-    $(this).siblings('button#searchbutton').click()
-})
-
-$('.manga-handler').on('click','.manga',selectManga) // MANGA COMPONENT CLICK EVT HANDLER
-
-$('.genre-list').on('click','.genre',function(){
-    $(this).parent().siblings('.manga-handler').data('href',$(this).data('href'))
-    $(this).parent().parent().find('#selectedGenre').html(`${$(this).html()} Mangas`).hide().slideDown()
-    $('.genre').removeClass('active')
-    $(this).addClass('active')
-    $('#genre-MangaList').empty()
-    $('.content#genrelist .header .clear').fadeIn()
-    CURRENT_GENRE_PAGE=1
-    updateMangaListFromGenre($(this).data('href'),CURRENT_GENRE_PAGE)
-})
-$('.content#genrelist .header .clear').click(function(){
-    var $clear = $(this)
-    $("#genre-MangaList .manga").fadeOut('fast',function(){
-        $('.genre').removeClass('active')
-        $(this).parent().parent().find('#selectedGenre').html('').slideUp()
-        $clear.fadeOut()
-        $(this).parent().empty()
-    })
-})
-
-$('.content#favorites').on('click','.mangas .manga',selectManga) // MANGA COMPONENT CLICK EVT HANDLER (FAVORITES)
-
-$('.content#selectedManga  .manga-info .manga-info-text #back').click(function(){ // SELECTED MANGA BACK EVT HANDLER
-    $('.content#selectedManga').fadeOut()
-})
-$('.content#selectedManga  .manga-info .manga-image #bookmark').click(function(){  // FAVORITE BUTTON EVT HANDLER
-    let $parent = $(this).parent().parent()
-    let $manga = $parent.data('mangaObj')
-    let $mangaClone = $manga.clone(true)
-    let id =`source${$parent.data('source').sourceId}`
-    if($manga.data('bookmarked')){
-        $(this).removeClass('bookmarked')
-        $manga.data('bookmarked',false)
-        main.send('removeFavorite', $manga.data('href'))
-        $(`.content#favorites .source-group#${id}`).find('.mangas').find('.manga').filter(function(){
-            return $(this).data('href') === $manga.data('href')
-        }).remove()
-    }
-    else{
-        $manga.data('bookmarked',true)
-        $(this).addClass('bookmarked')
-        $mangaClone.data('bookmarked',true)
-        $(`.content#favorites .source-group#${id}`).find('.mangas').append($mangaClone)
-        let serializedManga = serializeMangaObj($manga)
-        serializedManga.rating = -1
-        main.send('addFavorite',serializedManga)
-    }
-})
-$('.content#selectedManga  .manga-info .manga-image #test').click(function(){
-    let $parent = $(this).parent().parent()
-    let $manga = $parent.data('mangaObj')
-    let $mangaClone = $manga.clone(true)
-    console.log('created global serialized obj')
-    MANGATEST = serializeMangaObj($mangaClone)
-})
-$('.content#selectedManga  .manga-info .manga-info-text .absolute-snap').click(function(){ // MORE INFO CARD EVT HANDLER
-    $(this).children('.more-info-card').toggleClass('shown')
-})
-
-
-$('.content#selectedManga  .manga-info .manga-info-text').hover( // HOVER EVENTS FOR MANGA INFO TEXT
-    function(){ // DETERMINE GREATER HEIGHT
-        let addHeight = $(this).find('#title').height() + $(this).find('#alt-titles').height() + 21  
-        let descHeight = $(this).find('.description-card').height()
-        let infoHeight = $(this).find('.more-info-card').height()
-        $(this).height(Math.max(descHeight,infoHeight)+addHeight)
-    },
-    function(){ // RESET HEIGHT
-        $(this).height("45vh");
-    });
-
-$('.content#favorites').on('click','.source-group .header',function(){ // EXPAND SOURCE GROUP
-    $(this).siblings('.mangas-wrapper').slideToggle("fast")
-})
-
-// SETTINGS
-$(`.content#settings .setting-group#preload .dropdown .selected,
-   .content#settings .setting-group#preload .dropdown .arrow`).click(function(){
-    console.log('test')
-    $(this).parent().toggleClass('active')
-})
-$('.content#settings .setting-group#preload .dropdown .options .option').click(function(){
-    let $parent = $(this).parent().parent()
-    $parent.find('.selected').html($(this).html())
-    $parent.find('.option').each(function(){
-        $(this).removeClass('current')
-    })
-    $(this).addClass('current')
-    $parent.data('selected', $(this).html())
-    $parent.parent().parent().find('h5').slideDown().data('changed','changed')
-    setConfig('preloadNum',parseInt($(this).html()))
-    $parent.removeClass('active')
-})
-$('.content#settings .setting-group .switch.round input').change(function(){
-    $parent = $(this).parent().parent()
-    let id = $parent.attr('id')
-    //if(id==='readMode') id = $(this).parent().attr('id')
-    if(id==='preload') $parent.find('.dropdown').toggleClass('disabled')
-    $parent.parent().find('h5').slideDown().data('changed','changed')
-    setConfig(id,(this.checked)?1:0)
-})
-
-$('.modal-content#closePrompt #closeModal').click(function(){
-    $('.modal-bg').fadeOut()
-})
-$('.modal-content#closePrompt #closeElectron').click(function(){
-    main.send('close-electron')
-})
-$('.modal-content#closePrompt #minToTray').click(function(){
-    main.send('min-toTray')
-})
-//$('.content#testing').show()
-$('button.navlink#genrelist').click()
+// window.addEventListener('contextmenu', (e) => {
+//   e.preventDefault()
+//   rightClickPosition = {x: e.x, y: e.y}
+//   menu.popup(remote.getCurrentWindow())
+// }, false)

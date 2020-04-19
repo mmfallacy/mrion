@@ -3,25 +3,40 @@ var cheerio = require('cheerio')
 class Source {
     constructor(url){
         this.url = url
+        this.puppeteer = false;
         this.directive = {
         }
+        this.sourceKey = 'source';
     }
     async getSourceFromUrl(url){
-        let directive = this.directive.discover
         try{
-            var {status, data} = await axios.get(url)
+            if(!this.puppeteer)
+                var {status, data} = await axios.get(url)
+            else{
+                const browser =  await puppeteer.launch()
+                const page = await browser.newPage()
+                await page.goto(url)
+                await page.waitF
+            }
+
         }
         catch(e){
             status = e
         }
-        if(status !== 200) return [false,false]
+        if(status !== 200) {
+            console.log(status)
+            return [false,status]
+        }
         var $$ = cheerio.load(data)
         return [$$,$$('html')]
     }
     async getMangaList(page){
         let directive = this.directive.discover
         var [$$,$$source] = await this.getSourceFromUrl(`${this.url}${directive.urlAdd}${directive.pageAdd}${page}`)
+        if(!$$) return Promise.reject($$source)
+        
         let mangaList = []
+        let sourceKey = this.sourceKey
         $$source.find(directive.mangaList).find(directive.mangaItem).each(function(i,element){
             let manga = {}
             manga.title = (typeof directive.titleParser!=='function')
@@ -33,12 +48,15 @@ class Source {
                 : directive.imgParser( $$ , $$(this).find(directive.mangaImage) )
 
             manga.latestChap = $$(this).find(directive.latestChap).html()
+            if(manga.latestChap) manga.latestChap = manga.latestChap.trim()
 
-            manga.rating = (!directive.rating)?
-                false 
+            manga.rating = (!directive.rating)
+                ? -1
                 : manga.rating= $$(this).find(directive.rating).html()
 
             manga.href = $$(this).find(directive.mangaTitle).prop('href')
+
+            manga.sourceKey = sourceKey
 
             mangaList.push(manga)
         });
@@ -47,7 +65,9 @@ class Source {
     async searchSourceFor(keywords){
         let directive = this.directive.search
         var [$$,$$source] = await this.getSourceFromUrl(`${this.url}${directive.urlAdd}${keywords}`)
+        if(!$$) return Promise.reject($$source)
         let mangaList = []
+        let sourceKey = this.sourceKey
         $$source.find(directive.mangaList).find(directive.mangaItem).each(function(){
             let manga = {}
 
@@ -60,11 +80,14 @@ class Source {
                 : directive.imgParser($$,$$(this).find(directive.mangaImage))
 
             manga.latestChap = $$(this).find(directive.latestChap).html()
-
+            if(manga.latestChap) manga.latestChap = manga.latestChap.trim()
             manga.rating = (!directive.rating)
-                ? false 
+                ? -1 
                 : manga.rating= $$(this).find(directive.rating).html()
             manga.href = $$(this).find(directive.mangaTitle).prop('href')
+            
+            manga.sourceKey = sourceKey
+            
             mangaList.push(manga)
         });
         
@@ -73,9 +96,10 @@ class Source {
     async getMangaListFromGenre(href,page){
         let directive = this.directive.discover
         var [$$,$$source] = await this.getSourceFromUrl(`${href}${this.directive.genre.pageAdd}${page}`)
-        console.log($$source)
-        if(!$$source) return 404
+        if($$source.message==='Network Error') return Promise.reject($$source)
+        if(!$$) return Promise.resolve('NO-MORE')
         let mangaList = []
+        let sourceKey = this.sourceKey
         $$source.find(directive.mangaList).find(directive.mangaItem).each(function(){
             let manga = {}
 
@@ -88,11 +112,15 @@ class Source {
                 : directive.imgParser($$,$$(this).find(directive.mangaImage))
 
             manga.latestChap = $$(this).find(directive.latestChap).html()
+            if(manga.latestChap) manga.latestChap = manga.latestChap.trim()
 
             manga.rating = (!directive.rating)
-                ? false 
+                ? -1
                 : manga.rating= $$(this).find(directive.rating).html()
             manga.href = $$(this).find(directive.mangaTitle).prop('href')
+            
+            manga.sourceKey = sourceKey
+            
             mangaList.push(manga)
         });
         
@@ -101,6 +129,8 @@ class Source {
     async scanMangaHref(href){
         let directive = this.directive.manga
         var [$$,$$source] = await this.getSourceFromUrl(href)
+        if(!$$) return Promise.reject($$source)
+
         let obj = {}
 
         obj.image = $$source.find(directive.image).prop('src')
@@ -108,11 +138,11 @@ class Source {
         obj.altTitles = $$source.find(directive.altTitle).text().split(',')
         
         let chapters = []
-        
         $$source.find(directive.chapter.parent).find(directive.chapter.el).each(function(){
             let chapter = {}
             chapter.text = $$(this).find(directive.chapter.text).text().split(':')[0].trim()
             chapter.date = $$(this).find(directive.chapter.date).text().trim()
+            chapter.href = $$(this).find(directive.chapter.text).prop('href')
             chapters.push(chapter)
         })
 
@@ -120,7 +150,7 @@ class Source {
             ? 'test'
             : directive.infoParser($$, $$source.find(directive.info))
 
-        obj.chapters = chapters
+        obj.chapters = chapters.reverse()
 
         obj.description = (typeof directive.descriptionParser!=='function')
             ? $$source.find(directive.description).html()
@@ -145,6 +175,8 @@ class Mangakakalots extends Source{
     constructor(url){
         super(url);
         this.searchBuilder = '_';
+        this.sourceKey = 'mangakakalots';
+        this.puppeteer = false;
         this.directive = {
             discover: {
                 mangaList : '.truyen-list',
@@ -242,6 +274,8 @@ class KissManga extends Source{
     constructor(url){
         super(url);
         this.searchBuilder = '+';
+        this.sourceKey = 'kissmanga';
+        this.puppeteer = true;
         this.directive = {
             discover: {
                 mangaList : '.page-content-listing',
@@ -252,7 +286,8 @@ class KissManga extends Source{
                 urlAdd: 'manga-list/',
                 pageAdd: '',
                 rating: '.item-summary .post-total-rating .total_votes',
-                imgParser: this.imgParser
+                imgParser: this.imgParser,
+                waitSelector: '.page-item-detail.manga '
             },
             search: {
                 mangaList : '.c-tabs-item',
@@ -262,7 +297,9 @@ class KissManga extends Source{
                 latestChap: '.tab-meta .latest-chap .chapter a',
                 urlAdd: '?post_type=wp-manga&s=',
                 rating: '.tab-meta .rating .post-total-rating .total_votes',
-                imgParser: this.imgParser
+                imgParser: this.imgParser,
+                waitSelector: '.row.c-tabs-item__content'
+
             },
             manga:{
                 image : '.container .tab-summary .summary_image a img',
@@ -277,7 +314,9 @@ class KissManga extends Source{
                     date: '.chapter-release-date'
                 },
                 imgParser:this.imgParser,
-                infoParser: this.infoParser
+                infoParser: this.infoParser,
+                waitSelector: '.wp-manga-chapter'
+
             },
             genre:{
                 pageAdd:"/page/"
@@ -339,4 +378,5 @@ class KissManga extends Source{
     }
 }
 module.exports.Mangakakalots = Mangakakalots
-module.exports.KissManga = KissManga
+//TEMPORARILY DEPRECATED
+//module.exports.KissManga = KissManga

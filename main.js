@@ -1,6 +1,7 @@
 const {app, BrowserWindow, ipcMain,Tray, Menu} = require('electron')
 const path = require('path')
 const fs = require('fs')
+const axios = require('axios')
 const icon = path.join(__dirname,'resources','img','iconsmallx.png')
 
 const iconWBubble = path.join(__dirname,'resources','img','iconsmall.png')
@@ -10,23 +11,33 @@ require('electron-reload')(__dirname, {
   ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
 });
 
-const {Mangakakalots,KissManga} = require('./resources/source.js');
+const {Mangakakalots} = require('./resources/source.js');
 
 let SOURCES = {
   mangakakalots:{
-      source: new Mangakakalots('https://mangakakalots.com/'),
+      obj: new Mangakakalots('https://mangakakalots.com/'),
       name: "Mangakakalots",
-      sourceId:0,
       key:'mangakakalots',
-  },
-  kissmanga:{
-      source:new KissManga('https://kissmanga.in/'),
-      name:"KissManga",
-      sourceId:2,
-      key:'kissmanga',
-
   }
 }
+
+//https://stackoverflow.com/questions/12740659/downloading-images-with-node-js
+
+const downloadImage = (url, image_path) =>
+  axios({
+    url,
+    responseType: 'stream',
+  }).then(
+    response =>
+      new Promise((resolve, reject) => {
+        // GET EXT 
+        response.data
+          .pipe(fs.createWriteStream(image_path))
+          .on('finish', () => resolve())
+          .on('error', e => reject(e));
+      }),
+  );
+
 
 console.log(process.argv)
 var trayMode = false;
@@ -38,6 +49,7 @@ var knex = require("knex")({
   }
 });
 var CONFIG = JSON.parse(fs.readFileSync("./userdata/config.json"))
+var CHAPTERMARK  = JSON.parse(fs.readFileSync("./userdata/chapterdata.json"))
 var FAVORITES = {}
 var POSITIONS = {
   chapterNum:{}
@@ -80,7 +92,7 @@ function createMainWindow () {
     }
   })
   mainWindow.loadFile('index.html')
-  //mainWindow.webContents.openDevTools({mode:'detach'})
+  mainWindow.webContents.openDevTools({mode:'detach'})
 }
 function createReaderWindow(){
   readerWindow = new BrowserWindow({
@@ -186,12 +198,48 @@ ipcMain.on('getFavorites',(evt)=>{
   evt.returnValue = FAVORITES
 })
 ipcMain.on('addFavorite',(evt,data)=>{
-  knex.table('FAVORITES').insert(data).then()
-  FAVORITES[data.href] = data
+  data.cachedPath = 
+    `./userdata/fav-cache/${data.sourceKey}/${data.href.split('/').pop()}`
+
+  knex.table('FAVORITES').insert(data).then(function(){
+    FAVORITES[data.href] = data
+    evt.sender.send('promise', true)
+  })
+  .catch(function(err){
+    console.log('ERROR: ' + err)
+    evt.sender.send('promise', err)
+  })
 })
 ipcMain.on('removeFavorite',(evt,href)=>{
-  knex.table('FAVORITES').where({href:href}).del().then()
-  delete FAVORITES[href]
+  knex.table('FAVORITES').where({href:href}).del().then(function(){
+    if(FAVORITES[href].cachedPath)
+      fs.rmdir(FAVORITES[href].cachedPath,{recursive:true}, (err)=>{if(err) throw err})
+    delete FAVORITES[href]
+    evt.sender.send('promise', true)
+  })
+  .catch(function(err){
+    evt.sender.send('promise', err)
+  })
+})
+
+ipcMain.on('updateFavCache',(evt,data)=>{
+  let [result,href,sourceKey] = data
+  let name = href.split('/').pop()
+  console.log('UPDATING CACHE FOR: ' + name)
+  let path = `./userdata/fav-cache/${sourceKey}/${name}`
+  let image_ext = '.' + result.image.split('.').pop()
+
+  if(!fs.existsSync(`./userdata/fav-cache/${sourceKey}`))
+    fs.mkdirSync(`./userdata/fav-cache/${sourceKey}`)
+  if(!fs.existsSync(path))
+    fs.mkdirSync(path)
+  downloadImage(result.image,`${path}/image` + image_ext).then(()=>{
+    result.image = `${path}/image` + image_ext
+    fs.writeFileSync(`${path}/result.json`, JSON.stringify(result,null,2))
+  })
+})
+ipcMain.on('readFavCache',(evt,path)=>{
+  evt.returnValue = JSON.parse(fs.readFileSync(`${path}/result.json`))
 })
 ipcMain.on('setConfig',(evt,args)=>{
   let [key,val] = args
@@ -202,7 +250,7 @@ ipcMain.on('getConfig',(evt,key)=>{
   evt.returnValue = CONFIG[key]
 })
 ipcMain.on('settingsUpdated',(evt)=>{
-  fs.writeFileSync(path.join(__dirname,'userdata','config.json'), JSON.stringify(CONFIG,null,2))
+  fs.writeFileSync('./userdata/config.json', JSON.stringify(CONFIG,null,2))
 })
 ipcMain.on('getUpdates',(evt)=>{
   evt.returnValue = UPDATES
@@ -229,4 +277,18 @@ ipcMain.on('setLayoutPositions',(evt,data)=>{
       knex.table('POSITIONS').where({id:id}).update(val).then()
     }
   }
+})
+ipcMain.on('getCHAPTERMARK',(evt)=>evt.returnValue=CHAPTERMARK)
+ipcMain.on('syncCHAPTERMARK',(evt,data)=>{
+  CHAPTERMARK = data
+
+  // CLEAN CHAPTERMARK OF EMPTY HREFS
+    for(let [href,value] of Object.entries(CHAPTERMARK))
+      if(value.READ.length == 0 && value.MARKED.length == 0)
+        delete CHAPTERMARK[href]
+  fs.writeFileSync(path.join(__dirname,'userdata','chapterdata.json'), JSON.stringify(CHAPTERMARK,null,2))
+})
+ipcMain.on('min-toTray',(evt)=>{
+  mainWindow.destroy()
+  createTray()
 })
