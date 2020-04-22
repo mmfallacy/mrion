@@ -39,13 +39,17 @@ class Source {
     }
     
 
-    async scrapeDiscover(page){
+    async scrapeDiscover(page){ // RETURN VALUE: [MANGA ARRAY, TOTAL PAGE]
         let D = this.discover
         let $$ = await this.retrieveSourceFromUrl(D.urlBuilder(page),D.options)
         
         let mangaArray = []
         let sourceKey = this.sourceKey
-        let pages = D.pages($$);
+        let pages = 
+            (page==1)
+            ? D.pages($$)
+            : false
+
         $$(D.wrapper).find(D.item)
             .each(function(){
                 let manga = {}
@@ -86,13 +90,17 @@ class Source {
             return [mangaArray,pages];
     }
 
-    async searchFor(keywords,page){
+    async searchFor(keywords,page){ // RETURN VALUE: [MANGA ARRAY, TOTAL PAGE]
         let D = this.search;
         let $$ = await this.retrieveSourceFromUrl(D.urlBuilder(keywords,page),D.options)
         
         let mangaArray = []
         let sourceKey = this.sourceKey;
-        let pages = D.pages($$);
+        let pages = 
+            (page==1)
+            ? D.pages($$)
+            : false
+
         $$(D.wrapper).find(D.item)
             .each(function(){
                 let manga = {}
@@ -133,13 +141,16 @@ class Source {
             return [mangaArray, pages];
     }
 
-    async scrapeGenre(genreHref,page){
+    async scrapeGenre(genreHref,page){ // RETURN VALUE: [MANGA ARRAY, TOTAL PAGE]
         let D = this.genre;
         let $$ = await this.retrieveSourceFromUrl(D.urlBuilder(genreHref,page),D.options)
         
         let mangaArray = []
         let sourceKey = this.sourceKey
-        let pages = D.pages($$)
+        let pages = 
+            (page==1)
+            ? D.pages($$)
+            : false
 
         $$(D.wrapper).find(D.item)
             .each(function(){
@@ -181,7 +192,7 @@ class Source {
             return [mangaArray, pages];
     }
 
-    async scrapeManga(href){
+    async scrapeManga(href){ // RETURN VALUE: MANGA OBJECT
         let D = this.manga
         let $$ = await this.retrieveSourceFromUrl(href,D.options)
     
@@ -224,7 +235,7 @@ class Source {
         return obj
     }
 
-    async checkUpdates(href,title,lastChap){
+    async checkUpdates(href,title,lastChap){ // RETURN VALUE : BOOLEAN or LATEST CHAPTER STRING
         let D = this.manga
         let $$ = await this.retrieveSourceFromUrl(href,D.options)
 
@@ -235,9 +246,10 @@ class Source {
             latest.date = $$lastChapter.find(D.chapter.date).text().trim()
             latest.title = title
 
-        if(latest.text===lastChap) return [false]
-        else return [latest]
+        if(latest.text===lastChap) return false
+        else return latest
     }
+    async scrapeGenreList(){} // RETURN VALUE: GENRE ARRAY
 }
 
 

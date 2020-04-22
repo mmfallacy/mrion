@@ -13,7 +13,11 @@ const {Mangakakalots} = require('./resources/source.js');
     var MRION = {
         internalSource:false,
         internalMainPage:1,
+        TOTAL_MANGA_PAGE:2,
         internalGenrePage:1,
+        TOTAL_GENRE_PAGE:2,
+        CURRENT_SEARCH_PAGE:1,
+        TOTAL_SEARCH_PAGE:2,
         get CURRENT_SOURCE(){
             return this.internalSource
         },
@@ -35,8 +39,12 @@ const {Mangakakalots} = require('./resources/source.js');
         sourceListener: function(newObj){
             this.internalMainPage = 1;
             this.internalGenrePage = 1;
+            this.TOTAL_MANGA_PAGE = 2;
+            this.TOTAL_GENRE_PAGE = 2;
+
             if(!this.internalSource){
                 $(".content").filter('#search, #home, #genrelist')
+                    .data('disabled',false)
                     .find('.overlay')
                         .fadeOut(function(){
                             $(this).parent()
@@ -150,6 +158,34 @@ const {Mangakakalots} = require('./resources/source.js');
         }
 
 // | Search Content
+    function searchSourceFor(keywords,page){
+        MRION.CURRENT_SOURCE.obj.searchFor(keywords,page)
+        .then(([result,totalPage])=>{
+            // REMOVE LOADER
+            if(totalPage)MRION.TOTAL_SEARCH_PAGE = totalPage
+            $searchResults
+                .find('.loading-wrapper')
+                    .fadeOut(function(){
+                        $(this).parent()
+                            .removeClass('loading')
+                    }).end()
+            for(manga of result)
+                $searchResults.find('.manga-wrapper#search')
+                    .append(deserializeMangaObj(manga))
+        })
+        .catch(function(err){
+            $searchResults
+                .find('.loading-wrapper')
+                    .fadeOut(function(){
+                        $(this).parent()
+                            .removeClass('loading')
+                    }).end()
+                .find('.manga-wrapper#search')
+                    .empty()
+            spawnErrorPopup(err)
+        })
+
+    }
     bindSTTToSelector($('.content#search'))
     $('.content#search .searchBar')
         .find('#searchInput')
@@ -168,7 +204,10 @@ const {Mangakakalots} = require('./resources/source.js');
         .find('#searchSubmit')
             .click(function(){
                 let keywords = $(this).siblings('#searchInput').val()
+                $(this).parent().data('keywords',keywords)
+                $('.content#search').data('disabled',false)
                 $searchResults = $('.content#search').find('.searchResults')
+                MRION.CURRENT_SEARCH_PAGE = 1
                 $searchResults
                     .addClass('loading')
                     .find('.loading-wrapper')
@@ -179,34 +218,10 @@ const {Mangakakalots} = require('./resources/source.js');
                                 .html(keywords)
                                 .fadeIn()
                         })
-                
-                MRION.CURRENT_SOURCE.obj.searchSourceFor(keywords)
-                    .then(function(result){
-                        // REMOVE LOADER
-                        console.table(result)
-                        $searchResults
-                            .find('.loading-wrapper')
-                                .fadeOut(function(){
-                                    $(this).parent()
-                                        .removeClass('loading')
-                                }).end()
-                            .find('.manga-wrapper#search')
-                                .empty()
-                        for(manga of result)
-                            $searchResults.find('.manga-wrapper#search')
-                                .append(deserializeMangaObj(manga))
-                    })
-                    .catch(function(err){
-                        $searchResults
-                            .find('.loading-wrapper')
-                                .fadeOut(function(){
-                                    $(this).parent()
-                                        .removeClass('loading')
-                                }).end()
-                            .find('.manga-wrapper#search')
-                                .empty()
-                        spawnErrorPopup(err)
-                    })
+                        .end()
+                    .find('.manga-wrapper#search')
+                        .empty()
+                searchSourceFor(keywords,MRION.CURRENT_SEARCH_PAGE)
             }).end()
         .find('#searchClear')
             .click(function(){
@@ -222,7 +237,28 @@ const {Mangakakalots} = require('./resources/source.js');
                             $(this).remove()
                         })
             })
-
+    $('.content#search')
+        .data('disabled',false)
+        .scroll(function(){
+            if($(this).find('.manga-wrapper').children('.manga').length<1) return;
+        
+            if($(this).scrollTop()>$(this).height())
+                $(this).find('#scrollToTop').fadeIn()
+            else 
+                $(this).find('#scrollToTop').fadeOut()
+            
+            let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
+            if(hasReachedBottom && !$(this).data('disabled')){
+                let keywords = $(this).find('.searchBar').data('keywords')
+                console.log(MRION.CURRENT_SEARCH_PAGE,MRION.TOTAL_SEARCH_PAGE)
+                if(++MRION.CURRENT_SEARCH_PAGE>=MRION.TOTAL_SEARCH_PAGE){
+                    spawnErrorPopup('No more search results!','info')
+                    $(this).data('disabled',true)
+                }
+                else
+                    searchSourceFor(keywords,MRION.CURRENT_SEARCH_PAGE)
+            }
+        }).end()
 // | ScrollToTop Event
     function bindSTTToSelector($selector){
         $selector
@@ -261,7 +297,6 @@ const {Mangakakalots} = require('./resources/source.js');
 // DESERIALIZATION OF MANGA OBJECT (OBJ->NODE)
     function deserializeMangaObj(obj){
         let $manga = mangaTemplate.clone()
-
         if(obj.cachedPath){
             $manga.data('cached', true)
             $manga.data('cachedPath', obj.cachedPath)
@@ -281,12 +316,12 @@ const {Mangakakalots} = require('./resources/source.js');
         $manga.find('img')
             .prop('src',obj.cachedImage || obj.image)
 
-        if(!obj.latestChap)
+        if(!obj.latestChapter)
             $manga.find('#latestChap, #latestChap+.label')
                 .hide()
         else
             $manga.find('#latestChap')
-                .html(obj.latestChap)
+                .html(obj.latestChapter)
 
         if(obj.rating==-1) 
             $manga.find('#rating').hide()
@@ -591,8 +626,8 @@ const {Mangakakalots} = require('./resources/source.js');
                         $selectManga
                             .fadeIn()
                             .css('display','flex')
-                        source.obj.scanMangaHref(href)
-                            .then(function(result){
+                        source.obj.scrapeManga(href)
+                            .then((result)=>{
                                 console.log('FRESH')
                                 if($this.data('cached'))
                                     main.send('updateFavCache',[result,href,source.key])
@@ -605,7 +640,7 @@ const {Mangakakalots} = require('./resources/source.js');
                                                 .removeClass('loading')
                                         })
                             })
-                            .catch(function(err){
+                            .catch((err)=>{
                                 if($this.data('cached')){
                                     console.log('CACHED')
                                     spawnErrorPopup('Using Cached Mode due to '+err, 'warning')
@@ -679,8 +714,9 @@ const {Mangakakalots} = require('./resources/source.js');
         let $parent = $('.content#home')
         $parent.find('.loading-wrapper')
             .fadeIn()
-        MRION.CURRENT_SOURCE.obj.getMangaList(page)
-            .then(function(result){
+        MRION.CURRENT_SOURCE.obj.scrapeDiscover(page)
+            .then(([result,totalPage])=>{
+                if(totalPage)MRION.TOTAL_MANGA_PAGE = totalPage
                 result.map((obj)=>{
                     let $manga = deserializeMangaObj(obj)
                     $manga.hide()
@@ -698,26 +734,32 @@ const {Mangakakalots} = require('./resources/source.js');
         console.log('PAGE:' + page)
     }
     bindSTTToSelector($('.content#home'))
-    $('.content#home').scroll(function(){
-        if($(this).find('.manga-wrapper').children('.manga').length<1) return;
-        
-        if($(this).scrollTop()>$(this).height())
-            $(this).find('#scrollToTop').fadeIn()
-        else 
-            $(this).find('#scrollToTop').fadeOut()
-        
-        let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
-        if(hasReachedBottom){
-            updateHomeMangaList(++MRION.CURRENT_MANGA_PAGE)
-        }
-    })
+    $('.content#home')
+        .data('disabled',false)
+        .scroll(function(){
+            if($(this).find('.manga-wrapper').children('.manga').length<1) return;
+            
+            if($(this).scrollTop()>$(this).height())
+                $(this).find('#scrollToTop').fadeIn()
+            else 
+                $(this).find('#scrollToTop').fadeOut()
+            
+            let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
+            if(hasReachedBottom && !$(this).data('disabled')){
+                if(++MRION.CURRENT_MANGA_PAGE >= MRION.TOTAL_MANGA_PAGE){
+                    spawnErrorPopup('End of Discover','info')
+                    $(this).data('disabled',true)
+                }
+                else updateHomeMangaList(MRION.CURRENT_MANGA_PAGE)
+            }
+        })
 // GENRELIST
     function getGenreList(){
         let genreTemplate = $(`<div class="genre"></div>`)
         let $parent = $('.content#genrelist')
         $parent.find('.genre-list').find('.loading-wrapper')
             .fadeIn()
-        MRION.CURRENT_SOURCE.obj.getGenreList().then((result)=>{
+        MRION.CURRENT_SOURCE.obj.scrapeGenreList().then((result)=>{
             for(const [genre,href] of Object.entries(result)){
                 let $genre = genreTemplate.clone()
                 $genre.html(genre)
@@ -738,16 +780,9 @@ const {Mangakakalots} = require('./resources/source.js');
         let href = $parent.find('#currentGenre').data('href')
         $parent.children('.loading-wrapper')
             .fadeIn()
-        MRION.CURRENT_SOURCE.obj.getMangaListFromGenre(href,page)
-            .then(function(result){
-                if(result ==='NO-MORE'){
-                    $parent
-                        .data('disabled',true)
-                        .children('.loading-wrapper')
-                            .fadeOut()
-                            .end()
-                    spawnErrorPopup('Reached the end of genre page!','warning')
-                }
+        MRION.CURRENT_SOURCE.obj.scrapeGenre(href,page)
+            .then(([result,totalPage])=>{
+                if(totalPage)MRION.TOTAL_GENRE_PAGE = totalPage
                 result.map((obj)=>{
                     let $manga = deserializeMangaObj(obj)
                     $manga.hide()
@@ -789,19 +824,25 @@ const {Mangakakalots} = require('./resources/source.js');
         updateGenreMangaList(MRION.CURRENT_GENRE_MANGA_PAGE)
     })
     bindSTTToSelector($('.content#genrelist'))
-    $('.content#genrelist').scroll(function(){
-        if($(this).find('.manga-wrapper').children('.manga').length<1) return;
-        
-        if($(this).scrollTop()>$(this).height())
-            $(this).find('#scrollToTop').fadeIn()
-        else 
-            $(this).find('#scrollToTop').fadeOut()
-        
-        let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
-        if(hasReachedBottom && !$(this).data('disabled')){
-            updateGenreMangaList(++MRION.CURRENT_GENRE_MANGA_PAGE)
-        }
-    })
+    $('.content#genrelist')
+        .data('disabled',false)
+        .scroll(function(){
+            if($(this).find('.manga-wrapper').children('.manga').length<1) return;
+            
+            if($(this).scrollTop()>$(this).height())
+                $(this).find('#scrollToTop').fadeIn()
+            else 
+                $(this).find('#scrollToTop').fadeOut()
+            
+            let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
+            if(hasReachedBottom && !$(this).data('disabled')){
+                if(++MRION.CURRENT_GENRE_MANGA_PAGE>=MRION.TOTAL_GENRE_PAGE){
+                    spawnErrorPopup('No more mangas in this Genre!','info')
+                    $(this).data('disabled',true)
+                }
+                else updateGenreMangaList(MRION.CURRENT_GENRE_MANGA_PAGE)
+            }
+        })
 // SPAWN ERROR POPUP
     function spawnErrorPopup(msg,type){
         let id = type || 'error'
