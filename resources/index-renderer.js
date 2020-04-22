@@ -846,20 +846,20 @@ $('.navlink#genrelist').click()
 
 
 // TEMPORARY SOURCE TESTING
-const {Mangakakalots} = require('./resources/source.js')
+//const {Mangakakalots} = require('./resources/source.js')
 const {Mangakakalots:depMklts} = require('./resources/source-deprecated.js')
 
-var SOURCES = {
+SOURCES = {
     current : new Mangakakalots(),
     dep : new depMklts('https://mangakakalots.com/')
 }
 
 async function testVersions(a,b=false,{out='log',params=false}){
-    if(!params) throw 'No Parameters';
     if(!b) b=a;
     try{
         console.time('Current')
-        var cRes = await SOURCES.current[a](...params)[0]
+        _res = await SOURCES.current[a](...params)
+        var cRes = _res[0]
         console.log("CURRENT RESULT: ")
         console[out](cRes)
         console.log("-----------------------------------------")
@@ -877,7 +877,7 @@ async function testVersions(a,b=false,{out='log',params=false}){
         console.timeEnd('Deprecated')
     }
     catch(err){
-        console.log('CURRENT: ' + err)
+        console.log('DEPRECATED: ' + err)
     }
     let aliases = {
         latestChapter : 'latestChap'

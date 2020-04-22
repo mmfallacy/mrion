@@ -46,7 +46,7 @@ class Source {
         let mangaArray = []
         let sourceKey = this.sourceKey
         let pages = D.pages($$);
-        $$('html').find(D.wrapper).find(D.item)
+        $$(D.wrapper).find(D.item)
             .each(function(){
                 let manga = {}
                 // POPULATE MANGA OBJ ITEMS
@@ -93,7 +93,7 @@ class Source {
         let mangaArray = []
         let sourceKey = this.sourceKey;
         let pages = D.pages($$);
-        $$('html').find(D.wrapper).find(D.item)
+        $$(D.wrapper).find(D.item)
             .each(function(){
                 let manga = {}
                 // POPULATE MANGA OBJ ITEMS
@@ -141,7 +141,7 @@ class Source {
         let sourceKey = this.sourceKey
         let pages = D.pages($$)
 
-        $$('html').find(D.wrapper).find(D.item)
+        $$(D.wrapper).find(D.item)
             .each(function(){
                 let manga = {}
                 // POPULATE MANGA OBJ ITEMS
@@ -179,6 +179,49 @@ class Source {
 
             });
             return [mangaArray, pages];
+    }
+
+    async scrapeManga(href){
+        let D = this.manga
+        let $$ = await this.retrieveSourceFromUrl(href,D.options)
+    
+        let obj = {}
+
+        obj.image = 
+            (typeof D.image === 'function')
+            ? D.image($$)
+            : $$(D.image).prop('src')
+
+        obj.title = 
+            (typeof D.title === 'function')
+            ? D.title($$)
+            : $$(D.title).html()
+
+        obj.altTitles = 
+            (typeof D.altTitles === 'function')
+            ? D.altTitles($$)
+            : $$(D.altTitles).text().split(',')
+
+        let chapters = []
+        $$(D.chapter.wrapper).find(D.chapter.item)
+            .each(function(){
+                chapters.push({
+                    text: $$(this).find(D.chapter.text).text().split(':')[0].trim(),
+                    date: $$(this).find(D.chapter.date).text().trim(),
+                    href: $$(this).find(D.chapter.text).prop('href')
+                })
+            })
+
+        obj.info = D.info($$)
+
+        obj.chapters = chapters.reverse()
+
+        obj.description = 
+            (typeof D.description === 'function')
+            ? D.description($$)
+            : $$(D.description).text()
+
+        return obj
     }
 }
 
@@ -227,6 +270,69 @@ class Mangakakalots extends Source{
 
         this.genre = {...this.discover}
         this.genre.urlBuilder = (genreUrl,page=1) => {return `${genreUrl}&page=${page}`}
+        
+        this.manga = {
+            options : {
+                headless: false
+            },
+            image : '.manga-info-top .manga-info-pic img',
+            title : '.manga-info-top .manga-info-text li:nth-child(1) h1',
+            altTitles : '.manga-info-top .manga-info-text li:nth-child(1) h2',
+            description: ($$) => {return $$('#noidungm').clone().children().remove().end().text().trim() },
+            info: this.infoParser,
+            chapter:{
+                wrapper: '.manga-info-chapter .chapter-list',
+                item: '.row',
+                text: 'span:nth-child(1) a',
+                date: 'span:nth-child(3)'
+            },
+        }
+    }
+    infoParser($$){
+        let info = {}
+        $$('.manga-info-top .manga-info-text').find('li').each(function(index){
+            switch(index){
+                case 1:
+                    info.author = []
+                    $$(this).find('a').each(function(){
+                        info.author.push($$(this).text())
+                    })
+                    break;
+                case 2:
+                    info.status = $$(this).text().split(' : ')[1].trim()
+                    break;
+                case 3:
+                    info.lastUpdated = $$(this).text().split(' : ')[1].trim()
+                    break;
+                case 6:
+                    info.genres = []
+                    $$(this).find('a').each(function(){
+                        info.genres.push($$(this).text())
+                    })
+                    break;
+                case 8:
+                    info.rating =  parseFloat($$(this).find('em').filter(function(){
+                        return $$(this).attr('property') === 'v:average'
+                    }).html())
+                    break;
+            }
+        })
+        return info
+        
+    }
+
+
+    async scrapeGenreList(){
+        let $$ = await this.retrieveSourceFromUrl(this.url,{})
+        var genres = {}
+        $$('.panel-category table tbody').find('tr').each(function(i){
+            if(i<2) return
+            $$(this).find('td:not(:nth-child(1))').each(function(){
+                let genre = $$(this).text().trim()
+                if(genre) genres[genre] = $$(this).find('a').prop('href').split('&').slice(0,-1).join('&')
+            })
+        })
+        return genres
     }
 }
 
