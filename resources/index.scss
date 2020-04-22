@@ -927,6 +927,14 @@ hr{
         color:$color-foreground;
     }
 }
+.popup#info{
+    .icon{
+        color:rgb(93, 93, 252);
+    }
+    .title{
+        color:rgb(93, 93, 252);
+    }
+}
 .manga-wrapper{
     display:flex;
     flex-wrap:wrap;
