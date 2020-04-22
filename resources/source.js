@@ -223,6 +223,21 @@ class Source {
 
         return obj
     }
+
+    async checkUpdates(href,title,lastChap){
+        let D = this.manga
+        let $$ = await this.retrieveSourceFromUrl(href,D.options)
+
+        let $$lastChapter = $$(D.chapter.wrapper).find(D.chapter.item).first()
+        
+        let latest = {}
+            latest.text = $$lastChapter.find(D.chapter.text).text().split(':')[0].trim()
+            latest.date = $$lastChapter.find(D.chapter.date).text().trim()
+            latest.title = title
+
+        if(latest.text===lastChap) return [false]
+        else return [latest]
+    }
 }
 
 
