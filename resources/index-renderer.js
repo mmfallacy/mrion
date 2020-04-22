@@ -168,7 +168,6 @@ const {Mangakakalots} = require('./resources/source.js');
         .find('#searchSubmit')
             .click(function(){
                 let keywords = $(this).siblings('#searchInput').val()
-                console.log(keywords)
                 $searchResults = $('.content#search').find('.searchResults')
                 $searchResults
                     .addClass('loading')
@@ -844,3 +843,58 @@ $('.navlink#genrelist').click()
 //   rightClickPosition = {x: e.x, y: e.y}
 //   menu.popup(remote.getCurrentWindow())
 // }, false)
+
+
+// TEMPORARY SOURCE TESTING
+const {Mangakakalots} = require('./resources/source.js')
+const {Mangakakalots:depMklts} = require('./resources/source-deprecated.js')
+
+var SOURCES = {
+    current : new Mangakakalots(),
+    dep : new depMklts('https://mangakakalots.com/')
+}
+
+async function testVersions(a,b=false,{out='log',params=false}){
+    if(!params) throw 'No Parameters';
+    if(!b) b=a;
+    try{
+        console.time('Current')
+        var cRes = await SOURCES.current[a](...params)[0]
+        console.log("CURRENT RESULT: ")
+        console[out](cRes)
+        console.log("-----------------------------------------")
+        console.timeEnd('Current')
+    }
+    catch(err){
+        console.log('CURRENT: ' + err)
+    }
+    try{
+        console.time('Deprecated')
+        var dRes = await SOURCES.dep[b](...params)
+        console.log("Deprecated RESULT: ")
+        console[out](dRes)
+        console.log("-----------------------------------------")
+        console.timeEnd('Deprecated')
+    }
+    catch(err){
+        console.log('CURRENT: ' + err)
+    }
+    let aliases = {
+        latestChapter : 'latestChap'
+    }
+    if(cRes.length!=dRes.length)
+        return false
+    else{
+        for(var i= 0; i<cRes.length; i++){
+            for(const key in cRes[i]){
+                if (Object.keys(aliases).includes(key)) xkey = aliases[key];
+                else xkey = key
+                if(cRes[i][key]!=dRes[i][xkey]){
+                    console.log(i,key)
+                    return "Unequal Results!"
+                }
+            }
+        }
+        return "Test passed"
+    }
+}
