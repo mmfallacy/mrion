@@ -856,7 +856,6 @@ hr{
 }
 .reader-loading-wrapper{
     @extend .global-loading-wrapper;
-    display:block;
     .logo-wrapper{
         height:30vh;
         width:30vh;
@@ -866,18 +865,18 @@ hr{
         transform: translateX(-50%);
         .background{
             position:absolute;
-            top:0;
-            left:0;
-            height:100%;
-            width:100%;
+            top:5%;
+            left:5%;
+            height:90%;
+            width:90%;
             background-color:$color-foreground;
         }
         .foreground{
             position:absolute;
-            top:0;
-            left:0;
-            height:100%;
-            width:100%;
+            top:5%;
+            left:5%;
+            height:90%;
+            width:90%;
         }
     }
     .clipped{

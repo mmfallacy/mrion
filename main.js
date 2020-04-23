@@ -71,7 +71,7 @@ global.SOURCES = SOURCES // EXPOSE TO RENDERER
 global.CONFIG = CONFIG
 
 
-var mainWindow,tray;
+var mainWindow,tray,readerWindow;
 
 async function scheduleUpdater(){
   UPDATED = {}
@@ -92,7 +92,7 @@ function createMainWindow () {
     }
   })
   mainWindow.loadFile('index.html')
-  mainWindow.webContents.openDevTools({mode:'detach'})
+  //mainWindow.webContents.openDevTools({mode:'detach'})
 }
 function createReaderWindow(){
   readerWindow = new BrowserWindow({
@@ -100,6 +100,7 @@ function createReaderWindow(){
     height:900,
     frame:false,
     resizable:false,
+    show:false,
     webPreferences: {
       nodeIntegration: true
     }
@@ -108,7 +109,10 @@ function createReaderWindow(){
   readerWindow.webContents.openDevTools({mode:'detach'})
 }
 function showMainWindowFromTray(){
-  createMainWindow()
+  if(mainWindow.isDestroyed())
+    createMainWindow()
+  else
+    mainWindow.show()
   trayMode = false;
   tray.destroy()
 }
@@ -290,7 +294,19 @@ ipcMain.on('syncCHAPTERMARK',(evt,data)=>{
   fs.writeFileSync(path.join(__dirname,'userdata','chapterdata.json'), JSON.stringify(CHAPTERMARK,null,2))
 })
 
-ipcMain.on('min-toTray',(evt)=>{
-  mainWindow.destroy()
-  createTray()
+ipcMain.on('spawnReaderWindow',(evt,data)=>{
+  console.log('Initializing reader window')
+  createReaderWindow()
+  readerWindow.once('ready-to-show',()=>{
+    ipcMain.once('retrieveChapterData',(evt)=>{
+      evt.returnValue = data
+    })
+    evt.sender.send('readerInitialized')
+  })
+})
+ipcMain.on('show-reader',(evt)=>{
+  if(!readerWindow.isDestroyed()){
+    readerWindow.show()
+    mainWindow.hide()
+  }
 })

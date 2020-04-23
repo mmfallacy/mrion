@@ -3,6 +3,127 @@ const Panzoom = require('@panzoom/panzoom')
 const Mousetrap = require('mousetrap')
 var POSITIONS = main.sendSync('getLayoutPositions')
 
+
+// EVENT LISTENERS FOR IMAGE
+// ** CURRENT IMG IS IMG CONTAINER NOT <IMG>
+var READER = {
+    internalCurrentImg:false,
+    get CURRENT_IMG(){
+        return this.internalCurrentImg
+    },
+    set CURRENT_IMG($node){
+        this.internalCurrentImg = $node
+        this.CURRENT_IMG_INDEX = $('.img-container').index($node)
+    },
+    internalCurrentChapter:0,
+    get CURRENT_CHAPTER(){
+        return this.internalCurrentChapter
+    },
+    set CURRENT_CHAPTER(index){
+        this.internalCurrentChapter = index
+        this.CHP_indexListener(index) 
+    },
+    internalImgIndex: 1,
+    get CURRENT_IMG_INDEX(){
+        return this.internalImgIndex
+    },
+    set CURRENT_IMG_INDEX(i){
+        this.internalImgIndex=i
+        this.IMG_indexListener(i)
+    },
+    IMG_indexListener: function(i){
+        // DISABLE PREVIOUS IMG BUTTON IF INDEX IS 0
+        if(i==0)
+            $('#controls').find('#prevImg')
+                .attr('disabled',true)
+        else
+            $('#controls').find('#prevImg')
+                .attr('disabled',false)
+        // DISABLE NEXT IMG BUTTON IF INDEX IS MAX
+        if(i==this.CHAPTER_IMG_TOTAL-1)
+            $('#controls').find('#nextImg')
+                .attr('disabled',true)
+        else
+            $('#controls').find('#nextImg')
+                .attr('disabled',false)
+    },
+    CHP_indexListener: function(i){
+        // DISABLE PREVIOUS IMG BUTTON IF INDEX IS 0
+        if(i==0)
+            $('#controls').find('#prevChap')
+                .attr('disabled',true)
+        else
+            $('#controls').find('#prevChap')
+                .attr('disabled',false)
+        // DISABLE NEXT IMG BUTTON IF INDEX IS MAX
+        if(i==this.CHAPTERS.length-1)
+            $('#controls').find('#nextChap')
+                .attr('disabled',true)
+        else
+            $('#controls').find('#nextChap')
+                .attr('disabled',false)
+        // CHANGE SELECTED             
+        $('#chapterNum .dropdown')
+            .find('.selected')
+                .html(READER.CHAPTERS[i].text.split(' ')[1])
+                .end()
+            .find('.options').children()
+                .removeClass('active')
+                .filter(`:nth-child(${i+1})`)
+                    .addClass('active')
+        
+    },
+    get CHAPTER_IMG_CURRENT(){
+        $('.image-handler').children().length
+    },
+    CHAPTER_IMG_TOTAL: 0,
+    CHAPTERS:false,
+}
+
+READER.CURRENT_IMG = $('.image-handler .img-container').first()
+READER.CHAPTER_IMG_TOTAL = 7
+
+
+//let [chapters, index] = main.sendSync('retrieveChapterData')
+READER.CHAPTERS = [//chapters
+    {
+        text:"Chapter 1",
+        date:"Aug 25,19",
+        href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_1"
+    },
+    {
+        text:"Chapter 2",
+        date:"Aug 25,19",
+        href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_2"
+    },
+    {
+        text:"Chapter 3",
+        date:"Aug 25,19",
+        href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_3"
+    },
+]
+
+READER.CHAPTERS.map((el,i)=>{
+    let $option = $('<span class="option"></span>')
+    $option.data('index',i)
+    $option.html(el.text.split(' ')[1])
+    $('#chapterNum .dropdown .options').append($option)
+})
+$('#chapterNum .text').html(READER.CHAPTERS.length)
+
+READER.CURRENT_CHAPTER = 2//index
+
+function getCurrentShownImage(){
+    let {left,top} = $('.content .pointer').offset()
+    let targets = document.elementsFromPoint(left,top)
+    for(const target of targets)
+        if($(target).is('.img-container img'))
+            return $(target).parent()
+    return false
+}
+
+
+
 $('img').attr('draggable',false);
 
 
@@ -141,6 +262,17 @@ $('#controls')
             },500, 'swing')
         })
         .end()
+    .find('#nextChap')
+        .click(function(){
+            READER.CURRENT_CHAPTER++ 
+            console.log(READER.CURRENT_CHAPTER)
+        }).end()
+    .find('#prevChap')
+        .click(function(){
+            READER.CURRENT_CHAPTER--
+            console.log(READER.CURRENT_CHAPTER)
+
+        }).end()
 
 
 
@@ -206,61 +338,6 @@ $('.image-handler .img-container img').each(function(){
     })
 
 })
-// EVENT LISTENERS FOR IMAGE
-// ** CURRENT IMG IS IMG CONTAINER NOT <IMG>
-var READER = {
-    internalCurrentImg:false,
-    get CURRENT_IMG(){
-        return this.internalCurrentImg
-    },
-    set CURRENT_IMG($node){
-        this.internalCurrentImg = $node
-        this.CURRENT_IMG_INDEX = $('.img-container').index($node)
-    },
-    internalImgIndex: 1,
-    get CURRENT_IMG_INDEX(){
-        return this.internalImgIndex
-    },
-    set CURRENT_IMG_INDEX(i){
-        this.internalImgIndex=i
-        this.indexListener(i)
-    },
-    indexListener: function(i){
-        // DISABLE PREVIOUS IMG BUTTON IF INDEX IS 0
-        if(i==0)
-            $('#controls').find('#prevImg')
-                .attr('disabled',true)
-        else
-            $('#controls').find('#prevImg')
-                .attr('disabled',false)
-        // DISABLE NEXT IMG BUTTON IF INDEX IS MAX
-        if(i==this.CHAPTER_IMG_TOTAL-1)
-            $('#controls').find('#nextImg')
-                .attr('disabled',true)
-        else
-            $('#controls').find('#nextImg')
-                .attr('disabled',false)
-    },
-    get CHAPTER_IMG_CURRENT(){
-        $('.image-handler').children().length
-    },
-    CHAPTER_IMG_TOTAL: 0,
-
-
-}
-
-READER.CURRENT_IMG = $('.image-handler .img-container').first()
-READER.CHAPTER_IMG_TOTAL = 7
-
-function getCurrentShownImage(){
-    let {left,top} = $('.content .pointer').offset()
-    let targets = document.elementsFromPoint(left,top)
-    for(const target of targets)
-        if($(target).is('.img-container img'))
-            return $(target).parent()
-    return false
-}
-
 
 
 // BINDINGS

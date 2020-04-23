@@ -219,6 +219,9 @@ button.top-button{
     }
     .dropdown{
         @extend %dropdown;
+        .options{
+            flex-direction: column-reverse !important;
+        }
     }
 }
 #controls{

@@ -535,13 +535,14 @@ const anime = require('animejs')
                 CHAPTERMARK[href].READ.push(index)
                 $(this).addClass('read')
                 main.send('syncCHAPTERMARK', CHAPTERMARK)
-
-
-
-                main.send('spawnReaderWindow', $(this).parent().data('raw'))
-
-            }
-            console.log('chapter clicked')
+            } 
+            console.log('chapter clicked')  
+            $('.reader-loading-wrapper').fadeIn()
+            createReaderLoop()
+            main.send('spawnReaderWindow', [$(this).parent().data('raw'),index])
+            main.once('readerInitialized',()=>{
+                finishReaderLoop()
+            })
         }
     })
     // FAVORITE
@@ -851,7 +852,7 @@ const anime = require('animejs')
         })
 // READER LOADING
     var readerAnimation = {};
-    ;(function createReaderLoop(){
+    function createReaderLoop(){
         var $wrapper = $('.reader-loading-wrapper .text')
         $wrapper.html($wrapper.text().replace(/\S/g,"<span class='letter'>$&</span>"))
         readerAnimation.text = 
@@ -881,15 +882,23 @@ const anime = require('animejs')
                 easing: "linear",
                 duration:2250
             })
-    })()
+    }
     function finishReaderLoop(){
         readerAnimation.clipPath = 
-            anime.timeline({})
+            anime.timeline({easing:'easeInQuad'})
             .add({
                 targets:'.reader-loading-wrapper .logo-wrapper .background',
-                borderRadius:'10rem',
-                easing: "easeInCirc",
-                duration:1250
+                borderRadius:{
+                    value:'10rem',
+                    easing: "easeInCirc",
+                    duration:1250
+                },
+                height:'100%',
+                width:'100%',
+                top:'0%',
+                left:'0%',
+                easing: "easeInQuad",
+                duration:1000
             })
             .add({
                 targets:'.reader-loading-wrapper .text',
@@ -906,11 +915,18 @@ const anime = require('animejs')
             .add({
                 targets:'.reader-loading-wrapper .clipped',
                 clipPath:[
-                    'circle(15vh at 50vw 34vh)',
+                    'circle(5vh at 50vw 34vh)',
                     'circle(100vh at 50vw 34vh)',
                 ],
                 easing: "easeInExpo",
                 duration: 1250,
+            },1000)
+
+        readerAnimation.clipPath.finished
+            .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
+            .then(()=>{
+                $('.reader-loading-wrapper').fadeOut()
+                main.send('show-reader')
             })
     }
 // SPAWN ERROR POPUP
