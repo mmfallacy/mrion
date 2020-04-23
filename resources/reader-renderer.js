@@ -65,7 +65,7 @@ var READER = {
         // CHANGE SELECTED             
         $('#chapterNum .dropdown')
             .find('.selected')
-                .html(READER.CHAPTERS[i].text.split(' ')[1])
+                .html(READER.CHAPTERS[i].text.replace('Chapter ',''))
                 .end()
             .find('.options').children()
                 .removeClass('active')
@@ -85,7 +85,8 @@ READER.CHAPTER_IMG_TOTAL = 7
 
 
 //let [chapters, index] = main.sendSync('retrieveChapterData')
-READER.CHAPTERS = [//chapters
+READER.CHAPTERS =// chapters
+[
     {
         text:"Chapter 1",
         date:"Aug 25,19",
@@ -100,16 +101,16 @@ READER.CHAPTERS = [//chapters
         text:"Chapter 3",
         date:"Aug 25,19",
         href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_3"
-    },
+    }
 ]
 
 READER.CHAPTERS.map((el,i)=>{
     let $option = $('<span class="option"></span>')
     $option.data('index',i)
-    $option.html(el.text.split(' ')[1])
+    $option.html(el.text.replace('Chapter ',''))
     $('#chapterNum .dropdown .options').append($option)
 })
-$('#chapterNum .text').html(READER.CHAPTERS.length)
+$('#chapterNum .text').html(READER.CHAPTERS.slice(-1)[0].text.split(' ')[1])
 
 READER.CURRENT_CHAPTER = 2//index
 
