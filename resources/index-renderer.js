@@ -1,7 +1,7 @@
 const {ipcRenderer:main, remote} = require('electron');
 window.$ = require('jquery')
 const {Mangakakalots} = require('./resources/source.js');
-
+const anime = require('animejs')
 // | SOURCES 
     let SOURCES = {
         mangakakalots:{
@@ -420,6 +420,7 @@ const {Mangakakalots} = require('./resources/source.js');
                     .end()
                 .find('#chapter-list')
                     .data('href', href)
+                    .data('raw',result.chapters)
                     .end()
                 .find('#altTitle')
                     .html(result.altTitles.join(', '))
@@ -534,6 +535,11 @@ const {Mangakakalots} = require('./resources/source.js');
                 CHAPTERMARK[href].READ.push(index)
                 $(this).addClass('read')
                 main.send('syncCHAPTERMARK', CHAPTERMARK)
+
+
+
+                main.send('spawnReaderWindow', $(this).parent().data('raw'))
+
             }
             console.log('chapter clicked')
         }
@@ -843,6 +849,70 @@ const {Mangakakalots} = require('./resources/source.js');
                 else updateGenreMangaList(MRION.CURRENT_GENRE_MANGA_PAGE)
             }
         })
+// READER LOADING
+    var readerAnimation = {};
+    ;(function createReaderLoop(){
+        var $wrapper = $('.reader-loading-wrapper .text')
+        $wrapper.html($wrapper.text().replace(/\S/g,"<span class='letter'>$&</span>"))
+        readerAnimation.text = 
+            anime.timeline({loop:true})
+            .add({
+                    targets: '.reader-loading-wrapper .text .letter',
+                    opacity: [
+                        {
+                            value:1,
+                            easing: "easeInOutQuad",
+                            duration: 750,
+                        },
+                        {
+                            value:0,
+                            easing: "easeInOutQuad",
+                            duration: 750,
+                        }
+                    ],
+                    loop:true,
+                    delay: anime.stagger(100)
+                })
+        readerAnimation.logo = 
+            anime({
+                targets:'.reader-loading-wrapper .logo-wrapper .background',
+                rotate:'1turn',
+                loop:true,
+                easing: "linear",
+                duration:2250
+            })
+    })()
+    function finishReaderLoop(){
+        readerAnimation.clipPath = 
+            anime.timeline({})
+            .add({
+                targets:'.reader-loading-wrapper .logo-wrapper .background',
+                borderRadius:'10rem',
+                easing: "easeInCirc",
+                duration:1250
+            })
+            .add({
+                targets:'.reader-loading-wrapper .text',
+                opacity:0,
+                easing: "easeInQuad",
+                duration:500,
+            })
+            .add({
+                targets:'.reader-loading-wrapper .logo-wrapper .foreground',
+                opacity:0,
+                easing: "easeInQuad",
+                duration:500,
+            })
+            .add({
+                targets:'.reader-loading-wrapper .clipped',
+                clipPath:[
+                    'circle(15vh at 50vw 34vh)',
+                    'circle(100vh at 50vw 34vh)',
+                ],
+                easing: "easeInExpo",
+                duration: 1250,
+            })
+    }
 // SPAWN ERROR POPUP
     function spawnErrorPopup(msg,type){
         let id = type || 'error'

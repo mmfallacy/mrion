@@ -854,6 +854,52 @@ hr{
     height:calc(100% - 30px);
     background-color:$color-dark;
 }
+.reader-loading-wrapper{
+    @extend .global-loading-wrapper;
+    display:block;
+    .logo-wrapper{
+        height:30vh;
+        width:30vh;
+        position:absolute;
+        left:50%;
+        top:20%;
+        transform: translateX(-50%);
+        .background{
+            position:absolute;
+            top:0;
+            left:0;
+            height:100%;
+            width:100%;
+            background-color:$color-foreground;
+        }
+        .foreground{
+            position:absolute;
+            top:0;
+            left:0;
+            height:100%;
+            width:100%;
+        }
+    }
+    .clipped{
+        position:absolute;
+        top:0;
+        left:0;
+        height:100vh;
+        width:100vw;
+        clip-path:circle(0vh at 50vw 34vh);
+        background-color:$color-foreground;
+    }
+    .text{
+        color:$color-light-darker;
+        .letter{
+            opacity:0;
+        }
+        position:absolute;
+        bottom:20%;
+        left:50%;
+        transform:translateX(-50%)
+    }
+}
 .overflowTest{
     height:300vh;
     width:20px;

@@ -166,7 +166,8 @@ app.whenReady().then(function(){
   if(process.argv[2]=='tray'){
     createTray()
   }
-  else createReaderWindow() //createMainWindow()
+  else //createReaderWindow() 
+       createMainWindow()
 })
 
 app.on('window-all-closed', function (e) {
