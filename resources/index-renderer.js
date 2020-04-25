@@ -1,15 +1,8 @@
 const {ipcRenderer:main, remote} = require('electron');
 window.$ = require('jquery')
-const {Mangakakalots} = require('./resources/source.js');
 const anime = require('animejs')
 // | SOURCES 
-    let SOURCES = {
-        mangakakalots:{
-            obj: new Mangakakalots('https://mangakakalots.com/'),
-            name: "Mangakakalots",
-            key:'mangakakalots',
-        }
-    }
+    let SOURCES = remote.getGlobal('SOURCES')
     var MRION = {
         internalSource:false,
         internalMainPage:1,
@@ -539,7 +532,7 @@ const anime = require('animejs')
             console.log('chapter clicked')  
             $('.reader-loading-wrapper').fadeIn()
             createReaderLoop()
-            main.send('spawnReaderWindow', [$(this).parent().data('raw'),index])
+            main.send('spawnReaderWindow', [$(this).parent().data('raw'),index,$('.selectedManga').data('mangaObj').sourceKey])
             main.once('readerInitialized',()=>{
                 finishReaderLoop()
             })

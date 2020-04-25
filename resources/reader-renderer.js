@@ -1,19 +1,35 @@
 const {ipcRenderer:main, remote} = require('electron');
 const Panzoom = require('@panzoom/panzoom')
 const Mousetrap = require('mousetrap')
+
+
 var LAYOUTSETTINGS = main.sendSync('getLayoutPositions')
+let SOURCES = remote.getGlobal('SOURCES')
+
+var OPTIONS = {
+    LAZY_LOAD: true,
+    LAZY_LOAD_PARTS: 1,
+}
 
 
 // EVENT LISTENERS FOR IMAGE
 // ** CURRENT IMG IS IMG CONTAINER NOT <IMG>
 var READER = {
+    CURRENT_SOURCE:false,
     internalCurrentChapter:0,
+    internalLastChapter:0,
     get CURRENT_CHAPTER(){
         return this.internalCurrentChapter
     },
     set CURRENT_CHAPTER(index){
+        this.internalLastChapter = this.internalCurrentChapter
         this.internalCurrentChapter = index
-        this.CHP_indexListener(index) 
+        this.CHP_indexListener(index)
+        console.log('test') 
+        loadChapter(
+            this.CHAPTERS[index],
+            this.internalCurrentChapter - this.internalLastChapter
+        )
     },
     CHP_indexListener: function(i){
         // DISABLE PREVIOUS IMG BUTTON IF INDEX IS 0
@@ -44,25 +60,9 @@ var READER = {
     CHAPTERS:false,
 }
 
-//let [chapters, index] = main.sendSync('retrieveChapterData')
-READER.CHAPTERS =// chapters
-[
-    {
-        text:"Chapter 1",
-        date:"Aug 25,19",
-        href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_1"
-    },
-    {
-        text:"Chapter 2",
-        date:"Aug 25,19",
-        href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_2"
-    },
-    {
-        text:"Chapter 3",
-        date:"Aug 25,19",
-        href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_3"
-    }
-]
+let [chapters, index, sourceKey] = main.sendSync('retrieveChapterData')
+READER.CURRENT_SOURCE = SOURCES[sourceKey]
+READER.CHAPTERS = chapters
 
 READER.CHAPTERS.map((el,i)=>{
     let $option = $('<span class="option"></span>')
@@ -72,7 +72,7 @@ READER.CHAPTERS.map((el,i)=>{
 })
 $('#chapterNum .text').html(READER.CHAPTERS.slice(-1)[0].text.split(' ')[1])
 
-READER.CURRENT_CHAPTER = 2//index
+READER.CURRENT_CHAPTER =  index
 
 var DRAGGABLE_BUTTON_TEMPLATE = $(`
 <div class="button-group">
@@ -82,7 +82,130 @@ var DRAGGABLE_BUTTON_TEMPLATE = $(`
 </div>
 `)
 
+var IMGVIEW = {
+    internalImages : false,
+    get IMAGES(){
+        return this.internalImages
+    },
+    set IMAGES(array){
+        this.internalImages = array
+        $('.image-handler').children('.img-container').remove()
+        if(OPTIONS.LAZY_LOAD)
+            this.chunkify(array,OPTIONS.LAZY_LOAD_PARTS)
+        this.loadImages()
+    },
+    internalImagesChunks : [],
+    chunkify(array,chunkSize){
+        this.internalImagesChunks = []
+        this.chunkCursor = 0 ;
+        for(let i=0; i<array.length; i+=chunkSize){
+            let chunk = array.slice(i,i+chunkSize)
+            this.internalImagesChunks.push(chunk)
+        }
+    },
+    chunkCursor:0,
+    loadImages(){
+        console.log('LOADING NEW IMAGES: CC=' +this.chunkCursor)
+        if(OPTIONS.LAZY_LOAD){
+            if(this.chunkCursor<this.internalImagesChunks.length)    
+                var sources = this.internalImagesChunks[this.chunkCursor++]
+            else
+                return
+        }
+        else
+            var sources = this.internalImages
+        sources.map((src)=>{
+            let $image = $(`
+                <div class="img-container">
+                    <img src="${src}">
+                </div>
+            `)
+            $('.image-handler').append($image)
+            $image
+                .data('panzoom',
+                    Panzoom($image.children('img')[0],{
+                        animate:true,
+                        panOnlyWhenZoomed:true,
+                        canvas:true,
+                    })
+                )
+                .data('pos', $image.position())
+            $image.children('img')[0].addEventListener('wheel', function(e){
+                if(!e.shiftKey) return
+                if(e.target != this) return
+                let panzoom = $(this).parent().data('panzoom')
+                panzoom.zoomWithWheel(e)
+            })
+        })
+    },
+    internalCurrentImage:0,
+    get CURRENT_IMG(){
+        return this.internalCurrentImage
+    },
+    set CURRENT_IMG($container){
+        this.internalCurrentImage = $container
+        console.log($container.is(':last-child'))
+        if($container.is(':last-child'))
+            this.loadImages()
+    },
+    get IMAGE_CONTAINERS(){
+        return $('.image-handler').children()
+    },
+    internalImageIndex:0,
+    get CURRENT_IMG_INDEX(){
+        return this.internalImageIndex
+    },
+    set CURRENT_IMG_INDEX(i){
+        this.internalImageIndex=i
+        this.IMG_indexListener(i)
+    },
+    IMG_indexListener: function(i){
+        // DISABLE PREVIOUS IMG BUTTON IF INDEX IS 0
+        if(i==0)
+            $('#controls').find('#prevImg')
+                .attr('disabled',true)
+        else
+            $('#controls').find('#prevImg')
+                .attr('disabled',false)
+        // DISABLE NEXT IMG BUTTON IF INDEX IS MAX
+        if(i==this.CHAPTER_IMG_TOTAL-1)
+            $('#controls').find('#nextImg')
+                .attr('disabled',true)
+        else
+            $('#controls').find('#nextImg')
+                .attr('disabled',false)
+    },
 
+}
+// LOAD CHAPTERS
+    function loadChapter({href},mode){
+        if(mode==0) return
+        $('.loading-wrapper')
+                .fadeIn(function(){
+                    READER.CURRENT_SOURCE.obj
+                        .scrapeChapter(href)
+                            .then((res)=>{
+                                IMGVIEW.IMAGES = res
+                                $('.loading-wrapper')
+                                    .fadeOut()
+                            })
+                })
+    }           
+// IMAGE HANDLER
+    function getCurrentShownImage(){
+        let {left,top} = $('.content .pointer').offset()
+        let targets = document.elementsFromPoint(left,top)
+        for(const target of targets)
+            if($(target).is('.img-container img'))
+                return $(target).parent()
+        return false
+    }
+    $('.image-handler').scroll(function(){
+        if(!getCurrentShownImage()) return
+        if(getCurrentShownImage().is(IMGVIEW.CURRENT_IMG)) return
+        IMGVIEW.CURRENT_IMG = getCurrentShownImage()
+    })
+// DRAGGABLES
 $(".draggable")
     .each(function(){
         $(this).prepend(DRAGGABLE_BUTTON_TEMPLATE.clone())
@@ -249,6 +372,22 @@ $('#controls')
             console.log(READER.CURRENT_CHAPTER)
 
         }).end()
+    .find('#nextImg')
+        .click(function(){
+            let i = IMGVIEW.CURRENT_IMG_INDEX++
+            let {top} = IMGVIEW.IMAGE_CONTAINERS.eq(i).data('pos')
+            $('.image-handler').stop().animate({
+                scrollTop: top
+            },500, 'swing')
+        }).end()
+    .find('#prevImg')
+        .click(function(){
+            let i = IMGVIEW.CURRENT_IMG_INDEX--
+            let {top} = IMGVIEW.IMAGE_CONTAINERS.eq(i).data('pos')
+            $('.image-handler').stop().animate({
+                scrollTop: top
+            },500, 'swing')
+        }).end()
 
 
 
@@ -269,40 +408,45 @@ KEYBINDS = {
     PZ_RESET:'ctrl+r',
     NEXT_IMAGE: 'right',
     PREV_IMAGE: 'left',
+    REFRESH:['f5','ctrl+r','ctrl+f5']
 } 
 
-;(function MOUSETRAP_BINDINGS(){
-    if(!KEYBINDS.ENABLED) return;
-    // PANZOOM RESET
-    Mousetrap.bind(KEYBINDS.PZ_RESET, function(e){
-        e.preventDefault()
-        let target = $(document.elementFromPoint(MOUSE.x,MOUSE.y))
-        if(target.is('img'))
-            target.parent()
-                .data('panzoom')
-                    .reset()
-        else if(target.is('div.img-container'))
-            target
-                .data('panzoom')
-                    .reset()
-    },'keyup')
+// PANZOOM RESET
+Mousetrap.bind(KEYBINDS.PZ_RESET, function(e){
+    e.preventDefault()
+    let target = $(document.elementFromPoint(MOUSE.x,MOUSE.y))
+    if(target.is('img'))
+        target.parent()
+            .data('panzoom')
+                .reset()
+    else if(target.is('div.img-container'))
+        target
+            .data('panzoom')
+                .reset()
+},'keydown')
 
-    // PREVIOUS IMAGE
-    Mousetrap.bind(KEYBINDS.PREV_IMAGE,function(e){
-        e.preventDefault()
-        let $button = $('#controls').find('#prevImg')
+// PREVIOUS IMAGE
+Mousetrap.bind(KEYBINDS.PREV_IMAGE,function(e){
+    e.preventDefault()
+    let $button = $('#controls').find('#prevImg')
 
-        if(!$button.attr('disabled'))
-            $button.click()
-    },'keyup')
+    if(!$button.attr('disabled'))
+        $button.click()
+},'keydown')
 
-    // NEXT IMAGE
-    Mousetrap.bind(KEYBINDS.NEXT_IMAGE,function(e){
-        e.preventDefault()
-        let $button = $('#controls').find('#nextImg')
+// NEXT IMAGE
+Mousetrap.bind(KEYBINDS.NEXT_IMAGE,function(e){
+    e.preventDefault()
+    let $button = $('#controls').find('#nextImg')
 
-        if(!$button.attr('disabled'))
-            $button.click()
-    },'keyup')
+    if(!$button.attr('disabled'))
+        $button.click()
+},'keydown')
 
-})();
+if(!KEYBINDS.ENABLED) Mousetrap.reset()
+
+// DISABLE REFRESH
+Mousetrap.bind(KEYBINDS.REFRESH.filter((val)=>{
+    let {REFRESH, ...rest} = KEYBINDS
+    return !Object.values(rest).includes(val)
+}),(e,combo)=>e.preventDefault())

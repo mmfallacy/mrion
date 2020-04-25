@@ -15,7 +15,7 @@ const {Mangakakalots} = require('./resources/source.js');
 
 let SOURCES = {
   mangakakalots:{
-      obj: new Mangakakalots('https://mangakakalots.com/'),
+      obj: new Mangakakalots(),
       name: "Mangakakalots",
       key:'mangakakalots',
   }
@@ -92,7 +92,7 @@ function createMainWindow () {
     }
   })
   mainWindow.loadFile('index.html')
-  //mainWindow.webContents.openDevTools({mode:'detach'})
+  mainWindow.webContents.openDevTools({mode:'detach'})
 }
 function createReaderWindow(){
   readerWindow = new BrowserWindow({
@@ -170,8 +170,9 @@ app.whenReady().then(function(){
   if(process.argv[2]=='tray'){
     createTray()
   }
-  else //createReaderWindow() 
-       createMainWindow()
+  else 
+      // createReaderWindow() 
+      createMainWindow()
 })
 
 app.on('window-all-closed', function (e) {
@@ -310,3 +311,27 @@ ipcMain.on('show-reader',(evt)=>{
     mainWindow.hide()
   }
 })
+
+// ipcMain.on('retrieveChapterData',(evt)=>{
+//   evt.returnValue = [
+//     [
+//       {
+//           text:"Chapter 1",
+//           date:"Aug 25,19",
+//           href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_1"
+//       },
+//       {
+//           text:"Chapter 2",
+//           date:"Aug 25,19",
+//           href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_2"
+//       },
+//       {
+//           text:"Chapter 3",
+//           date:"Aug 25,19",
+//           href:"https://mangakakalots.com/chapter/baka_to_test_to_shokanjuu_dya/chapter_3"
+//       }
+//   ],
+//   2,
+//   SOURCES.mangakakalots.key
+//   ]
+// })

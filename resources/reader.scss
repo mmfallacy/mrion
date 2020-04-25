@@ -129,7 +129,6 @@ button.top-button{
     top:50%;
     transform: translateX(-50%) translateY(-50%);
     margin:auto;
-
     .img-container{
         width:98%;
         background-color:black;
@@ -137,6 +136,7 @@ button.top-button{
             width:100%;
         }
     }
+    
 }
 .pointer{
     position:fixed;
@@ -310,7 +310,39 @@ button.top-button{
     background-color: $color-normal;
 }
 
-
+.loading-wrapper{
+    height:100%;
+    width:100%;
+    position:fixed;
+    top:0;
+    left:0;
+    display:none;
+    background-color: $color-light-darker;
+    .loading &{
+        display:block;
+    }
+    .loader{
+        height:50px;
+        width:50px;
+        border: 7.5px solid $color-normal;
+        border-top-color: $color-foreground;
+        border-radius: 50%;
+        margin:50% auto;
+        animation: loading 1s linear infinite;
+        @keyframes loading{
+            0%{transform: rotate(0deg);}
+            100%{transform: rotate(360deg);}
+        }
+    }
+}
+.loading-wrapper{
+    background-color: $color-dark;
+    width:76%;
+    height:95%;
+    left:56%;
+    top:50%;
+    transform: translateX(-50%) translateY(-50%);
+}
 %dropdown{
     width:130px;
     max-height:95%;

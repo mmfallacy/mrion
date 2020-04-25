@@ -9,18 +9,43 @@ class Source {
         this.url;
         this.sourceKey = 'source';
     }
-    async retrieveSourceFromUrl( url=pRequired('URL') ,{headless = false, waitSelector = 'html'}){
+    async retrieveSourceFromUrl( url=pRequired('URL') ,{headless = false, waitFunction = false}){
         let content;
         if(headless) {
-            const browser = await puppeteer.launch()
+            console.time('HEADLESS SCRAPER')
+            const browser = await puppeteer.launch(
+                {
+                    headless:true,
+                    args: [
+                        '--proxy-server="direct://"',
+                        '--proxy-bypass-list=*',
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-accelerated-2d-canvas',
+                        '--no-first-run',
+                        '--no-zygote',
+                        '--disable-gpu'
+                    ]
+                }
+            )
             const page = await browser.newPage()
 
-            await page.goto(url)
-            await page.waitForSelector(waitSelector)
+            await page.setRequestInterception(true);
 
+            page.on('request', (req) => {
+                if(['image','stylesheet','font',].includes(req.resourceType())){
+                    req.abort();
+                }
+                else {
+                    req.continue();
+                }
+            });
+            await page.goto(url,{waitUntil:'domcontentloaded'})
+            await page.waitForFunction(waitFunction)
             content = await page.content()
+            browser.close().then(()=>console.timeEnd('HEADLESS SCRAPER'))
 
-            await browser.close()
         }
         else{
             try {
@@ -34,7 +59,6 @@ class Source {
             content = data;
         }
         let $$ = cheerio.load(content)
-
         return $$
     }
     
@@ -250,6 +274,15 @@ class Source {
         else return latest
     }
     async scrapeGenreList(){} // RETURN VALUE: GENRE ARRAY
+    async scrapeChapter(href){
+        let D = this.chapter
+        let $$ = await this.retrieveSourceFromUrl(href,D.options)
+        let images = []
+        $$(D.wrapper).find(D.item).each(function(){
+            images.push($$(this).prop('src'))
+        })
+        return images
+    }
 }
 
 
@@ -313,6 +346,15 @@ class Mangakakalots extends Source{
                 text: 'span:nth-child(1) a',
                 date: 'span:nth-child(3)'
             },
+        }
+
+        this.chapter = {
+            options:{
+                headless:true,
+                waitFunction:'document.querySelector("#vungdoc").childElementCount >1'
+            },
+            wrapper:'#vungdoc',
+            item: 'img:not(:nth-child(1))'
         }
     }
     infoParser($$){
