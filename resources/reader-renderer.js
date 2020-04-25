@@ -1,20 +1,12 @@
 const {ipcRenderer:main, remote} = require('electron');
 const Panzoom = require('@panzoom/panzoom')
 const Mousetrap = require('mousetrap')
-var POSITIONS = main.sendSync('getLayoutPositions')
+var LAYOUTSETTINGS = main.sendSync('getLayoutPositions')
 
 
 // EVENT LISTENERS FOR IMAGE
 // ** CURRENT IMG IS IMG CONTAINER NOT <IMG>
 var READER = {
-    internalCurrentImg:false,
-    get CURRENT_IMG(){
-        return this.internalCurrentImg
-    },
-    set CURRENT_IMG($node){
-        this.internalCurrentImg = $node
-        this.CURRENT_IMG_INDEX = $('.img-container').index($node)
-    },
     internalCurrentChapter:0,
     get CURRENT_CHAPTER(){
         return this.internalCurrentChapter
@@ -22,30 +14,6 @@ var READER = {
     set CURRENT_CHAPTER(index){
         this.internalCurrentChapter = index
         this.CHP_indexListener(index) 
-    },
-    internalImgIndex: 1,
-    get CURRENT_IMG_INDEX(){
-        return this.internalImgIndex
-    },
-    set CURRENT_IMG_INDEX(i){
-        this.internalImgIndex=i
-        this.IMG_indexListener(i)
-    },
-    IMG_indexListener: function(i){
-        // DISABLE PREVIOUS IMG BUTTON IF INDEX IS 0
-        if(i==0)
-            $('#controls').find('#prevImg')
-                .attr('disabled',true)
-        else
-            $('#controls').find('#prevImg')
-                .attr('disabled',false)
-        // DISABLE NEXT IMG BUTTON IF INDEX IS MAX
-        if(i==this.CHAPTER_IMG_TOTAL-1)
-            $('#controls').find('#nextImg')
-                .attr('disabled',true)
-        else
-            $('#controls').find('#nextImg')
-                .attr('disabled',false)
     },
     CHP_indexListener: function(i){
         // DISABLE PREVIOUS IMG BUTTON IF INDEX IS 0
@@ -73,16 +41,8 @@ var READER = {
                     .addClass('active')
         
     },
-    get CHAPTER_IMG_CURRENT(){
-        $('.image-handler').children().length
-    },
-    CHAPTER_IMG_TOTAL: 0,
     CHAPTERS:false,
 }
-
-READER.CURRENT_IMG = $('.image-handler .img-container').first()
-READER.CHAPTER_IMG_TOTAL = 7
-
 
 //let [chapters, index] = main.sendSync('retrieveChapterData')
 READER.CHAPTERS =// chapters
@@ -114,24 +74,46 @@ $('#chapterNum .text').html(READER.CHAPTERS.slice(-1)[0].text.split(' ')[1])
 
 READER.CURRENT_CHAPTER = 2//index
 
-function getCurrentShownImage(){
-    let {left,top} = $('.content .pointer').offset()
-    let targets = document.elementsFromPoint(left,top)
-    for(const target of targets)
-        if($(target).is('.img-container img'))
-            return $(target).parent()
-    return false
-}
+var DRAGGABLE_BUTTON_TEMPLATE = $(`
+<div class="button-group">
+    <button class="ri-ghost-2-line" id="hoverable"></button>
+    <button class="ri-eye-fill" id="visible"></button>
+    <div class="ri-drag-move-2-line" id="handle"></div>
+</div>
+`)
 
 
+$(".draggable")
+    .each(function(){
+        $(this).prepend(DRAGGABLE_BUTTON_TEMPLATE.clone())
+    })
+    .draggable({
+        containment: ".content",
+        handle:"#handle",
+        start: function(){
+            $(this).data('changed',true)
+        }
+    })
 
-$('img').attr('draggable',false);
-
-
-(function parsePOSITIONSVariable(){
-    for(let [id,value] of Object.entries(POSITIONS)){
+;(function applyLayoutSettings(){
+    for(let [id,value] of Object.entries(LAYOUTSETTINGS)){
+        // REGISTER POSITION
         $(`.draggable-content#${id}`).parent()
             .css({top:value.top,left:value.left})
+        // REGISTER VISIBILITY
+            .find('#visible')
+                .data('toggle',value.visible)
+                .end()
+            .find('#hoverable')
+                .data('toggle',value.hoverable)
+                
+        if(!value.hoverable)
+            $(`.draggable-content#${id}`)
+                .parent()
+                    .addClass('solid')
+                .find('#hoverable')
+                    .attr('class','ri-ghost-2-fill')
+
         if(!value.visible)
             $(`.draggable-content#${id}`)
                 .parent()
@@ -142,32 +124,46 @@ $('img').attr('draggable',false);
 })();
 
 $(".draggable")
-    .draggable({
-    containment: ".content",
-    handle:"#handle",
-    start: function(){
-        $(this).data('changed',true)
-    }
-    }).fadeIn().css('display','flex')
-
-$(".draggable #visible")
-    .data('toggle',false)
-    .click(function(){
-    let STATE = $(this).data('toggle')
-    let id = $(this).parent().parent().find('.draggable-content').attr('id')
-    if(STATE){
-        $(this).parent().parent().addClass('hidden')
-        $(this).attr('class','ri-eye-off-fill')
-        POSITIONS[id].visible = false;
-    }
-    else{
-        $(this).parent().parent().removeClass('hidden')
-        $(this).attr('class','ri-eye-fill')
-        POSITIONS[id].visible = true;
-    }
-    POSITIONS[id].changed = true;
-    $(this).data('toggle',!STATE)
+    .fadeIn(function(){
+        $(this).css('display','flex')
     })
+    .find('#visible')
+        .click(function(){
+            let STATE = $(this).data('toggle')
+            console.log(STATE)
+            let id = $(this).parent().parent().find('.draggable-content').attr('id')
+            if(STATE){
+                $(this).parent().parent().addClass('hidden')
+                $(this).attr('class','ri-eye-off-fill')
+                LAYOUTSETTINGS[id].visible = false;
+            }
+            else{
+                $(this).parent().parent().removeClass('hidden')
+                $(this).attr('class','ri-eye-fill')
+                LAYOUTSETTINGS[id].visible = true;
+            }
+            LAYOUTSETTINGS[id].changed = true;
+            $(this).data('toggle',!STATE)
+        })
+        .end()
+    .find('#hoverable')
+        .click(function(){
+            let STATE = $(this).data('toggle')
+            console.log(STATE)
+            let id = $(this).parent().parent().find('.draggable-content').attr('id')
+            if(STATE){
+                $(this).parent().parent().addClass('solid')
+                $(this).attr('class','ri-ghost-2-fill')
+                LAYOUTSETTINGS[id].hoverable = false;
+            }
+            else{
+                $(this).parent().parent().removeClass('solid')
+                $(this).attr('class','ri-ghost-2-line')
+                LAYOUTSETTINGS[id].hoverable = true;
+            }
+            LAYOUTSETTINGS[id].changed = true;
+            $(this).data('toggle',!STATE)
+        })
 
 //DROPDOWN LOGIC
 $('.dropdown .selected')
@@ -208,9 +204,9 @@ $("#editLayout")
             $('.draggable').each(function(){
                 let id =$(this).find('.draggable-content').attr('id')
                 if($(this).data('changed')){
-                    POSITIONS[id].changed = true;
-                    POSITIONS[id].top = $(this).offset().top
-                    POSITIONS[id].left = $(this).offset().left
+                    LAYOUTSETTINGS[id].changed = true;
+                    LAYOUTSETTINGS[id].top = $(this).offset().top
+                    LAYOUTSETTINGS[id].left = $(this).offset().left
                     $(this).data('changed',false)
                 }
             })
@@ -235,34 +231,13 @@ function showModal(id){
 }
 
 
-// ON UNLOAD SAVE POSITIONS
+// ON UNLOAD SAVE LAYOUTSETTINGS
 $(window).on('beforeunload',function(){
-    main.send('setLayoutPositions',POSITIONS)
+    main.send('setLayoutPositions',LAYOUTSETTINGS)
 })
 
 // CONTROLS
 $('#controls')
-    // IMAGES
-    .find('#nextImg')
-        .click(function(){
-            let $nextObj = READER.CURRENT_IMG.next()
-            let offset = $nextObj.data('pos').top
-            
-            $('.image-handler').animate({
-                scrollTop: offset
-            },500, 'swing')
-        })
-        .end()
-    .find('#prevImg')
-        .click(function(){
-            let $prevObj = READER.CURRENT_IMG.prev()
-            let offset = $prevObj.data('pos').top
-            
-            $('.image-handler').animate({
-                scrollTop: offset
-            },500, 'swing')
-        })
-        .end()
     .find('#nextChap')
         .click(function(){
             READER.CURRENT_CHAPTER++ 
@@ -277,29 +252,6 @@ $('#controls')
 
 
 
-// ZOOM CONTROLS
-$('#zoom-controls')
-    .find('#zoomIn')
-        .click(function(){
-            getCurrentShownImage()
-                .data('panzoom')
-                    .zoomIn()
-        })
-        .end()
-    .find('#zoomOut')
-        .click(function(){
-            getCurrentShownImage()
-                .data('panzoom')
-                    .zoomOut()
-        })
-        .end()
-    .find('#reset')
-        .click(function(){
-            getCurrentShownImage()
-                .data('panzoom')
-                    .reset()
-        })
-
 // MOUSE LOCATIONS
 MOUSE = {
     x:0,
@@ -311,68 +263,46 @@ $(document).mousemove(e=>{
 })
 
 
-// IMAGE HANDLERS
-$('.image-handler').scroll(function(){
-    if(!getCurrentShownImage()) return
-    if(getCurrentShownImage().is(READER.CURRENT_IMG)) return
-    READER.CURRENT_IMG = getCurrentShownImage()
-})
-$('.image-handler .img-container').each(function(){
-    $(this).data('pos',$(this).position())
-})
-$('.image-handler .img-container img').each(function(){
-    $(this).parent().data('panzoom',
-        Panzoom($(this)[0],{
-            animate:true,
-            panOnlyWhenZoomed:true,
-            canvas:true,
-        })
-    )
-})
-
-$('.image-handler .img-container img').each(function(){
-    this.addEventListener('wheel', function(e){
-        if(!e.shiftKey) return
-        if(e.target != this) return
-        let panzoom = $(this).parent().data('panzoom')
-        panzoom.zoomWithWheel(e)
-    })
-
-})
-
-
 // BINDINGS
 KEYBINDS = {
+    ENABLED: true,
     PZ_RESET:'ctrl+r',
     NEXT_IMAGE: 'right',
     PREV_IMAGE: 'left',
-}
+} 
 
+;(function MOUSETRAP_BINDINGS(){
+    if(!KEYBINDS.ENABLED) return;
+    // PANZOOM RESET
+    Mousetrap.bind(KEYBINDS.PZ_RESET, function(e){
+        e.preventDefault()
+        let target = $(document.elementFromPoint(MOUSE.x,MOUSE.y))
+        if(target.is('img'))
+            target.parent()
+                .data('panzoom')
+                    .reset()
+        else if(target.is('div.img-container'))
+            target
+                .data('panzoom')
+                    .reset()
+    },'keyup')
 
-Mousetrap.bind(KEYBINDS.PZ_RESET, function(e){
-    e.preventDefault()
-    let target = $(document.elementFromPoint(MOUSE.x,MOUSE.y))
-    if(target.is('img'))
-        target.parent()
-            .data('panzoom')
-                .reset()
-    else if(target.is('div.img-container'))
-        target
-            .data('panzoom')
-                .reset()
-})
-Mousetrap.bind(KEYBINDS.PREV_IMAGE,function(e){
-    e.preventDefault()
-    let $button = $('#controls').find('#prevImg')
+    // PREVIOUS IMAGE
+    Mousetrap.bind(KEYBINDS.PREV_IMAGE,function(e){
+        e.preventDefault()
+        let $button = $('#controls').find('#prevImg')
 
-    if(!$button.attr('disabled'))
-        $button.click()
-})
+        if(!$button.attr('disabled'))
+            $button.click()
+    },'keyup')
 
-Mousetrap.bind(KEYBINDS.NEXT_IMAGE,function(e){
-    e.preventDefault()
-    let $button = $('#controls').find('#nextImg')
+    // NEXT IMAGE
+    Mousetrap.bind(KEYBINDS.NEXT_IMAGE,function(e){
+        e.preventDefault()
+        let $button = $('#controls').find('#nextImg')
 
-    if(!$button.attr('disabled'))
-        $button.click()
-})
+        if(!$button.attr('disabled'))
+            $button.click()
+    },'keyup')
+
+})();

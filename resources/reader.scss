@@ -152,11 +152,13 @@ button.top-button{
     flex-direction: column;
     align-self: center;
     border:2px solid transparent;
+    
     .edit &{
         border:2px dashed $color-dark;
         .draggable-content{
             border-top-right-radius:0!important;
-            background-color:red;
+            opacity:1 !important;
+            transition-delay:0s !important;
         }
         .button-group{
             visibility:visible;
@@ -176,7 +178,7 @@ button.top-button{
         align-self: flex-end;
         display:flex;
         visibility:hidden;
-        #visible, #handle{
+        #visible, #handle,#hoverable{
             letter-spacing: 0;
             height:20px;
             width:20px;
@@ -188,13 +190,31 @@ button.top-button{
             justify-content: center;
             background-color:transparent;
         }
-        #visible{
+        #visible,#hoverable{
             cursor:pointer;
         }
         #handle{
             cursor:grabbing;
         }
     }
+    .draggable-content{   
+        opacity:.5;
+        
+        transition: opacity .5s ease-in;
+        transition-delay:2s;
+    }
+
+    &.solid .draggable-content{
+        opacity:1 !important;
+        transition-delay: 0;
+        transition-duration:0s;
+    }
+
+    &:not(.solid) .draggable-content:hover{
+        opacity:1;
+        transition-delay:0s;
+    }
+    
 }
 
 #chapterNum{
@@ -204,19 +224,8 @@ button.top-button{
     border-radius: 5rem;
     color:white;
     background-color: $color-dark-brighter;
-    opacity:.5;
-    transition: opacity .5s ease-in;
-    transition-delay:2s;
     display:flex;
     align-items:center;
-    &:hover{
-        opacity:1;
-        transition-delay:0s;
-    }
-    .edit &.draggable-content{
-        opacity:1;
-        transition-delay:0s;
-    }
     .dropdown{
         @extend %dropdown;
         .options{
@@ -230,20 +239,9 @@ button.top-button{
     border-radius: 5rem;
     padding:2.5% 5%;
     background-color: $color-dark-brighter;
-    opacity:.5;
-    transition: opacity .5s ease-in;
-    transition-delay:2s;
     display:flex;
     align-items:center;
     justify-content: space-between;
-    &:hover{
-        opacity:1;
-        transition-delay:0s;
-    }
-    .edit &.draggable-content{
-        opacity:1;
-        transition-delay:0s;
-    }
     button{
         letter-spacing: 0;
         height:30px;
