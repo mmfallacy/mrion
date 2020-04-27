@@ -5,9 +5,10 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder",
-    "test-build": "electron-builder --dir",
-    "rebuild": "electron-builder install-app-deps"
+    "build": "electron-builder build --win publish never",
+    "test-build": "electron-builder --dir publish never",
+    "rebuild": "electron-builder install-app-deps",
+    "deploy": "electron-builder build --win --publish always"
   },
   "build": {
     "appId": "com.mmfallacy.mrion",
@@ -22,11 +23,22 @@
         "nsis"
       ],
       "icon": "resources/img/icon.png"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "mmfallacy",
+        "repo": "mrion",
+        "releaseType": "draft"
+      }
+    ]
   },
-  "repository": "https://github.com/electron/electron-quick-start",
-  "author": "GitHub",
-  "license": "CC0-1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mmfallacy/mrion.git"
+  },
+  "author": "mmfallacy",
+  "license": "MIT",
   "devDependencies": {
     "electron": "^8.2.0",
     "electron-builder": "^22.4.1",
@@ -40,15 +52,14 @@
     "colors": "^1.4.0",
     "electron-is-dev": "^1.2.0",
     "electron-log": "^4.1.1",
+    "electron-updater": "^4.2.5",
     "fs": "0.0.1-security",
     "jquery": "^3.4.1",
     "knex": "^0.20.13",
-    "lodash": "^4.17.15",
     "mousetrap": "^1.6.5",
     "node-schedule": "^1.3.2",
     "os": "^0.1.1",
     "puppeteer": "^3.0.1",
-    "sqlite3": "^4.1.1",
-    "util": "^0.12.2"
+    "sqlite3": "^4.1.1"
   }
 }

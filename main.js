@@ -9,6 +9,8 @@
   const isDev = require('electron-is-dev');
   var schedule = require('node-schedule');
   const colors = require('colors')
+
+  const {autoUpdater} = require('electron-updater')
 // PATHS
   const icon = path.join(__dirname,'resources','img','iconsmallx.png')
   const iconWBubble = path.join(__dirname,'resources','img','iconsmall.png')
@@ -196,6 +198,7 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
     mainWindow.webContents.openDevTools({mode:'detach'})
     
     mainWindow.once('show',(evt)=>{
+      autoUpdater.checkForUpdatesAndNotify();
       if(CONFIG.chromePath) 
         for(let [key,{obj}] of Object.entries(SOURCES))
           obj._CHROME_PATH = CONFIG.chromePath
@@ -484,7 +487,15 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
       evt.returnValue = returnVal[0]
   })
 
-
+// AUTO UPDATER EVENTS
+  autoUpdater.on('mrionu-available', () => {
+    console.header('MRION UPDATE AVAILABLE',['bgYellow','bold'])
+    mainWindow.webContents.send('update_available');
+  });
+  autoUpdater.on('mrionu-downloaded', () => {
+    console.header('MRION UPDATE DOWNLOADED',['bgYellow','bold'])
+    mainWindow.webContents.send('update_downloaded');
+  });
 
 
 // FOR DEBUG
