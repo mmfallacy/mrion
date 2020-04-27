@@ -17,7 +17,7 @@
       <button class="ri-notification-badge-line" id="min-toTray"></button>
       <button class="ri-subtract-line" id="min-electron"></button>
       <button class="ri-checkbox-multiple-blank-line" id="max-electron"></button>
-      <button class="ri-close-line" id="close-electron"></button>
+      <button class="ri-close-line" id="close-prompt"></button>
     </div>
 <!-- SIDE BAR -->
     <div class="side-bar">
@@ -209,6 +209,14 @@
         <h3>Available Sources</h3>
         <div class="source-list">
         </div>
+      </div>
+      <div class="modal-content" id="chromePath">
+        <div class="header">
+          <span class="title">Set Chrome Path</span>
+        </div>
+        <h3>Chrome Path:</h3>
+        <textarea id="path" placeholder="No Filepath set" disabled readonly></textarea>
+        <button class="ri-file-search-line" id="spawnFileDialog"></button>
       </div>
     </div>
     <div class="popup" id="error">

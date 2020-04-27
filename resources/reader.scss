@@ -142,7 +142,6 @@ button.top-button{
     position:fixed;
     top:50%;
     left:55%;
-    color:red;
     transform:translate(-50%);
 }
 .draggable{
@@ -265,44 +264,87 @@ button.top-button{
     @extend #controls;
 }
 .modal-bg{
-    display:none;
-    position:fixed;
     height:100%;
     width:100%;
+    display:none;
+    position: absolute;
     top:0;
     left:0;
-    z-index:2000;
-    background-color: rgba(black,0.8);
+    z-index: 2000;
+    background-color: rgba(black,.8);
     .modal-content{
-        position:absolute;
-        left:50%;
-        top:50%;
-        z-index:2001;
-        transform: translateX(-50%) translateY(-50%);
-        height:200px;
+        height:250px;
         width:400px;
-        background-color:white;
+        background-color: $color-normal;
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform: translate(-50%,-50%);
+        padding:2%;
+        padding-top:calc(30px + 1.5%);
+        box-shadow: 0 5px 6px black;
         .header{
-            pointer-events: auto;
-            color: white; 
-            padding:0 2%;
             height:30px;
+            background-color: $color-foreground;
+            position: absolute;
+            top:0;
+            left:0;
             width:100%;
             display:flex;
             justify-content: space-between;
             align-items: center;
-            background-color: $color-foreground;
-            button{
+            padding: 0% 2.5%;
+            color:white;
+            .closeModal{
                 font-size:1.5rem;
-                color:white;
+                cursor: pointer;
+                padding:0;
+                color:$color-light;
+                letter-spacing: 0;
                 border:none;
                 background-color: transparent;
-                cursor:pointer;
             }
         }
     }
 }
-
+.modal-content#backprompt{
+    background-color: $color-normal;
+    p{
+        color:white;
+    }
+    .button-group{
+        width:100%;
+        display:flex;
+        justify-content: space-between;
+        padding:0 5%;
+        position: absolute;
+        left:0;
+        bottom: 10%;
+        button{
+            padding:2.5% 5%;
+            font-size:.7rem;
+            letter-spacing: .15rem;
+            border-radius: 5rem;
+            border:none;
+            cursor: pointer;
+            transition: transform .5s ease-in;
+            &:hover{
+                transform:scale(1.05);
+            }
+        }
+        #return{
+            color:white;
+            background-color: $color-foreground;
+            border:2px solid $color-foreground;
+        }
+        #cancel{
+            border:2px solid $color-foreground;
+            font-weight: bolder;
+            background-color: $color-normal;
+            color:$color-foreground;
+        }
+    }
+}
 .modal-content#options{
     height:400px;
     width:500px;
@@ -327,7 +369,7 @@ button.top-button{
         border: 7.5px solid $color-normal;
         border-top-color: $color-foreground;
         border-radius: 50%;
-        margin:50% auto;
+        margin:25% 53%;
         animation: loading 1s linear infinite;
         @keyframes loading{
             0%{transform: rotate(0deg);}
@@ -337,11 +379,7 @@ button.top-button{
 }
 .loading-wrapper{
     background-color: $color-dark;
-    width:76%;
-    height:95%;
-    left:56%;
-    top:50%;
-    transform: translateX(-50%) translateY(-50%);
+    display:block;
 }
 %dropdown{
     width:130px;

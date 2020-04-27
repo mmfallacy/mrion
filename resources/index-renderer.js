@@ -1,8 +1,11 @@
 const {ipcRenderer:main, remote} = require('electron');
 window.$ = require('jquery')
 const anime = require('animejs')
+const Mousetrap = require('mousetrap')
+
 // | SOURCES 
     let SOURCES = remote.getGlobal('SOURCES')
+    let UPDATES = main.sendSync("getUpdates")
     var MRION = {
         internalSource:false,
         internalMainPage:1,
@@ -11,6 +14,18 @@ const anime = require('animejs')
         TOTAL_GENRE_PAGE:2,
         CURRENT_SEARCH_PAGE:1,
         TOTAL_SEARCH_PAGE:2,
+        internalFavoritesBubble:0,
+        get FAVORITES_BUBBLE(){
+            return this.internalFavoritesBubble
+        },
+        set FAVORITES_BUBBLE(val){
+            this.internalFavoritesBubble = val;
+            if(val<=0)
+                $('button.navlink#favorites').children('.bubble').fadeOut()
+            else
+                $('button.navlink#favorites').children('.bubble').fadeIn()
+            
+        },
         get CURRENT_SOURCE(){
             return this.internalSource
         },
@@ -107,7 +122,7 @@ const anime = require('animejs')
 
 // | TITLEBAR
     $('.title-bar button').click(function(){
-        if(this.id=='close-electron')
+        if(this.id=='close-prompt')
             showModal('closePrompt')
         else
             main.send(this.id)
@@ -123,7 +138,11 @@ const anime = require('animejs')
     }
     $('.modal-content #closeModal')
         .click(()=>$('.modal-bg').fadeOut())
-
+    $('#closePrompt')
+        .find('button')
+            .click(function(){
+                main.send(this.id)
+            })
 // | SOURCE SELECT{
     $('.source-select #changeSource')
         .click(()=>showModal('changeSource'))
@@ -294,14 +313,11 @@ const anime = require('animejs')
             $manga.data('cached', true)
             $manga.data('cachedPath', obj.cachedPath)
             obj.cachedImage = `${obj.cachedPath}/image.` + obj.image.split('.').pop()
+            console.log(obj.cachedImage)
         }
         else 
             $manga.data('cached', false)
 
-        if(Object.keys(FAVORITES).includes(obj.href))
-            $manga.data('isFavorite',true)
-        else
-            $manga.data('isFavorite',false)
 
         $manga.find('#title')
             .html(obj.title)
@@ -337,7 +353,7 @@ const anime = require('animejs')
             
         obj.image = $node.find('img').prop('src')
 
-        obj.latestChap = $node.find('#latestChap').html()
+        obj.latestChapter = $node.find('#latestChap').html()
         
         obj.rating = $node.data('rating')
 
@@ -532,7 +548,7 @@ const anime = require('animejs')
             console.log('chapter clicked')  
             $('.reader-loading-wrapper').fadeIn()
             createReaderLoop()
-            main.send('spawnReaderWindow', [$(this).parent().data('raw'),index,$('.selectedManga').data('mangaObj').sourceKey])
+            main.send('spawnReaderWindow', [$(this).parent().data('raw'),index,$('.selectedManga').data('mangaObj')])
             main.once('readerInitialized',()=>{
                 finishReaderLoop()
             })
@@ -552,13 +568,13 @@ const anime = require('animejs')
                 return;
             }
             $this.addClass('tempDisabled')
-            console.log('test')
             setTimeout(()=>$this.removeClass('tempDisabled'),2000)
             if(STATUS){
                 
                 main.send('removeFavorite',href)
                 main.once('promise', (event,resolved)=>{
                     if(resolved){
+                        delete FAVORITES[href]
                         $('.content#favorites').find(`.source-group#${SGID}`)
                             .find('.manga').filter(function(){return $(this).data('href')===href})
                                 .remove()
@@ -615,7 +631,7 @@ const anime = require('animejs')
         function(){
             let href = $(this).data('href')
             let source = $(this).data('source')
-            let isFavorite = $(this).data('isFavorite')
+            let isFavorite = Object.keys(FAVORITES).includes(href)
             let $selectManga = $('.selectedManga')
             let mangaObj = serializeMangaNode($(this))
             let $this = $(this)
@@ -689,7 +705,6 @@ const anime = require('animejs')
     (function appendFavoritesToSG(){
         for(const [href,obj] of Object.entries(FAVORITES)){
             let $manga = deserializeMangaObj(obj)
-            $manga.data('isFavorite', true)
             $('.content#favorites').find(`.source-group#${obj.sourceKey}`).find('.manga-wrapper')
                 .append($manga)
         }
@@ -821,7 +836,7 @@ const anime = require('animejs')
                     .fadeOut(function(){
                         $(this).remove()
                     })
-        updateGenreMangaList(MRION.CURRENT_GENRE_MANGA_PAGE)
+        updateGenreMangaList(MRION.CURRENT_GENRE_MANGA_PAGE)     
     })
     bindSTTToSelector($('.content#genrelist'))
     $('.content#genrelist')
@@ -922,6 +937,31 @@ const anime = require('animejs')
                 main.send('show-reader')
             })
     }
+// HANDLE UPDATES
+    main.on('favoritesUpdate', (evt,UPDATES) =>{
+        parseUpdates(UPDATES)
+    });
+    main.on('spawnInfoOnUpdates', (evt,number) =>{
+        spawnErrorPopup(number + ` manga${(number>1)?'s':''} updated!`,'info')
+    });
+    function parseUpdates(updates){
+        if(!updates) return
+        for(let[href, obj] of Object.entries(updates)){
+            if(typeof obj === 'boolean') continue
+            MRION.FAVORITES_BUBBLE++;
+            let $manga =
+                $(`.content#favorites .source-group`).find('.manga-wrapper').find('.manga').filter(function(){
+                    return $(this).data('href') === href
+                })
+            $manga.find('.bubble').fadeIn();
+            $manga.find('#latestChap').html(obj.text)
+            $manga.one('click',function(){
+                $(this).find('.bubble').fadeOut();
+                MRION.FAVORITES_BUBBLE--
+            })
+        }
+    };
+    parseUpdates(UPDATES)
 // SPAWN ERROR POPUP
     function spawnErrorPopup(msg,type){
         let id = type || 'error'
@@ -942,25 +982,35 @@ const anime = require('animejs')
         },5000)
     }
 $('.navlink#genrelist').click()
-//$('.source#mangakakalots').click()
 
-// const Menu = remote.require('electron').Menu
-// const MenuItem = remote.require('electron').MenuItem
-
-// let rightClickPosition = null
-
-// const menu = new Menu()
-// const menuItem = new MenuItem({
-//   label: 'Inspect Element',
-//   click: () => {
-//     remote.getCurrentWindow().inspectElement(rightClickPosition.x, rightClickPosition.y)
-//   }
-// })
-// menu.append(menuItem)
-
-// window.addEventListener('contextmenu', (e) => {
-//   e.preventDefault()
-//   rightClickPosition = {x: e.x, y: e.y}
-//   menu.popup(remote.getCurrentWindow())
-// }, false)
+// CHROME PATH SELECTOR
+main.on('chromeNotSet',(evt)=>{
+    $('.modal-bg').find('#chromePath').show().end().fadeIn()
+})
+main.send('mainWindowReady')
+$('#chromePath #spawnFileDialog').click(function(){
+    let _path = main.sendSync('spawnFileDialog')
+    let _name = _path.split('\\').pop()
+    $(this).siblings('#path').html(_path)
+    if(!_path) spawnErrorPopup('Invalid File Path!')
+    console.log(_name)
+    if(_name!='chrome.exe') spawnErrorPopup('Invalid File Path!')
+    else{
+        main.sendSync('setConfig',['chromePath',_path])
+        main.send('settingsUpdated')
+        setTimeout(()=>{
+            $('#chromePath').fadeOut()
+            $('.modal-content').hide()
+            spawnErrorPopup('Please restart MRION for changes to take effect!','info')
+            setTimeout(()=>{
+                main.send('close-electron')
+            },5000)
+        },2000)
+    }
+})
+// KEYBINDS
+Mousetrap.bind(['alt+f4','ctrl+w'],(e)=>{
+    e.preventDefault()
+    $('.title-bar').find('#close-prompt').click()
+},'keydown')
 

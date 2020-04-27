@@ -1,13 +1,14 @@
 var axios = require('axios')
 var cheerio = require('cheerio')
-var puppeteer = require('puppeteer')
- 
+const puppeteer = require("puppeteer");
+
 function pRequired(type) { throw new Error(`${type} parameter of ${arguments.callee.caller.name} is required!`) }
 
 class Source {
     constructor(){
         this.url;
         this.sourceKey = 'source';
+        this._CHROME_PATH = false;
     }
     async retrieveSourceFromUrl( url=pRequired('URL') ,{headless = false, waitFunction = false}){
         let content;
@@ -26,7 +27,8 @@ class Source {
                         '--no-first-run',
                         '--no-zygote',
                         '--disable-gpu'
-                    ]
+                    ],
+                    executablePath: this._CHROME_PATH
                 }
             )
             const page = await browser.newPage()
@@ -93,7 +95,7 @@ class Source {
                         ? D.latestChapter($$, $$(this))
                         : $$(this).find(D.latestChapter).html()
                     if(_latestChapter) 
-                        manga.latestChapter = _latestChapter.trim()
+                        manga.latestChapter = _latestChapter.split(':')[0].trim()
 
                     manga.rating = 
                         (typeof D.rating === 'function')
@@ -144,7 +146,7 @@ class Source {
                         ? D.latestChapter($$, $$(this))
                         : $$(this).find(D.latestChapter).html()
                     if(_latestChapter) 
-                        manga.latestChapter = _latestChapter.trim()
+                        manga.latestChapter = _latestChapter.split(':')[0].trim()
 
                     manga.rating = 
                         (typeof D.rating === 'function')
@@ -195,7 +197,7 @@ class Source {
                         ? D.latestChapter($$, $$(this))
                         : $$(this).find(D.latestChapter).html()
                     if(_latestChapter) 
-                        manga.latestChapter = _latestChapter.trim()
+                        manga.latestChapter = _latestChapter.split(':')[0].trim()
 
                     manga.rating = 
                         (typeof D.rating === 'function')
@@ -241,7 +243,7 @@ class Source {
         $$(D.chapter.wrapper).find(D.chapter.item)
             .each(function(){
                 chapters.push({
-                    text: $$(this).find(D.chapter.text).text().split(':')[0].trim(),
+                    text: $$(this).find(D.chapter.text).text().trim(),
                     date: $$(this).find(D.chapter.date).text().trim(),
                     href: $$(this).find(D.chapter.text).prop('href')
                 })
@@ -270,12 +272,15 @@ class Source {
             latest.date = $$lastChapter.find(D.chapter.date).text().trim()
             latest.title = title
 
-        if(latest.text===lastChap) return false
-        else return latest
+        if(latest.text===lastChap) 
+            return false
+        else 
+            return latest
     }
     async scrapeGenreList(){} // RETURN VALUE: GENRE ARRAY
     async scrapeChapter(href){
         let D = this.chapter
+        console.log('RETRIEVING CHAPTER')
         let $$ = await this.retrieveSourceFromUrl(href,D.options)
         let images = []
         $$(D.wrapper).find(D.item).each(function(){
@@ -406,4 +411,4 @@ class Mangakakalots extends Source{
 }
 
 
-module.exports = {Mangakakalots}
+module.exports = {Mangakakalots,Source}

@@ -1,16 +1,23 @@
-const {app, BrowserWindow, ipcMain,Tray, Menu} = require('electron')
 const path = require('path')
+const {app, BrowserWindow, ipcMain,Tray, Menu, MenuItem, dialog} = require('electron')
 const fs = require('fs')
 const axios = require('axios')
 const icon = path.join(__dirname,'resources','img','iconsmallx.png')
-
+const isDev = require('electron-is-dev');
+var schedule = require('node-schedule');
 const iconWBubble = path.join(__dirname,'resources','img','iconsmall.png')
+var __userdata ;
 
-require('electron-reload')(__dirname, {
-  electron: require(`${__dirname}/node_modules/electron`),
-  ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
-});
-
+if(isDev){
+  require('electron-reload')(__dirname, {
+    electron: require(`${__dirname}/node_modules/electron`),
+    ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
+  });
+  __userdata = path.join(__dirname,'userdata')
+}
+else{
+  __userdata = path.join(__dirname,'/../../userdata')
+}
 const {Mangakakalots} = require('./resources/source.js');
 
 let SOURCES = {
@@ -21,7 +28,8 @@ let SOURCES = {
   }
 }
 
-//https://stackoverflow.com/questions/12740659/downloading-images-with-node-js
+if(!fs.existsSync(path.join(__userdata,'fav-cache')))
+    fs.mkdirSync(path.join(__userdata,'fav-cache'))
 
 const downloadImage = (url, image_path) =>
   axios({
@@ -39,7 +47,6 @@ const downloadImage = (url, image_path) =>
   );
 
 
-console.log(process.argv)
 var trayMode = false;
 var UPDATES;
 var knex = require("knex")({
@@ -48,13 +55,15 @@ var knex = require("knex")({
     filename: "./userdata/data.db"
   }
 });
-var CONFIG = JSON.parse(fs.readFileSync("./userdata/config.json"))
-var CHAPTERMARK  = JSON.parse(fs.readFileSync("./userdata/chapterdata.json"))
+
+console.log(__userdata)
+
+var CONFIG = JSON.parse(fs.readFileSync(path.join(__userdata,"config.json")))
+var CHAPTERMARK  = JSON.parse(fs.readFileSync(path.join(__userdata,"chapterdata.json")))
 var FAVORITES = {}
 var POSITIONS = {
   chapterNum:{}
 }
-
 knex.table('FAVORITES').then(res=>{
   for(fav of res)
     FAVORITES[fav.href] = fav
@@ -64,19 +73,20 @@ knex.table('POSITIONS').then(res=>{
     let {id,...rest} = row
     POSITIONS[id] = rest
   }
-  console.log(POSITIONS)
 })
 
 global.SOURCES = SOURCES // EXPOSE TO RENDERER
 global.CONFIG = CONFIG
 
 
-var mainWindow,tray,readerWindow;
 
+var mainWindow,tray,readerWindow;
 async function scheduleUpdater(){
   UPDATED = {}
+  console.log('TIME NOW', new Date().toString())
   for(let [href,obj] of Object.entries(FAVORITES)){
-    UPDATED[href] = await SOURCES[obj.sourceKey].source.checkHrefForUpdates(href,obj.title,obj.latestChap)
+    console.log('-> CHECKING: ' + href)
+    UPDATED[href] = await SOURCES[obj.sourceKey].obj.checkUpdates(href,obj.title,obj.latestChapter)
   }
   UPDATES = UPDATED
   return UPDATED
@@ -86,13 +96,32 @@ function createMainWindow () {
     width: 900,
     height: 700,
     frame:false,
+    show:false,
     resizable:false,
     webPreferences: {
       nodeIntegration: true
     }
   })
   mainWindow.loadFile('index.html')
-  mainWindow.webContents.openDevTools({mode:'detach'})
+  // mainWindow.webContents.openDevTools({mode:'detach'})
+
+  
+  mainWindow.once('show',(evt)=>{
+    console.log('CHROME PATH: ')
+    console.log(CONFIG.chromePath)
+    if(CONFIG.chromePath) 
+      for(let [key,{obj}] of Object.entries(SOURCES))
+        obj._CHROME_PATH = CONFIG.chromePath
+    else
+      ipcMain.once('mainWindowReady',(evt)=>{
+        mainWindow.webContents.send('chromeNotSet')
+      })
+  })
+
+  mainWindow.on('close',(evt)=>{
+    app.quit()
+  })
+  mainWindow.show()
 }
 function createReaderWindow(){
   readerWindow = new BrowserWindow({
@@ -100,31 +129,49 @@ function createReaderWindow(){
     height:900,
     frame:false,
     resizable:false,
+    fullscreen:true,
     show:false,
     webPreferences: {
       nodeIntegration: true
     }
   })
   readerWindow.loadFile('reader.html')
-  readerWindow.webContents.openDevTools({mode:'detach'})
+
+  readerWindow.on('close',(evt)=>{
+    mainWindow.show()
+  })
+  // readerWindow.webContents.openDevTools({mode:'detach'})
 }
 function showMainWindowFromTray(){
   if(mainWindow.isDestroyed())
     createMainWindow()
   else
-    mainWindow.show()
+     mainWindow.show()
   trayMode = false;
   tray.destroy()
 }
+
+const pauseSchedulerMenuItem = 
+  new MenuItem({label:'Pause Scheduler', type:'checkbox',click:pauseSchedulerItem})
+function pauseSchedulerItem(){
+  let STATUS = pauseSchedulerMenuItem.checked
+  if(STATUS){
+    console.log("PAUSED SCHEDULER")
+    scheduler.cancel()
+  }
+  else
+    createScheduler()
+}
+
 function createTray(){
   tray = new Tray(icon)
 
   
   const contextMenu = Menu.buildFromTemplate([
     {label:'Maximize',type:'normal',click:showMainWindowFromTray},
-    {label:'Start Updater',type:'normal',click:updateFunction},
     {label:'Quit MRION',role:'quit'}
   ]);
+  contextMenu.insert(1,pauseSchedulerMenuItem)
 
   tray.setContextMenu(contextMenu)
   tray.setToolTip('MRION')
@@ -140,6 +187,19 @@ function createTray(){
     showMainWindowFromTray()
   })
 }
+
+var scheduler; 
+
+function createScheduler(){
+  console.log("CREATED SCHEDULE")
+  CRON_TIMER = 
+    '0 0 * * * *'
+    // '*/20 * * * * *' // DEBUGGING
+  scheduler = schedule.scheduleJob(CRON_TIMER,updateFunction);
+}
+
+createScheduler();
+
 function updateFunction(){
   scheduleUpdater().then((result)=>{
     let mangas = []
@@ -147,21 +207,26 @@ function updateFunction(){
       if(typeof obj === 'boolean') continue
       mangas.push(obj.title)
       console.log('UPDATE '+obj.title)
-      if(!trayMode) {
-        mainWindow.webContents.send('favoritesUpdate')
-        return
-      }
-    }
-    if(trayMode) {
-      console.log('tray bubble')
-      tray.setImage(iconWBubble)
-      if(CONFIG.notify)tray.displayBalloon({
-        icon:icon,
-        iconType:'custom',
-        title:'MRION',
-        content: `${mangas.length} manga${(mangas.length>1)?'s':''} updated!`,
-        largeIcon:true
+      knex.table('FAVORITES').where({href}).update({latestChapter:obj.text}).then(function(){
+        FAVORITES[href].latestChapter = obj.text
+        console.log('-> UPDATED DATABASE')
       })
+    }
+    if(mangas.length<1) return
+    if(trayMode) {
+      tray.setImage(iconWBubble)
+      if(CONFIG.notify)
+        tray.displayBalloon({
+          icon:icon,
+          iconType:'custom',
+          title:'MRION',
+          content: `${mangas.length} manga${(mangas.length>1)?'s':''} updated!`,
+          largeIcon:true
+        })
+    }
+    else {
+      mainWindow.webContents.send('favoritesUpdate',UPDATES)
+      mainWindow.webContents.send('spawnInfoOnUpdates', mangas.length)
     }
   })
 }
@@ -193,6 +258,7 @@ ipcMain.on('min-electron',(evt)=>{
 })
 ipcMain.on('max-electron',(evt)=>{
   window = mainWindow//BrowserWindow.fromId(evt.frameId)
+
   window.setFullScreen(!window.isFullScreen());
 })
 
@@ -205,8 +271,8 @@ ipcMain.on('getFavorites',(evt)=>{
 })
 ipcMain.on('addFavorite',(evt,data)=>{
   data.cachedPath = 
-    `./userdata/fav-cache/${data.sourceKey}/${data.href.split('/').pop()}`
-
+    path.join(__userdata,'fav-cache',data.sourceKey,data.href.split('/').pop())
+  console.log(data)
   knex.table('FAVORITES').insert(data).then(function(){
     FAVORITES[data.href] = data
     evt.sender.send('promise', true)
@@ -232,20 +298,20 @@ ipcMain.on('updateFavCache',(evt,data)=>{
   let [result,href,sourceKey] = data
   let name = href.split('/').pop()
   console.log('UPDATING CACHE FOR: ' + name)
-  let path = `./userdata/fav-cache/${sourceKey}/${name}`
+  let _path = path.join(__userdata,'fav-cache',sourceKey,name)
   let image_ext = '.' + result.image.split('.').pop()
 
-  if(!fs.existsSync(`./userdata/fav-cache/${sourceKey}`))
-    fs.mkdirSync(`./userdata/fav-cache/${sourceKey}`)
-  if(!fs.existsSync(path))
-    fs.mkdirSync(path)
-  downloadImage(result.image,`${path}/image` + image_ext).then(()=>{
-    result.image = `${path}/image` + image_ext
-    fs.writeFileSync(`${path}/result.json`, JSON.stringify(result,null,2))
+  if(!fs.existsSync(path.join(__userdata,'fav-cache',sourceKey)))
+    fs.mkdirSync(path.join(__userdata,'fav-cache',sourceKey))
+  if(!fs.existsSync(_path))
+    fs.mkdirSync(_path)
+  downloadImage(result.image,`${_path}/image` + image_ext).then(()=>{
+    result.image = `${_path}/image` + image_ext
+    fs.writeFileSync(`${_path}/result.json`, JSON.stringify(result,null,2))
   })
 })
-ipcMain.on('readFavCache',(evt,path)=>{
-  evt.returnValue = JSON.parse(fs.readFileSync(`${path}/result.json`))
+ipcMain.on('readFavCache',(evt,_path)=>{
+  evt.returnValue = JSON.parse(fs.readFileSync(`${_path}/result.json`))
 })
 ipcMain.on('setConfig',(evt,args)=>{
   let [key,val] = args
@@ -256,7 +322,7 @@ ipcMain.on('getConfig',(evt,key)=>{
   evt.returnValue = CONFIG[key]
 })
 ipcMain.on('settingsUpdated',(evt)=>{
-  fs.writeFileSync('./userdata/config.json', JSON.stringify(CONFIG,null,2))
+  fs.writeFileSync(path.join(__userdata,'config.json'), JSON.stringify(CONFIG,null,2))
 })
 ipcMain.on('getUpdates',(evt)=>{
   evt.returnValue = UPDATES
@@ -265,12 +331,7 @@ ipcMain.on('getUpdates',(evt)=>{
 ipcMain.on('runUpdater',(evt)=>{
   updateFunction()
 })
-ipcMain.on('updateLatestChap',(evt,data)=>{
-  knex.table('FAVORITES').where({href:data.href}).update({latestChap:data.text}).then(()=>{
-    FAVORITES[data.href].latestChap = data.text
-    UPDATES[data.href] = false;
-  })
-})
+
 ipcMain.on('getLayoutPositions',(evt)=>{
   evt.returnValue = POSITIONS
 })
@@ -278,7 +339,6 @@ ipcMain.on('setLayoutPositions',(evt,data)=>{
   POSITIONS = data
   for(let[id,val] of Object.entries(data)){
     if(val.changed){
-      console.log("UPDATED "+id)
       val.changed = false;
       knex.table('POSITIONS').where({id:id}).update(val).then()
     }
@@ -292,7 +352,7 @@ ipcMain.on('syncCHAPTERMARK',(evt,data)=>{
     for(let [href,value] of Object.entries(CHAPTERMARK))
       if(value.READ.length == 0 && value.MARKED.length == 0)
         delete CHAPTERMARK[href]
-  fs.writeFileSync(path.join(__dirname,'userdata','chapterdata.json'), JSON.stringify(CHAPTERMARK,null,2))
+  fs.writeFileSync(path.join(__userdata,'chapterdata.json'), JSON.stringify(CHAPTERMARK,null,2))
 })
 
 ipcMain.on('spawnReaderWindow',(evt,data)=>{
@@ -311,6 +371,25 @@ ipcMain.on('show-reader',(evt)=>{
     mainWindow.hide()
   }
 })
+ipcMain.on('showMainFromReader',(evt)=>{
+  readerWindow.close()
+})
+ipcMain.on('spawnFileDialog',(evt)=>{
+  let [_path] =
+    dialog.showOpenDialogSync(mainWindow,
+      {
+        title: 'Set Chrome Path',
+        defaultPath: "C:\\Program Files (x86)\\Google\\Chrome\\Application",
+        buttonLabel: "Set Path",
+        filters: [
+          { name: 'Executable', extensions: ['exe'] },
+        ],
+        properties: ["openFile","dontAddToRecent"],
+        message:"Set chrome executable file path as dependency"
+      })
+  evt.returnValue = _path
+})
+
 
 // ipcMain.on('retrieveChapterData',(evt)=>{
 //   evt.returnValue = [
@@ -332,6 +411,9 @@ ipcMain.on('show-reader',(evt)=>{
 //       }
 //   ],
 //   2,
-//   SOURCES.mangakakalots.key
+//   {
+//     sourceKey:SOURCES.mangakakalots.key,
+//     href:'https://mangakakalots.com/manga/baka_to_test_to_shokanjuu_dya'
+//   }
 //   ]
 // })

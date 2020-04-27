@@ -6,15 +6,18 @@ const Mousetrap = require('mousetrap')
 var LAYOUTSETTINGS = main.sendSync('getLayoutPositions')
 let SOURCES = remote.getGlobal('SOURCES')
 
+let CHAPTERMARK = main.sendSync('getCHAPTERMARK')
+
 var OPTIONS = {
     LAZY_LOAD: true,
-    LAZY_LOAD_PARTS: 1,
+    LAZY_LOAD_PARTS: 2,
 }
 
 
 // EVENT LISTENERS FOR IMAGE
 // ** CURRENT IMG IS IMG CONTAINER NOT <IMG>
 var READER = {
+    HREF:0,
     CURRENT_SOURCE:false,
     internalCurrentChapter:0,
     internalLastChapter:0,
@@ -26,6 +29,10 @@ var READER = {
         this.internalCurrentChapter = index
         this.CHP_indexListener(index)
         console.log('test') 
+        if(!CHAPTERMARK[this.HREF].READ.includes(index)){
+            CHAPTERMARK[this.HREF].READ.push(index)
+            main.send('syncCHAPTERMARK', CHAPTERMARK)
+        }
         loadChapter(
             this.CHAPTERS[index],
             this.internalCurrentChapter - this.internalLastChapter
@@ -60,8 +67,9 @@ var READER = {
     CHAPTERS:false,
 }
 
-let [chapters, index, sourceKey] = main.sendSync('retrieveChapterData')
+let [chapters, index, {sourceKey,href}] = main.sendSync('retrieveChapterData')
 READER.CURRENT_SOURCE = SOURCES[sourceKey]
+READER.HREF = href
 READER.CHAPTERS = chapters
 
 READER.CHAPTERS.map((el,i)=>{
@@ -151,31 +159,6 @@ var IMGVIEW = {
     get IMAGE_CONTAINERS(){
         return $('.image-handler').children()
     },
-    internalImageIndex:0,
-    get CURRENT_IMG_INDEX(){
-        return this.internalImageIndex
-    },
-    set CURRENT_IMG_INDEX(i){
-        this.internalImageIndex=i
-        this.IMG_indexListener(i)
-    },
-    IMG_indexListener: function(i){
-        // DISABLE PREVIOUS IMG BUTTON IF INDEX IS 0
-        if(i==0)
-            $('#controls').find('#prevImg')
-                .attr('disabled',true)
-        else
-            $('#controls').find('#prevImg')
-                .attr('disabled',false)
-        // DISABLE NEXT IMG BUTTON IF INDEX IS MAX
-        if(i==this.CHAPTER_IMG_TOTAL-1)
-            $('#controls').find('#nextImg')
-                .attr('disabled',true)
-        else
-            $('#controls').find('#nextImg')
-                .attr('disabled',false)
-    },
-
 }
 // LOAD CHAPTERS
     function loadChapter({href},mode){
@@ -305,6 +288,7 @@ $('.dropdown .option')
         $parent.find('.selected').html($(this).html())
         $parent.find('.option').removeClass('active')
         $(this).addClass('active')
+        READER.CURRENT_CHAPTER = $(this).data('index')
     })
 //-----------------------------
 $("#show-main")
@@ -352,7 +336,17 @@ function showModal(id){
     $('.modal-bg').fadeIn()
     $('.modal-bg').find(`#${id}`).show()
 }
-
+// MODAL BUTTONS
+$('#backprompt')
+    .find('#return')
+        .click(function(){
+            main.send('showMainFromReader')
+        })
+        .end()
+    .find('#cancel')
+        .click(function(){
+            $(this).parent().parent().parent().fadeOut()
+        })
 
 // ON UNLOAD SAVE LAYOUTSETTINGS
 $(window).on('beforeunload',function(){
@@ -372,22 +366,6 @@ $('#controls')
             console.log(READER.CURRENT_CHAPTER)
 
         }).end()
-    .find('#nextImg')
-        .click(function(){
-            let i = IMGVIEW.CURRENT_IMG_INDEX++
-            let {top} = IMGVIEW.IMAGE_CONTAINERS.eq(i).data('pos')
-            $('.image-handler').stop().animate({
-                scrollTop: top
-            },500, 'swing')
-        }).end()
-    .find('#prevImg')
-        .click(function(){
-            let i = IMGVIEW.CURRENT_IMG_INDEX--
-            let {top} = IMGVIEW.IMAGE_CONTAINERS.eq(i).data('pos')
-            $('.image-handler').stop().animate({
-                scrollTop: top
-            },500, 'swing')
-        }).end()
 
 
 
@@ -406,8 +384,6 @@ $(document).mousemove(e=>{
 KEYBINDS = {
     ENABLED: true,
     PZ_RESET:'ctrl+r',
-    NEXT_IMAGE: 'right',
-    PREV_IMAGE: 'left',
     REFRESH:['f5','ctrl+r','ctrl+f5']
 } 
 
@@ -425,23 +401,7 @@ Mousetrap.bind(KEYBINDS.PZ_RESET, function(e){
                 .reset()
 },'keydown')
 
-// PREVIOUS IMAGE
-Mousetrap.bind(KEYBINDS.PREV_IMAGE,function(e){
-    e.preventDefault()
-    let $button = $('#controls').find('#prevImg')
 
-    if(!$button.attr('disabled'))
-        $button.click()
-},'keydown')
-
-// NEXT IMAGE
-Mousetrap.bind(KEYBINDS.NEXT_IMAGE,function(e){
-    e.preventDefault()
-    let $button = $('#controls').find('#nextImg')
-
-    if(!$button.attr('disabled'))
-        $button.click()
-},'keydown')
 
 if(!KEYBINDS.ENABLED) Mousetrap.reset()
 
