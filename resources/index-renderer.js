@@ -3,6 +3,11 @@ window.$ = require('jquery')
 const anime = require('animejs')
 const Mousetrap = require('mousetrap')
 
+// | LOGGER
+    window.onerror = function (msg, url, ln) {
+        main.send('window-error',[msg,url,ln])
+        return false;
+    }
 // | SOURCES 
     let SOURCES = remote.getGlobal('SOURCES')
     let UPDATES = main.sendSync("getUpdates")
@@ -581,7 +586,7 @@ const Mousetrap = require('mousetrap')
                         $(this).removeClass('active')
                     }
                     else{
-                        console.log('error')
+                        console.error('ERROR')
                         spawnErrorPopup(resolved)
                     }
                 })
@@ -965,6 +970,14 @@ const Mousetrap = require('mousetrap')
 // SPAWN ERROR POPUP
     function spawnErrorPopup(msg,type){
         let id = type || 'error'
+
+        if(id == 'error') {
+            let err = Error(msg)
+            console.error(err)
+            let caller = err.stack.split("\n").pop();
+            let [url,ln] = caller.slice(3,-1).split(':').slice(-3,-1)
+            main.send('window-error', [msg,url,ln])
+        }
         let $popup = $(`.popup#${id}`)
         $popup
             .find('#msg')
@@ -983,6 +996,7 @@ const Mousetrap = require('mousetrap')
     }
 $('.navlink#genrelist').click()
 
+spawnErrorPopup('test')
 // CHROME PATH SELECTOR
 main.on('chromeNotSet',(evt)=>{
     $('.modal-bg').find('#chromePath').show().end().fadeIn()
@@ -990,14 +1004,18 @@ main.on('chromeNotSet',(evt)=>{
 main.send('mainWindowReady')
 $('#chromePath #spawnFileDialog').click(function(){
     let _path = main.sendSync('spawnFileDialog')
+
+    // CANCEL PARSING EVENTS IF DIALOG IS CANCELED
+    if(!_path) return
+
+
     let _name = _path.split('\\').pop()
     $(this).siblings('#path').html(_path)
-    if(!_path) spawnErrorPopup('Invalid File Path!')
     console.log(_name)
     if(_name!='chrome.exe') spawnErrorPopup('Invalid File Path!')
     else{
         main.sendSync('setConfig',['chromePath',_path])
-        main.send('settingsUpdated')
+        main.send('saveConfig')
         setTimeout(()=>{
             $('#chromePath').fadeOut()
             $('.modal-content').hide()
