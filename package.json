@@ -1,37 +1,33 @@
 {
   "name": "mrion",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "description": "Electron-based Manga Reader app",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder build --win publish never",
-    "test-build": "electron-builder --dir publish never",
+    "build": "electron-builder build --win --publish never",
+    "test-build": "electron-builder build --dir --publish never",
     "rebuild": "electron-builder install-app-deps",
     "deploy": "electron-builder build --win --publish always"
   },
   "build": {
     "appId": "com.mmfallacy.mrion",
+    "productName": "MRION",
     "directories": {
       "output": "dist"
     },
-    "extraFiles": [
-      "userdata"
-    ],
     "win": {
       "target": [
         "nsis"
       ],
-      "icon": "resources/img/icon.png"
-    },
-    "publish": [
-      {
+      "icon": "resources/img/icon.png",
+      "publish": {
         "provider": "github",
         "owner": "mmfallacy",
         "repo": "mrion",
-        "releaseType": "draft"
+        "private": true
       }
-    ]
+    }
   },
   "repository": {
     "type": "git",
@@ -56,6 +52,7 @@
     "fs": "0.0.1-security",
     "jquery": "^3.4.1",
     "knex": "^0.20.13",
+    "moment": "^2.24.0",
     "mousetrap": "^1.6.5",
     "node-schedule": "^1.3.2",
     "os": "^0.1.1",

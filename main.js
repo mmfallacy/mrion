@@ -9,7 +9,7 @@
   const isDev = require('electron-is-dev');
   var schedule = require('node-schedule');
   const colors = require('colors')
-
+  const moment = require('moment')
   const {autoUpdater} = require('electron-updater')
 // PATHS
   const icon = path.join(__dirname,'resources','img','iconsmallx.png')
@@ -22,26 +22,39 @@ if(isDev){
     electron: require(`${__dirname}/node_modules/electron`),
     ignored:/userdata|resources[\/\\]img|logs|main.js|node_modules|[\/\\]\./
   });
-
+  autoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml');
   // SET USERDATA PATH TO ./userdata
   __userdata = path.join(__dirname,'userdata')
 }
 else{
   // SET USERDATA PATH TO ./userdata (FOR BUILT APPLICATION)
   __userdata = path.join(__dirname,'/../../userdata')
+  
 }
 // LOGGER
-if(!fs.existsSync(path.join(__userdata,'..','logs')))
-      fs.mkdirSync(path.join(__userdata,'..','logs'))
-  const DATESTAMP = new Date()
+  // CHECK FOR LOGS FOLDER
+  if(!fs.existsSync(__userdata)){
+    console.log("USERDATA FOLDER NOT FOUND".bgRed.bold)
+    fs.mkdirSync(__userdata)
+    console.log("--> USERDATA FOLDER CREATED".blue.bold)
+  }
+
+  if(!fs.existsSync(path.join(__userdata,'..','logs'))){
+    console.log("LOGS FOLDER NOT FOUND".bgRed.bold)
+    fs.mkdirSync(path.join(__userdata,'..','logs'))
+    console.log("--> LOGS FOLDER CREATED".blue.bold)
+  }
+
+  const DATESTAMP = moment().format('DD-MM-YYYY')
   const logger = require('electron-log')
-  logger.transports.file.level = 'info';
-  logger.transports.file.resolvePath =()=>path.join(__userdata,'..','logs',`${DATESTAMP.toDateString()}.mrionlog`);
+  logger.transports.file.level = (isDev)? false:'info';
+  logger.transports.file.resolvePath =()=>path.join(__userdata,'..','logs',`${DATESTAMP}.mrionlog`);
   logger.transports.file.format = '[{h}:{i}:{s} | {y}-{m}-{d} ] [{level}] >>> {text}'
   logger.transports.console.format = '{text}'
   var _console = {};
   Object.assign(_console,console)
   Object.assign(console,logger.functions)
+  
   console.header = (header, args) => {
     logger.transports.console.level = false;
     let _pretty_header = ' ' +  header + ' '
@@ -54,7 +67,8 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
 
   //DIFFERENTIATE INSTANCES
     console.header("------------------------------------------------------------------------",['bgBrightMagenta','bold','grey'])
-    console.header("  STARTING MRION APP...                                                 ",['bgBrightMagenta','bold','grey'])
+    console.header(`  STARTING MRION APP...                                                 `,['bgBrightMagenta','bold','grey'])
+    console.header(`  VERSION ${app.getVersion()}${' '.repeat(62-app.getVersion().length)}`,['bgBrightMagenta','bold','grey'])
     console.header("------------------------------------------------------------------------",['bgBrightMagenta','bold','grey'])
 // SOURCES
   const {Mangakakalots} = require('./resources/source.js');
@@ -103,17 +117,27 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
   }
 
   // CREATE GLOBAL SCHEDULE
-  var scheduler; 
-  function createScheduler(){
-    console.header("UPDATE SCHEDULE INITIALIZED",['bgBlue','bold'])
+  var manga_scheduler; 
+  function createMangaScheduler(){
+    console.header("MANGA UPDATE SCHEDULE INITIALIZED",['bgBlue','bold'])
     CRON_TIMER = 
       '0 0 * * * *'
       // '*/20 * * * * *' // DEBUGGING
-    scheduler = schedule.scheduleJob(CRON_TIMER,updateFunction);
+    manga_scheduler = schedule.scheduleJob(CRON_TIMER,updateFunction);
   }
   // RUN SCHEDULER ON START
-  createScheduler();
+  createMangaScheduler();
 
+  // CREATE GLOBAL SCHEDULE
+  var update_scheduler; 
+  function createUpdateScheduler(){
+    console.header("UPDATE SCHEDULE INITIALIZED",['bgBlue','bold'])
+    CRON_TIMER = 
+      '0 0 */5 * * *'
+    manga_scheduler = schedule.scheduleJob(CRON_TIMER,checkForMRIONUpdate);
+  }
+  // RUN SCHEDULER ON START
+  createUpdateScheduler();
 
   // UPDATE FUNCTION HANDLER
   function updateFunction(){
@@ -148,6 +172,32 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
     })
   }
 // DATABASE AND JSON
+  var PATHS = {
+    CONFIG: path.join(__userdata,"config.json"),
+    CHAPTERDATA: path.join(__userdata,"chapterdata.json"),
+    DB : path.join(__userdata,"data.db")
+  } 
+  
+  // CHECK FOR CONFIG JSON
+  if(!fs.existsSync(PATHS.CONFIG)){
+    console.header("CONFIG NOT FOUND", ["bgRed","bold"])
+    fs.writeFileSync(PATHS.CONFIG, JSON.stringify({notify:1,checkUpdate:1},null,2))
+    console.header("--> CONFIG INITIALIZED", ["blue","bold"])
+  }
+
+  // CHECK FOR CHAPTERDATA
+  if(!fs.existsSync(PATHS.CHAPTERDATA)){
+    console.header("CHAPTERDATA NOT FOUND", ["bgRed","bold"])
+    fs.writeFileSync(PATHS.CHAPTERDATA, JSON.stringify({},null,2))
+    console.header("--> CHAPTERDATA INITIALIZED", ["blue","bold"])
+  }
+
+  // CHECK FOR DB
+  if(!fs.existsSync(PATHS.DB)){ 
+    console.header("DATABASE NOT FOUND", ["bgRed","bold"])
+    fs.copyFileSync(path.join(__dirname,'resources','clean-data.db'), PATHS.DB);
+    console.header("--> DATABAASE INITIALIZED", ["blue","bold"])
+  }
 
   var knex = require("knex")({
     client: "sqlite3",
@@ -156,8 +206,8 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
     },
     useNullAsDefault: true
   });
-  var CONFIG = JSON.parse(fs.readFileSync(path.join(__userdata,"config.json")))
-  var CHAPTERMARK  = JSON.parse(fs.readFileSync(path.join(__userdata,"chapterdata.json")))
+  var CONFIG = JSON.parse(fs.readFileSync(PATHS.CONFIG))
+  var CHAPTERMARK  = JSON.parse(fs.readFileSync(PATHS.CHAPTERDATA))
 
   // LOAD FAVORITES FROM DB
   var FAVORITES = {}
@@ -195,10 +245,10 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
       }
     })
     mainWindow.loadFile('index.html')
-    mainWindow.webContents.openDevTools({mode:'detach'})
+    //mainWindow.webContents.openDevTools({mode:'detach'})
     
     mainWindow.once('show',(evt)=>{
-      autoUpdater.checkForUpdatesAndNotify();
+
       if(CONFIG.chromePath) 
         for(let [key,{obj}] of Object.entries(SOURCES))
           obj._CHROME_PATH = CONFIG.chromePath
@@ -207,7 +257,10 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
           mainWindow.webContents.send('chromeNotSet')
         })
     })
-
+    mainWindow.on('show',(evt)=>{
+      if(UPDATE_AVAILABLE)
+        mainWindow.webContents.send('mrionu-available',UPDATE_AVAILABLE)
+    })
     mainWindow.on('close',(evt)=>{
       app.quit()
     })
@@ -247,9 +300,12 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
       {label:'Quit MRION',role:'quit'}
     ]);
 
-    MENU_ITEM_PAUSE_SCHED = new MenuItem({label:'Pause Scheduler', type:'checkbox',click:pauseSchedulerItem})
-    contextMenu.insert(1,MENU_ITEM_PAUSE_SCHED)
-  
+    MENU_ITEM_PAUSE_MANGA_SCHED = new MenuItem({label:'Pause Manga Updates', type:'checkbox',click:pauseMangaSchedulerItem})
+    MENU_ITEM_PAUSE_UPD_SCHED = new MenuItem({label:'Pause Updates', checked:!CONFIG.checkUpdate,type:'checkbox',click:pauseUpdateSchedulerItem})
+
+    contextMenu.insert(1,MENU_ITEM_PAUSE_MANGA_SCHED)
+    contextMenu.insert(1,MENU_ITEM_PAUSE_UPD_SCHED)
+
     tray.setContextMenu(contextMenu)
     tray.setToolTip('MRION')
   
@@ -266,7 +322,7 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
 
 // TRAY CLICK EVENTS
   function showMainWindowFromTray(){
-    if(mainWindow.isDestroyed())
+    if(!mainWindow || mainWindow.isDestroyed())
       createMainWindow()
     else
       mainWindow.show()
@@ -274,16 +330,24 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
     tray.destroy()
   } 
     
-  function pauseSchedulerItem(){
-    let STATUS = pauseSchedulerMenuItem.checked
+  function pauseMangaSchedulerItem(){
+    let STATUS = MENU_ITEM_PAUSE_MANGA_SCHED.checked
     if(STATUS){
       console.header('UPDATE SCHEDULE IS PAUSED ',['bgGreen','bold'])
       scheduler.cancel()
     }
     else
-      createScheduler()
+      createMangaScheduler()
   }
-
+  function pauseUpdateSchedulerItem(){
+    let STATUS = MENU_ITEM_PAUSE_UPD_SCHED.checked
+    if(STATUS){
+      console.header('UPDATE SCHEDULE IS PAUSED ',['bgGreen','bold'])
+      scheduler.cancel()
+    }
+    else
+      createMangaScheduler()
+  }
 
 // APP EVENT LISTENERS
   // CREATE TRAY/MAINWINDOW ON APP READY
@@ -291,9 +355,10 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
       if(process.argv[2]=='tray'){
         createTray()
       }
-      else 
+      else {
           // createReaderWindow() 
           createMainWindow()
+      }
     })
   // PREVENT APP QUIT ON ALL WINDOW CLOSED (SYSTEM TRAY)
     app.on('window-all-closed', function (e) {
@@ -327,6 +392,10 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
       ipcMain.on('min-toTray',(evt)=>{
         mainWindow.destroy()
         createTray()
+      })
+      ipcMain.on('restart-electron',(evt)=>{
+        app.relaunch()
+        app.exit()
       })
     // ON ERROR
       ipcMain.on('window-error',(evt,[msg,url,ln])=>{
@@ -376,8 +445,10 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
 
         if(!fs.existsSync(path.join(__userdata,'fav-cache',sourceKey)))
           fs.mkdirSync(path.join(__userdata,'fav-cache',sourceKey))
+
         if(!fs.existsSync(_path))
           fs.mkdirSync(_path)
+
         downloadImage(result.image,`${_path}/image` + image_ext).then(()=>{
           result.image = `${_path}/image` + image_ext
           fs.writeFileSync(`${_path}/result.json`, JSON.stringify(result,null,2))
@@ -487,17 +558,78 @@ if(!fs.existsSync(path.join(__userdata,'..','logs')))
       evt.returnValue = returnVal[0]
   })
 
-// AUTO UPDATER EVENTS
-  autoUpdater.on('mrionu-available', () => {
-    console.header('MRION UPDATE AVAILABLE',['bgYellow','bold'])
-    mainWindow.webContents.send('update_available');
+// HUMANIZE BYTES
+  function humanizeBytes(bytes){
+    let units = ['B','KB','MB','GB']
+    let unit;
+    let value = bytes
+    for(unit of units){
+        if((value/1024)<1) break
+        value/=1024
+    }
+    return value.toFixed(2) + " " + unit
+  }
+
+// AUTO UPDATER
+  var UPDATE_AVAILABLE = false
+  autoUpdater.autoDownload = false
+  autoUpdater.logger = _console
+
+  function checkForMRIONUpdate(){
+    autoUpdater.checkForUpdates().catch((err)=>{
+      console.header('FAILED CHECKING FOR UPDATES',['bgRed','bold'])
+      if(mainWindow.isVisible())
+        mainWindow.webContents.send('mrionu-failedToCheck')
+    })
+  }
+  checkForMRIONUpdate();
+
+  autoUpdater.on('update-available', (res) => {
+    console.header('MRION UPDATE AVAILABLE',['bgYellow','black','bold'])
+    res.files[0].size = humanizeBytes(res.files[0].size) 
+    if(TRAY_MODE){
+      tray.setImage(iconWBubble)
+      if(CONFIG.notify)
+        tray.displayBalloon({
+          icon:icon,
+          iconType:'custom',
+          title:'MRION',
+          content: `Version ${res.version} available! Size: ${res.files[0].size}`,
+          largeIcon:true
+        })
+    }
+    else if(mainWindow.isVisible())
+      mainWindow.webContents.send('mrionu-available',res)
+    else if(readerWindow.isVisible())
+      readerWindow.webContents.send('mrionu-available',res)
+    UPDATE_AVAILABLE = res;
   });
-  autoUpdater.on('mrionu-downloaded', () => {
-    console.header('MRION UPDATE DOWNLOADED',['bgYellow','bold'])
-    mainWindow.webContents.send('update_downloaded');
+  autoUpdater.on('update-not-available', () => {
+    UPDATE_AVAILABLE = false
+  });
+  
+  autoUpdater.on('update-downloaded', () => {
+    console.header('MRION UPDATE DOWNLOADED',['bgYellow','black','bold'])
+    mainWindow.webContents.send('mrionu-downloaded');
   });
 
+  autoUpdater.on('download-progress', (_obj) => {
+    let obj = {}
+    obj.speed = humanizeBytes(_obj.bytesPerSecond)
+    obj.trans = humanizeBytes(_obj.transferred)
+    obj.total = humanizeBytes(_obj.total)
+    obj.percent = _obj.percent
+    mainWindow.webContents.send('download-progress',obj)
+  })
 
+  ipcMain.on('downloadUpdate',(evt)=>{
+    autoUpdater.downloadUpdate()
+  })
+
+  ipcMain.on('mrionu-getUpdateStatus',(evt)=>evt.returnValue=UPDATE_AVAILABLE)
+  ipcMain.on('mrionu-installUpdates',(evt)=>{
+    autoUpdater.quitAndInstall()
+  })
 // FOR DEBUG
 // ipcMain.on('retrieveChapterData',(evt)=>{
 //   evt.returnValue = [

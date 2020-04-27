@@ -447,3 +447,69 @@ button.top-button{
         width:var(--thumb-width);
     }
 }
+.popup{
+    height:100px;
+    width:350px;
+    background-color:$color-light;
+    border-radius:1rem;
+    position:fixed;
+    z-index:5000;
+    bottom:2%;
+    right:1.5%;
+    padding:1%;
+    display:none;
+    align-items:center;
+    box-shadow: 0 5px 6px $color-dark;
+    .icon{
+        font-size:5rem;
+        color:$color-invalid;
+        margin-right:10px;
+    }
+    .text{
+        height:87%;
+        width:70%;
+        .title{
+            display:block;
+            color:$color-invalid;
+            font-weight:bolder;
+            font-size:1rem;
+            margin-bottom:1%;
+        }
+        #msg{
+            display:block;
+            font-size:.8rem;
+            text-align:justify;
+            letter-spacing:.125rem;
+        }
+    }
+}
+.popup#warning{
+    .icon{
+        color:rgb(238, 235, 61);
+    }
+    .title{
+        color:rgb(238, 235, 61);
+    }
+}
+.popup#info{
+    .icon{
+        color:rgb(93, 93, 252);
+    }
+    .title{
+        color:rgb(93, 93, 252);
+    }
+}
+.popup#notif{
+    .icon{
+        color:$color-foreground;
+    }
+    .title{
+        color:$color-foreground;
+    }
+    &.clickable{
+        cursor: pointer;
+        &:hover{
+            background-color: $color-light-darker;
+        }
+    }
+}

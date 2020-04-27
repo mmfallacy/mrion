@@ -38,6 +38,10 @@
       <button class="navlink" id="settings">
         <span>Settings</span>
       </button>
+      <button class="clickable" id="update">
+        <span>Update</span>
+        <div class="bubble"></div>
+      </button>
     </div>
 <!-- SOURCE SELECT -->
     <div class="source-select">
@@ -218,6 +222,55 @@
         <textarea id="path" placeholder="No Filepath set" disabled readonly></textarea>
         <button class="ri-file-search-line" id="spawnFileDialog"></button>
       </div>
+      <div class="modal-content" id="updatePrompt">
+        <div class="header">
+          <span class="title">Update MRION?</span>
+        </div>
+        <table>
+          <tr>
+            <th>Version</th>
+            <td id="version"></td>
+          </tr>
+          <tr>
+            <th>Filename</th>
+            <td id="filename"></td>
+          </tr>
+          <tr>
+            <th>Size</th>
+            <td id="filesize"></td>
+          </tr>
+          <tr>
+            <th>Release Date</th>
+            <td id="reldate"></td>
+          </tr>
+        </table>
+        <div class="button-group">
+          <button id="updateCancel">Cancel</button>
+          <button id="updateConfirm">Update</button>
+        </div>
+      </div>
+      <div class="modal-content" id="downloadProgress">
+        <div class="header">
+          <span class="title">Downloading Update</span>
+        </div>
+        <span>Downloading <span id="filename"></span> ...</span>
+        <div id="clip-path"></div>
+        <div class="progress">
+          <span id="dl-speed">? MB</span>
+          <div class="info-group" id="dl-downloaded">
+            <span id="dl-transferred">? MB</span>
+            <span id="dl-total">? MB</span>
+          </div>
+          <div class="prog-bg">
+            <div class="prog-fg">
+              <span id="dl-percent">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="note">
+          MRION will restart to install updates upon completing download
+        </div>
+      </div>
     </div>
     <div class="popup" id="error">
       <span class="icon ri-error-warning-fill"></span>
@@ -239,6 +292,14 @@
       <span class="icon ri-information-fill"></span>
       <div class="text">
         <span class="title">INFORMATION</span>
+        <span id='msg'>
+        </span>
+      </div>
+    </div>
+    <div class="popup" id="notif">
+      <span class="icon ri-notification-3-fill"></span>
+      <div class="text">
+        <span class="title">NOTIFICATION</span>
         <span id='msg'>
         </span>
       </div>

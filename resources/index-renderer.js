@@ -2,6 +2,7 @@ const {ipcRenderer:main, remote} = require('electron');
 window.$ = require('jquery')
 const anime = require('animejs')
 const Mousetrap = require('mousetrap')
+const moment = require('moment')
 
 // | LOGGER
     window.onerror = function (msg, url, ln) {
@@ -124,7 +125,14 @@ const Mousetrap = require('mousetrap')
         else 
         $('.source-select').slideUp()
     })
-
+    $('.side-bar button.clickable')
+        .mousedown(function(){
+            $(this).addClass('active')
+            showModal('updatePrompt')
+        })
+        .mouseup(function(){
+            $(this).removeClass('active')
+        })
 // | TITLEBAR
     $('.title-bar button').click(function(){
         if(this.id=='close-prompt')
@@ -199,7 +207,7 @@ const Mousetrap = require('mousetrap')
                     }).end()
                 .find('.manga-wrapper#search')
                     .empty()
-            spawnErrorPopup(err)
+            spawnPopup(err)
         })
 
     }
@@ -269,7 +277,7 @@ const Mousetrap = require('mousetrap')
                 let keywords = $(this).find('.searchBar').data('keywords')
                 console.log(MRION.CURRENT_SEARCH_PAGE,MRION.TOTAL_SEARCH_PAGE)
                 if(++MRION.CURRENT_SEARCH_PAGE>=MRION.TOTAL_SEARCH_PAGE){
-                    spawnErrorPopup('No more search results!','info')
+                    spawnPopup('No more search results!','info')
                     $(this).data('disabled',true)
                 }
                 else
@@ -569,7 +577,7 @@ const Mousetrap = require('mousetrap')
             let cachedResult = $('.selectedManga').data('result')
             let $this = $(this)
             if($this.hasClass('tempDisabled')) {
-                spawnErrorPopup('Please do not spam the Favorite button.', 'warning')
+                spawnPopup('Please do not spam the Favorite button.', 'warning')
                 return;
             }
             $this.addClass('tempDisabled')
@@ -587,7 +595,7 @@ const Mousetrap = require('mousetrap')
                     }
                     else{
                         console.error('ERROR')
-                        spawnErrorPopup(resolved)
+                        spawnPopup(resolved)
                     }
                 })
             }
@@ -605,7 +613,7 @@ const Mousetrap = require('mousetrap')
                         $(this).addClass('active')
                     }
                     else{
-                        spawnErrorPopup(resolved)
+                        spawnPopup(resolved)
                     }
                 })
             }
@@ -664,7 +672,7 @@ const Mousetrap = require('mousetrap')
                             .catch((err)=>{
                                 if($this.data('cached')){
                                     console.log('CACHED')
-                                    spawnErrorPopup('Using Cached Mode due to '+err, 'warning')
+                                    spawnPopup('Using Cached Mode due to '+err, 'warning')
                                     $selectManga.addClass('cached')
                                     let result = main.sendSync('readFavCache',$this.data('cachedPath'))
                                     populateSelectManga(result,href,source,isFavorite,mangaObj)
@@ -678,7 +686,7 @@ const Mousetrap = require('mousetrap')
                                     return
                                 }
                                 $selectManga.find('#smBack').click()
-                                spawnErrorPopup(err)
+                                spawnPopup(err)
                             })
                     });
         });
@@ -767,7 +775,7 @@ const Mousetrap = require('mousetrap')
             let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
             if(hasReachedBottom && !$(this).data('disabled')){
                 if(++MRION.CURRENT_MANGA_PAGE >= MRION.TOTAL_MANGA_PAGE){
-                    spawnErrorPopup('End of Discover','info')
+                    spawnPopup('End of Discover','info')
                     $(this).data('disabled',true)
                 }
                 else updateHomeMangaList(MRION.CURRENT_MANGA_PAGE)
@@ -857,7 +865,7 @@ const Mousetrap = require('mousetrap')
             let hasReachedBottom = ($(this).scrollTop()+$(this).innerHeight()>=this.scrollHeight)
             if(hasReachedBottom && !$(this).data('disabled')){
                 if(++MRION.CURRENT_GENRE_MANGA_PAGE>=MRION.TOTAL_GENRE_PAGE){
-                    spawnErrorPopup('No more mangas in this Genre!','info')
+                    spawnPopup('No more mangas in this Genre!','info')
                     $(this).data('disabled',true)
                 }
                 else updateGenreMangaList(MRION.CURRENT_GENRE_MANGA_PAGE)
@@ -947,7 +955,7 @@ const Mousetrap = require('mousetrap')
         parseUpdates(UPDATES)
     });
     main.on('spawnInfoOnUpdates', (evt,number) =>{
-        spawnErrorPopup(number + ` manga${(number>1)?'s':''} updated!`,'info')
+        spawnPopup(number + ` manga${(number>1)?'s':''} updated!`,'info')
     });
     function parseUpdates(updates){
         if(!updates) return
@@ -967,8 +975,8 @@ const Mousetrap = require('mousetrap')
         }
     };
     parseUpdates(UPDATES)
-// SPAWN ERROR POPUP
-    function spawnErrorPopup(msg,type){
+// SPAWN POPUPS
+    function spawnPopup(msg,type,cb){
         let id = type || 'error'
 
         if(id == 'error') {
@@ -978,28 +986,38 @@ const Mousetrap = require('mousetrap')
             let [url,ln] = caller.slice(3,-1).split(':').slice(-3,-1)
             main.send('window-error', [msg,url,ln])
         }
+        let clickable=false;
+        if(id==='notif-c'){
+            clickable=true;
+            id='notif'
+        }
         let $popup = $(`.popup#${id}`)
         $popup
             .find('#msg')
                 .html(msg)
                 .end()
             .fadeIn()
+            .addClass((clickable)?'clickable':'')
             .css('display','flex')
         
+        if(clickable){
+            if(typeof cb !== 'function') throw 'Clickable Spawn Popup no callback function'
+            $popup.click(cb)
+        }
         setTimeout(function(){
             $popup
                 .fadeOut(function(){
                     $(this).find('#msg')
                         .html('')
                 })
+                .removeClass('clickable')
         },5000)
     }
 $('.navlink#genrelist').click()
 
-spawnErrorPopup('test')
 // CHROME PATH SELECTOR
 main.on('chromeNotSet',(evt)=>{
-    $('.modal-bg').find('#chromePath').show().end().fadeIn()
+    showModal('chromePath')
 })
 main.send('mainWindowReady')
 $('#chromePath #spawnFileDialog').click(function(){
@@ -1012,20 +1030,123 @@ $('#chromePath #spawnFileDialog').click(function(){
     let _name = _path.split('\\').pop()
     $(this).siblings('#path').html(_path)
     console.log(_name)
-    if(_name!='chrome.exe') spawnErrorPopup('Invalid File Path!')
+    if(_name!='chrome.exe') spawnPopup('Invalid File Path!')
     else{
         main.sendSync('setConfig',['chromePath',_path])
         main.send('saveConfig')
         setTimeout(()=>{
             $('#chromePath').fadeOut()
             $('.modal-content').hide()
-            spawnErrorPopup('Please restart MRION for changes to take effect!','info')
+            spawnPopup('Restarting MRION for changes to take effect!','info')
             setTimeout(()=>{
-                main.send('close-electron')
+                main.send('restart-electron')
             },5000)
         },2000)
     }
 })
+
+// HANDLE AUTO UPDATE
+    let UPDATE_STATUS = main.sendSync('mrionu-getUpdateStatus')
+    if(UPDATE_STATUS) handleUpdate(UPDATE_STATUS)
+    main.on('mrionu-available',(evt,data)=>handleUpdate(data))
+
+
+    function handleUpdate(res){
+        console.log("UPDATE AVAILABLE")
+        // POPULATE DATA
+            $('.modal-content#updatePrompt')
+                .find('#version')
+                    .html(res.version)
+                    .end()
+                .find('#filename')
+                    .html(res.files[0].url)
+                    .end()
+                .find('#filesize')
+                    .html(res.files[0].size)
+                    .end()
+                .find('#reldate')
+                    .html(moment(res.releaseDate).format('MMMM DD, YYYY'))
+                    .end()
+            $('.modal-content#downloadProgress')
+                .find('#filename')
+                    .html(res.files[0].url)
+        $('.side-bar #update').fadeIn().css('display','flex')
+        spawnPopup(`Version ${res.version} available! <br>Click to update!`,'notif-c',
+            function(){
+                $(this).fadeOut()
+                showModal('updatePrompt')
+            }
+        )
+    }
+
+    // showModal('downloadProgress')
+    // MODAL
+    $('.modal-content#updatePrompt')
+        .find('#updateCancel')
+            .click(()=>$('.modal-bg').fadeOut())
+            .end()
+        .find('#updateConfirm')
+            .click(()=>{
+                $('#downloadProgress').hide()
+                showModal('downloadProgress')
+                main.send('downloadUpdate')
+            })
+            .end()
+
+    main.on('download-progress',(evt,progress)=>{
+        $('.modal-content#downloadProgress')
+            .find('#dl-speed')
+                .html(progress.speed)
+                .end()
+            .find('#dl-transferred')
+                .html(progress.trans)
+                .end()
+            .find('#dl-total')
+                .html(progress.total)
+                .end()
+            .find('#dl-percent')
+                .html(parseInt(progress.percent))
+                .data(parseInt(progress.percent))
+                .end()
+            .find('.prog-fg')
+                .width(`${Math.max(6.5,parseInt(progress.percent))}%`)
+
+        if(parseInt(progress.percent)>99)
+            $('#downloadProgress').find('.prog-fg').addClass('filled')
+    })
+
+    main.on('mrionu-downloaded',(evt)=>{
+        if(!$('#downwloadProgress').find('#dl-percent').data('percent')){
+            $('#downloadProgress')
+                .find('.prog-fg').addClass('filled')
+                .find('#dl-percent').html('100')
+        }
+        let animation =
+        anime.timeline({easing:'easeInQuad'})
+            .add({
+                targets:'#downloadProgress .prog-bg',
+                width: '10%',
+                marginLeft: '45%',
+                easing: "easeInExpo",
+                duration: 2250
+            })
+            .add({
+                targets:'#downloadProgress .prog-fg #dl-percent',
+                opacity: 0,
+                easing: "easeInExpo",
+                duration: 2250
+            },0)
+            .add({
+                targets:'#downloadProgress #clip-path',
+                clipPath:'circle(100% at 50% 64%)',
+                easing: "easeInExpo",
+                duration: 1250,
+            },'+=500')
+
+        animation.finished
+        .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
+        .then(()=>main.send('mrionu-installUpdates'))
+    })
 // KEYBINDS
 Mousetrap.bind(['alt+f4','ctrl+w'],(e)=>{
     e.preventDefault()

@@ -402,6 +402,53 @@ Mousetrap.bind(KEYBINDS.PZ_RESET, function(e){
 
 
 
+// SPAWN POPUPS
+    function spawnPopup(msg,type,cb){
+        let id = type || 'error'
+
+        if(id == 'error') {
+            let err = Error(msg)
+            console.error(err)
+            let caller = err.stack.split("\n").pop();
+            let [url,ln] = caller.slice(3,-1).split(':').slice(-3,-1)
+            main.send('window-error', [msg,url,ln])
+        }
+        let clickable=false;
+        if(id==='notif-c'){
+            clickable=true;
+            id='notif'
+        }
+        let $popup = $(`.popup#${id}`)
+        $popup
+            .find('#msg')
+                .html(msg)
+                .end()
+            .fadeIn()
+            .addClass((clickable)?'clickable':'')
+            .css('display','flex')
+        
+        if(clickable){
+            if(typeof cb !== 'function') throw 'Clickable Spawn Popup no callback function'
+            $popup.click(cb)
+        }
+        setTimeout(function(){
+            $popup
+                .fadeOut(function(){
+                    $(this).find('#msg')
+                        .html('')
+                })
+                .removeClass('clickable')
+        },5000)
+    }
+
+    main.on('mrionu-available',(evt,res)=>{
+        spawnPopup(`Version ${res.version} available! <br>Click to return to MRION!`,'notif-c',
+        function(){
+            main.send('showMainFromReader')
+        }
+    )
+
+    })
 if(!KEYBINDS.ENABLED) Mousetrap.reset()
 
 // DISABLE REFRESH
