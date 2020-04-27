@@ -20,7 +20,7 @@ if(isDev){
   // RELOAD ELECTRON ON RESOURCE CHANGE
   require('electron-reload')(__dirname, {
     electron: require(`${__dirname}/node_modules/electron`),
-    ignored:/userdata|resources[\/\\]img|logs|main.js|node_modules|[\/\\]\./
+    ignored:/userdata|resources[\/\\]img|main.js|node_modules|[\/\\]\./
   });
   autoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml');
   // SET USERDATA PATH TO ./userdata
@@ -28,7 +28,7 @@ if(isDev){
 }
 else{
   // SET USERDATA PATH TO ./userdata (FOR BUILT APPLICATION)
-  __userdata = path.join(__dirname,'/../../userdata')
+  __userdata = path.join(app.getPath('documents'),'MRION')
   
 }
 // LOGGER
@@ -39,16 +39,16 @@ else{
     console.log("--> USERDATA FOLDER CREATED".blue.bold)
   }
 
-  if(!fs.existsSync(path.join(__userdata,'..','logs'))){
+  if(!fs.existsSync(path.join(__userdata,'logs'))){
     console.log("LOGS FOLDER NOT FOUND".bgRed.bold)
-    fs.mkdirSync(path.join(__userdata,'..','logs'))
+    fs.mkdirSync(path.join(__userdata,'logs'))
     console.log("--> LOGS FOLDER CREATED".blue.bold)
   }
 
   const DATESTAMP = moment().format('DD-MM-YYYY')
   const logger = require('electron-log')
   logger.transports.file.level = (isDev)? false:'info';
-  logger.transports.file.resolvePath =()=>path.join(__userdata,'..','logs',`${DATESTAMP}.mrionlog`);
+  logger.transports.file.resolvePath =()=>path.join(__userdata,'logs',`${DATESTAMP}.mrionlog`);
   logger.transports.file.format = '[{h}:{i}:{s} | {y}-{m}-{d} ] [{level}] >>> {text}'
   logger.transports.console.format = '{text}'
   var _console = {};
@@ -202,7 +202,7 @@ else{
   var knex = require("knex")({
     client: "sqlite3",
     connection:{
-      filename: "./userdata/data.db"
+      filename: PATHS.DB
     },
     useNullAsDefault: true
   });
