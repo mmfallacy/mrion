@@ -13,6 +13,11 @@ var OPTIONS = {
     LAZY_LOAD_PARTS: 2,
 }
 
+// | LOGGER
+window.onerror = function (msg, url, ln) {
+    main.send('window-error',[msg,url,ln])
+    return false;
+}
 // EVENT LISTENERS FOR IMAGE
 // ** CURRENT IMG IS IMG CONTAINER NOT <IMG>
 var READER = {

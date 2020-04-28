@@ -9,6 +9,7 @@ class Source {
         this.url;
         this.sourceKey = 'source';
         this._CHROME_PATH = false;
+        this.timeout = 30000
     }
     async retrieveSourceFromUrl( url=pRequired('URL') ,{headless = false, waitFunction = false}){
         let content;
@@ -43,7 +44,7 @@ class Source {
                     req.continue();
                 }
             });
-            await page.goto(url,{waitUntil:'domcontentloaded'})
+            await page.goto(url,{waitUntil:'domcontentloaded',timeout:this.timeout})
             await page.waitForFunction(waitFunction)
             content = await page.content()
             browser.close().then(()=>console.timeEnd('HEADLESS SCRAPER'))
@@ -51,7 +52,7 @@ class Source {
         }
         else{
             try {
-                var {status, data} = await axios.get(url)
+                var {status, data} = await axios.get(url, {timeout:this.timeout})
             }
             catch(err){
                 throw err
