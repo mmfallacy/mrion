@@ -630,6 +630,8 @@ else{
   ipcMain.on('mrionu-installUpdates',(evt)=>{
     autoUpdater.quitAndInstall()
   })
+
+  
 // FOR DEBUG
 // ipcMain.on('retrieveChapterData',(evt)=>{
 //   evt.returnValue = [

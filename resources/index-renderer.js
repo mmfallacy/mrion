@@ -560,10 +560,10 @@ const moment = require('moment')
             } 
             console.log('chapter clicked')  
             $('.reader-loading-wrapper').fadeIn()
-            createReaderLoop()
+            readerAnimation.start()
             main.send('spawnReaderWindow', [$(this).parent().data('raw'),index,$('.selectedManga').data('mangaObj')])
             main.once('readerInitialized',()=>{
-                finishReaderLoop()
+                readerAnimation.finish()
             })
         }
     })
@@ -870,15 +870,17 @@ const moment = require('moment')
                 }
                 else updateGenreMangaList(MRION.CURRENT_GENRE_MANGA_PAGE)
             }
-        })
+        });
 // READER LOADING
-    var readerAnimation = {};
-    function createReaderLoop(){
+
+    (function encloseLetterInSpan(){
         var $wrapper = $('.reader-loading-wrapper .text')
         $wrapper.html($wrapper.text().replace(/\S/g,"<span class='letter'>$&</span>"))
-        readerAnimation.text = 
-            anime.timeline({loop:true})
-            .add({
+    })();
+    var readerAnimation = {
+        internalStart :[
+                // TEXT
+                anime({
                     targets: '.reader-loading-wrapper .text .letter',
                     opacity: [
                         {
@@ -892,64 +894,81 @@ const moment = require('moment')
                             duration: 750,
                         }
                     ],
+                    autoplay:false,
                     loop:true,
-                    delay: anime.stagger(100)
-                })
-        readerAnimation.logo = 
+                    delay: anime.stagger(100)   
+                },0),
+            //LOGO
             anime({
                 targets:'.reader-loading-wrapper .logo-wrapper .background',
                 rotate:'1turn',
                 loop:true,
+                autoplay:false,
                 easing: "linear",
                 duration:2250
-            })
-    }
-    function finishReaderLoop(){
-        readerAnimation.clipPath = 
-            anime.timeline({easing:'easeInQuad'})
-            .add({
-                targets:'.reader-loading-wrapper .logo-wrapper .background',
-                borderRadius:{
-                    value:'10rem',
-                    easing: "easeInCirc",
-                    duration:1250
-                },
-                height:'100%',
-                width:'100%',
-                top:'0%',
-                left:'0%',
-                easing: "easeInQuad",
-                duration:1000
-            })
-            .add({
-                targets:'.reader-loading-wrapper .text',
-                opacity:0,
-                easing: "easeInQuad",
-                duration:500,
-            })
-            .add({
-                targets:'.reader-loading-wrapper .logo-wrapper .foreground',
-                opacity:0,
-                easing: "easeInQuad",
-                duration:500,
-            })
-            .add({
-                targets:'.reader-loading-wrapper .clipped',
-                clipPath:[
-                    'circle(5vh at 50vw 34vh)',
-                    'circle(100vh at 50vw 34vh)',
-                ],
-                easing: "easeInExpo",
-                duration: 1250,
-            },1000)
-
-        readerAnimation.clipPath.finished
-            .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
-            .then(()=>{
-                $('.reader-loading-wrapper').fadeOut()
-                main.send('show-reader')
-            })
-    }
+            },0)
+        ],
+        start: function(){
+            for(let animation of this.internalStart)
+                animation.play()
+        },
+        internalFinish:
+            anime.timeline({autoplay:false,easing:'easeInQuad'})
+                .add({
+                    targets:'.reader-loading-wrapper .logo-wrapper .background',
+                    borderRadius:{
+                        value:'10rem',
+                        easing: "easeInCirc",
+                        duration:1250
+                    },
+                    height:'100%',
+                    width:'100%',
+                    top:'0%',
+                    left:'0%',
+                    easing: "easeInQuad",
+                    duration:1000
+                })
+                .add({
+                    targets:'.reader-loading-wrapper .text',
+                    opacity:0,
+                    easing: "easeInQuad",
+                    duration:500,
+                })
+                .add({
+                    targets:'.reader-loading-wrapper .logo-wrapper .foreground',
+                    opacity:0,
+                    easing: "easeInQuad",
+                    duration:500,
+                })
+                .add({
+                    targets:'.reader-loading-wrapper .clipped',
+                    clipPath:[
+                        'circle(5vh at 50vw 34vh)',
+                        'circle(100vh at 50vw 34vh)',
+                    ],
+                    easing: "easeInExpo",
+                    duration: 1250,
+                },1000),
+        finish: function(){
+            this.internalFinish.play()
+            this.internalFinish.finished
+                .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
+                .then(()=>{
+                    main.send('show-reader')
+                    $('.reader-loading-wrapper').fadeOut(
+                        ()=>{
+                            for(let animation of this.internalStart){
+                                animation.restart()
+                                animation.pause()
+                            }
+                            this.internalFinish.restart()
+                            this.internalFinish.pause()
+                        }
+                    )
+                })
+        }
+    };
+    
 // HANDLE UPDATES
     main.on('favoritesUpdate', (evt,UPDATES) =>{
         parseUpdates(UPDATES)
