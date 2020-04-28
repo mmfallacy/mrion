@@ -9,3 +9,4 @@ userdata/
 logs/
 
 dev-app-update.yml
+resources/*.apikey

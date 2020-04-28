@@ -11,6 +11,10 @@
   const colors = require('colors')
   const moment = require('moment')
   const {autoUpdater} = require('electron-updater')
+  const eUTIL = require('electron-util')
+  const split = require('split')
+  var PastebinAPI = require('pastebin-js')
+  const {v4:uuidv4} = require('uuid')
 // PATHS
   const icon = path.join(__dirname,'resources','img','iconsmallx.png')
   const iconWBubble = path.join(__dirname,'resources','img','iconsmall.png')
@@ -46,6 +50,7 @@ else{
   }
 
   const DATESTAMP = moment().format('DD-MM-YYYY')
+  const INSTANCE_UUID = uuidv4()
   const logger = require('electron-log')
   logger.transports.file.level = (isDev)? false:'info';
   logger.transports.file.resolvePath =()=>path.join(__userdata,'logs',`${DATESTAMP}.mrionlog`);
@@ -66,11 +71,27 @@ else{
   }
 
   //DIFFERENTIATE INSTANCES
+  (function establishLoggerStartInstance(){
+    logger.transports.file.format = '{text}'
+    logger.transports.console.level = false;
+    // INSTANCE DIFFERENTIATION
+    console.log(`~~ ${INSTANCE_UUID}`)
+    logger.transports.console.level = true;
+    logger.transports.file.format = '[{h}:{i}:{s} | {y}-{m}-{d} ] [{level}] >>> {text}'
+  })();
+
     console.header("------------------------------------------------------------------------",['bgBrightMagenta','bold','grey'])
     console.header(`  STARTING MRION APP...                                                 `,['bgBrightMagenta','bold','grey'])
     console.header(`  VERSION ${app.getVersion()}${' '.repeat(62-app.getVersion().length)}`,['bgBrightMagenta','bold','grey'])
     console.header("------------------------------------------------------------------------",['bgBrightMagenta','bold','grey'])
-// SOURCES
+  // LOAD PASTEBIN KEY
+  var PASTEBIN_API_CREDENTIALS = fs.readFileSync(path.join(__dirname,'resources','pastebin.apikey')).toString().split('\r\n');
+  var PASTEBIN= new PastebinAPI({
+    api_dev_key :PASTEBIN_API_CREDENTIALS[0],
+    api_user_name:PASTEBIN_API_CREDENTIALS[1],
+    api_user_password:PASTEBIN_API_CREDENTIALS[2]
+  })
+  // SOURCES
   const {Mangakakalots} = require('./resources/source.js');
 
   let SOURCES = {
@@ -631,7 +652,86 @@ else{
     autoUpdater.quitAndInstall()
   })
 
-  
+  ipcMain.on('readLogOfCurrentInstance',(evt,curInst)=>{
+    readLog((contents)=>{
+      evt.returnValue = contents
+    },curInst)
+  })  
+  ipcMain.on('mrion-bugReport',(evt,{title="TITLE",body='BODY',wholeLog=false})=>{
+    readLog((log)=>{
+      let debug_info = {};
+      let _temp_debug_info = eUTIL.debugInfo().split('\n');
+      debug_info.mrion_version = _temp_debug_info[0].split(' ')[1];
+      debug_info.electron_version = _temp_debug_info[1].split(' ')[1];
+      debug_info.platform = _temp_debug_info[2];
+      debug_info.locale = _temp_debug_info[3].split(': ')[1];
+      debug_info.chrome_version = eUTIL.chromeVersion;
+      PASTEBIN.createPaste({
+        text:log,
+        title:`DATESTAMP: ${DATESTAMP}`,
+        privacy:2,
+        expiration:'10M'
+      }).then((paste_url)=>{
+        var data = {
+          'entry.693722158': title,
+          'entry.2059878648': debug_info.mrion_version,
+          'entry.806401704':  debug_info.electron_version,
+          'entry.15711249': debug_info.chrome_version,
+          'entry.1151395471': debug_info.platform,
+          'entry.1411390783': debug_info.locale,
+          'entry.407730727': body,
+          'entry.468568485': paste_url,
+          'entry.1443362654':'',
+          'entry.1959224094':'Sent from MRION App',
+        }
+        formResponse(data)
+          .then((res)=>{
+            if(res) {
+              console.header('BUG REPORTED SUCCESSFULLY',['bgYellow','black','bold'])
+              evt.sender.send('mrion-brSuccess')
+            }
+            else
+              evt.sender.send('mrion-brSuccess')
+          })
+      })
+    },wholeLog)
+  })
+
+
+  async function formResponse(data){
+    let link = "https://docs.google.com/forms/d/e/1FAIpQLSfxfiHBd79LXsAdiJ6Lp7W3vcAMNoWuDucIHEe6fTAd3af_rg"
+    link+= '/formResponse?ifq'
+    datastring = ''
+    for (var field in data)
+      datastring += '&' + field + '=' + encodeURIComponent(data[field] || '')
+    
+    link+= datastring
+    link+= '&submit=Submit'
+
+    let {status} = await axios.post(link,{timeout:30000})
+    if(status==200) return true
+    else return false
+  }
+  // INITIALIZE GITHUB ISSUES BUG REPORTER
+  async function readLog(callback, wholeLog = false){
+    var currentInstance = false
+    var _buffer = [];
+    fs.createReadStream(path.join(__userdata,'logs',`${DATESTAMP}.mrionlog`))
+      .pipe(split())
+      .on('data',(line)=>{
+        if(wholeLog)
+          _buffer.push(line)
+        else {
+          if(currentInstance)
+            _buffer.push(line)
+          else if(line===`~~ ${INSTANCE_UUID}`)
+            currentInstance = true
+        }
+      })
+      .on('end',()=>{
+        callback(_buffer.join('\n'))
+      })
+  }
 // FOR DEBUG
 // ipcMain.on('retrieveChapterData',(evt)=>{
 //   evt.returnValue = [
