@@ -128,11 +128,18 @@ const moment = require('moment')
     $('.side-bar button.clickable')
         .mousedown(function(){
             $(this).addClass('active')
-            showModal('updatePrompt')
         })
         .mouseup(function(){
             $(this).removeClass('active')
         })
+        .filter('#update')
+            .click(function(){
+                showModal('updatePrompt')
+            }).end()
+        .filter('#bug-report')
+            .click(function(){
+                showModal('bugReport')
+            })
 // | TITLEBAR
     $('.title-bar button').click(function(){
         if(this.id=='close-prompt')
@@ -958,11 +965,9 @@ const moment = require('moment')
                     $('.reader-loading-wrapper').fadeOut(
                         ()=>{
                             for(let animation of this.internalStart){
-                                animation.restart()
-                                animation.pause()
+                                animation.seek(0)
                             }
-                            this.internalFinish.restart()
-                            this.internalFinish.pause()
+                            this.internalFinish.seek(0)
                         }
                     )
                 })
@@ -997,7 +1002,6 @@ const moment = require('moment')
 // SPAWN POPUPS
     function spawnPopup(msg,type,cb){
         let id = type || 'error'
-
         if(id == 'error') {
             let err = Error(msg)
             console.error(err)
@@ -1011,26 +1015,49 @@ const moment = require('moment')
             id='notif'
         }
         let $popup = $(`.popup#${id}`)
+
         $popup
             .find('#msg')
                 .html(msg)
                 .end()
-            .fadeIn()
-            .addClass((clickable)?'clickable':'')
             .css('display','flex')
-        
+            .addClass((clickable)?'clickable':'')
+
+        let animation = anime.timeline({autoplay:false})
+                .add({
+                    targets:`.popup#${id}`,  
+                    width: '350px',
+                    easing: "easeInQuad",
+                    duration:500,
+                })
+                .add({
+                    targets:`.popup#${id} .note`,
+                    opacity:1,
+                    easing: "easeInQuad",
+                    duration:500,
+                })
+                .add({
+                    targets:`.popup#${id}`,  
+                    width: 0,
+                    padding:{
+                        value:0,
+                        delay:400,
+                        easing:'linear',
+                        duration:100
+                    },
+                    easing: "easeInQuad",
+                    duration:500,
+                },'+=5000')
+        animation.play()
         if(clickable){
             if(typeof cb !== 'function') throw 'Clickable Spawn Popup no callback function'
             $popup.click(cb)
         }
-        setTimeout(function(){
-            $popup
-                .fadeOut(function(){
-                    $(this).find('#msg')
-                        .html('')
-                })
-                .removeClass('clickable')
-        },5000)
+        animation.finished
+            .then(()=>{
+                $popup.off('click')
+                $popup.find('#msg').html('')
+            })
     }
 $('.navlink#genrelist').click()
 
@@ -1098,7 +1125,6 @@ $('#chromePath #spawnFileDialog').click(function(){
         )
     }
 
-    // showModal('downloadProgress')
     // MODAL
     $('.modal-content#updatePrompt')
         .find('#updateCancel')
@@ -1166,6 +1192,112 @@ $('#chromePath #spawnFileDialog').click(function(){
         .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
         .then(()=>main.send('mrionu-installUpdates'))
     })
+
+// HANDLE BUG REPORTS
+    // MODAL
+    let bugReportAnimation = {
+        clipPath:
+            anime({
+                targets:'.modal-content#bugReport .clipped',
+                clipPath:'circle(200% at 79% 82%)',
+                easing: "easeInExpo",
+                duration: 1000,
+                autoplay:false
+            }),
+        drawHalo:anime.timeline({autoplay:false})
+            .add({
+                targets:'.modal-content#bugReport .clipped #halo',
+                strokeDasharray: '283,20000',
+                easing: "easeInExpo",
+                duration: 750,
+                delay:100
+            })
+            .add({
+                targets:'.modal-content#bugReport .clipped #text',
+                opacity:1,
+                easing: "easeInExpo",
+                duration: 750
+            },500)
+    }
+    $('.modal-content#bugReport')
+        .find('#bug-log').find('#switch')
+            .change(function(){
+                let STATUS = $(this).prop('checked')
+                $(this).parent().data('checked',STATUS)
+                if(STATUS)
+                    $(this).parent().siblings('.label')
+                        .html('Include Current Instance Only')
+                else
+                    $(this).parent().siblings('.label')
+                        .html('Include Whole Log')
+            }).end().end()
+        .find('#bugConfirm')
+            .click(function(){
+                // VALIDATE IF BOTH FIELDS ARE FILLED UP
+                let $parent = $(this).parent().parent()
+                let $title = $parent.find('#bug-title')
+                let $body = $parent.find('#bug-body')
+                let $log = $parent.find('#bug-log')
+                $parent.find('.input').removeClass('invalid')
+
+                if(!$title.val())
+                    $title.addClass('invalid')
+
+                
+                else if(!$body.val())
+                    $body.addClass('invalid')
+                
+                else{
+                        bugReportAnimation.clipPath.play()
+                        main.send('mrion-bugReport',{
+                            body:$body.val(),
+                            title:$title.val(),
+                            wholeLog:!$log.data('checked')
+                        })
+                }
+            }).end()
+        .find('#bugDiscard')
+            .click(function(){
+                $(this).parent().parent()
+                    .find('.input').val('')
+                $('.modal-bg').fadeOut()
+            })
+
+    main.on('mrion-bugReportStatus',(evt,result)=>{
+        console.log('RESULT: '+result)
+        if(result){
+            bugReportAnimation.drawHalo.play()
+            bugReportAnimation.drawHalo.finished
+            .then(() => new Promise(resolve => setTimeout(resolve, 1000)))
+                .then(()=>{
+                    $('.modal-bg').fadeOut(()=>{
+                        bugReportAnimation.clipPath.seek(0)
+                        bugReportAnimation.drawHalo.seek(0)
+                    })
+                })
+        }
+        else{
+            $('.modal-bg').fadeOut(()=>{
+                bugReportAnimation.clipPath.seek(0)
+                spawnPopup('Cannot send Bug Report','warning')
+            })
+
+        }
+    })
+    // PREFILL ON ERROR POPUP CLICK
+    $('.popup#error').click(
+        function(){
+            let ISSUE_TITLE = $(this).find('#msg').html()
+            $(this).fadeOut()
+            showModal('bugReport')
+            $('.modal-content#bugReport')
+                .find('#bug-title')
+                    .val(ISSUE_TITLE)
+                    .end()
+                .find('#bug-body')
+                    .focus()
+        }
+    )
 // KEYBINDS
 Mousetrap.bind(['alt+f4','ctrl+w'],(e)=>{
     e.preventDefault()

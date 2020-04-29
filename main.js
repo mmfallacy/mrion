@@ -266,7 +266,6 @@ else{
       }
     })
     mainWindow.loadFile('index.html')
-    //mainWindow.webContents.openDevTools({mode:'detach'})
     
     mainWindow.once('show',(evt)=>{
 
@@ -307,7 +306,6 @@ else{
     readerWindow.on('close',(evt)=>{
       mainWindow.show()
     })
-    // readerWindow.webContents.openDevTools({mode:'detach'})
   }
 
 
@@ -657,8 +655,9 @@ else{
       evt.returnValue = contents
     },curInst)
   })  
-  ipcMain.on('mrion-bugReport',(evt,{title="TITLE",body='BODY',wholeLog=false})=>{
+  ipcMain.on('mrion-bugReport',(evt,{title="TITLE",body='BODY',wholeLog=true})=>{
     readLog((log)=>{
+      _console.log('LOG READ')
       let debug_info = {};
       let _temp_debug_info = eUTIL.debugInfo().split('\n');
       debug_info.mrion_version = _temp_debug_info[0].split(' ')[1];
@@ -666,12 +665,18 @@ else{
       debug_info.platform = _temp_debug_info[2];
       debug_info.locale = _temp_debug_info[3].split(': ')[1];
       debug_info.chrome_version = eUTIL.chromeVersion;
+      if(!log){
+        // if log is empty stop sending bug report
+        evt.sender.send('mrion-bugReportStatus',false)
+        return
+      }
       PASTEBIN.createPaste({
         text:log,
         title:`DATESTAMP: ${DATESTAMP}`,
         privacy:2,
-        expiration:'10M'
+        expiration:(isDev)?'10M':'N'
       }).then((paste_url)=>{
+        _console.log('PASTE CREATED')
         var data = {
           'entry.693722158': title,
           'entry.2059878648': debug_info.mrion_version,
@@ -686,14 +691,12 @@ else{
         }
         formResponse(data)
           .then((res)=>{
-            if(res) {
+
+            if(res) 
               console.header('BUG REPORTED SUCCESSFULLY',['bgYellow','black','bold'])
-              evt.sender.send('mrion-brSuccess')
-            }
-            else
-              evt.sender.send('mrion-brSuccess')
+            evt.sender.send('mrion-bugReportStatus',res)
           })
-      })
+      }).catch((err)=>console.error(err))
     },wholeLog)
   })
 
@@ -713,7 +716,7 @@ else{
     else return false
   }
   // INITIALIZE GITHUB ISSUES BUG REPORTER
-  async function readLog(callback, wholeLog = false){
+  async function readLog(callback, wholeLog = true){
     var currentInstance = false
     var _buffer = [];
     fs.createReadStream(path.join(__userdata,'logs',`${DATESTAMP}.mrionlog`))
@@ -732,6 +735,12 @@ else{
         callback(_buffer.join('\n'))
       })
   }
+
+  ipcMain.on('openDevTools',
+  (evt)=>evt.sender.openDevTools({mode:'detach'})
+  )
+
+// readerWindow.webContents.openDevTools({mode:'detach'})
 // FOR DEBUG
 // ipcMain.on('retrieveChapterData',(evt)=>{
 //   evt.returnValue = [

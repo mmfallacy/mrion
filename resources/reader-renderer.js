@@ -408,43 +408,65 @@ Mousetrap.bind(KEYBINDS.PZ_RESET, function(e){
 
 
 // SPAWN POPUPS
-    function spawnPopup(msg,type,cb){
-        let id = type || 'error'
-
-        if(id == 'error') {
-            let err = Error(msg)
-            console.error(err)
-            let caller = err.stack.split("\n").pop();
-            let [url,ln] = caller.slice(3,-1).split(':').slice(-3,-1)
-            main.send('window-error', [msg,url,ln])
-        }
-        let clickable=false;
-        if(id==='notif-c'){
-            clickable=true;
-            id='notif'
-        }
-        let $popup = $(`.popup#${id}`)
-        $popup
-            .find('#msg')
-                .html(msg)
-                .end()
-            .fadeIn()
-            .addClass((clickable)?'clickable':'')
-            .css('display','flex')
-        
-        if(clickable){
-            if(typeof cb !== 'function') throw 'Clickable Spawn Popup no callback function'
-            $popup.click(cb)
-        }
-        setTimeout(function(){
-            $popup
-                .fadeOut(function(){
-                    $(this).find('#msg')
-                        .html('')
-                })
-                .removeClass('clickable')
-        },5000)
+function spawnPopup(msg,type,cb){
+    let id = type || 'error'
+    if(id == 'error') {
+        let err = Error(msg)
+        console.error(err)
+        let caller = err.stack.split("\n").pop();
+        let [url,ln] = caller.slice(3,-1).split(':').slice(-3,-1)
+        main.send('window-error', [msg,url,ln])
     }
+    let clickable=false;
+    if(id==='notif-c'){
+        clickable=true;
+        id='notif'
+    }
+    let $popup = $(`.popup#${id}`)
+
+    $popup
+        .find('#msg')
+            .html(msg)
+            .end()
+        .css('display','flex')
+        .addClass((clickable)?'clickable':'')
+
+    let animation = anime.timeline({autoplay:false})
+            .add({
+                targets:`.popup#${id}`,  
+                width: '350px',
+                easing: "easeInQuad",
+                duration:500,
+            })
+            .add({
+                targets:`.popup#${id} .note`,
+                opacity:1,
+                easing: "easeInQuad",
+                duration:500,
+            })
+            .add({
+                targets:`.popup#${id}`,  
+                width: 0,
+                padding:{
+                    value:0,
+                    delay:400,
+                    easing:'linear',
+                    duration:100
+                },
+                easing: "easeInQuad",
+                duration:500,
+            },'+=5000')
+    animation.play()
+    if(clickable){
+        if(typeof cb !== 'function') throw 'Clickable Spawn Popup no callback function'
+        $popup.click(cb)
+    }
+    animation.finished
+        .then(()=>{
+            $popup.off('click')
+            $popup.find('#msg').html('')
+        })
+}
 
     main.on('mrionu-available',(evt,res)=>{
         spawnPopup(`Version ${res.version} available! <br>Click to return to MRION!`,'notif-c',

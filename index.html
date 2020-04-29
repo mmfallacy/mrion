@@ -42,6 +42,10 @@
         <span>Update</span>
         <div class="bubble"></div>
       </button>
+      <button class="clickable" id="bug-report">
+        <span>Report a Bug</span>
+        <div class="bubble"></div>
+      </button>
     </div>
 <!-- SOURCE SELECT -->
     <div class="source-select">
@@ -271,6 +275,37 @@
           MRION will restart to install updates upon completing download
         </div>
       </div>
+      <div class="modal-content" id="bugReport">
+        <div class="header">
+          <span class="title"><span class="ri-bug-fill icon"></span>Report A Bug</span>
+        </div>
+        <div class="mrion-input required">
+          <input class="input" type="text" id="bug-title" placeholder="-">
+          <label>ISSUE TITLE</label>
+        </div>
+        <div class="mrion-textarea required">
+          <textarea class="input" id="bug-body" placeholder="-"></textarea> 
+          <label>DETAILS</label>
+        </div>
+        <div class="field">
+          <div class="mrion-toggle" id="bug-log">
+            <input type="checkbox" id="switch"/><label for="switch">Toggle</label>
+          </div>
+          <span class="label">Include Whole Log</span>
+        </div>
+        <div class="button-group">
+          <button id="bugDiscard">Discard</button>
+          <button id="bugConfirm">Send</button>
+        </div>
+        <div class="clipped">
+          <div class="reportStatus">
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%; height:100%; top:0; left:0;">
+              <circle cx="150" cy="50" r="45" id="halo" fill="none" stroke="#00CC33" stroke-width="10"  transform="rotate(-90,100,100)" />
+            </svg>
+            <span id="text">SUCCESS</span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="popup" id="error">
       <span class="icon ri-error-warning-fill"></span>
@@ -278,6 +313,7 @@
         <span class="title">ERROR</span>
         <span id='msg'>
         </span>
+        <span class='note'>Click to Prefill Bug Report -></span>
       </div>
     </div>
     <div class="popup" id="warning">
