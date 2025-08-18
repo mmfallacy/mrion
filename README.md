@@ -1,4 +1,19 @@
-# electron-quick-start
+# MRION
+
+![MRION image 1](./assets/mrion1.png)
+![MRION image 2](./assets/mrion2.png)
+
+MRION is an manga reader app that scrapes online manga sources like Mangakakalots and lets the reader keep track of favorites and read history.
+This project is created using JQuery, Electron, Sass, Puppeteer, and SQLite.
+
+## Project Details
+
+- A standalone manga reader app that scrapes the web for content built with ElectronJS.
+- Leverages Puppeteer's headless browser to scrape manga off client-side rendered website sources.
+- Persists user activity using SQLite and lazy loads pages for a seamless experience.
+- Auto-updates on startup upon publishing a new release.
+
+## electron-quick-start
 
 **Clone and run for a quick way to see Electron in action.**
 
